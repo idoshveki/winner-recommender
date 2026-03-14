@@ -70,18 +70,19 @@ UNRELIABLE_HOME = {'Tottenham', 'Man United', 'Chelsea', 'Brighton',
                    'West Ham', 'Bournemouth'}
 
 
-def get_corner_avgs(history_df):
-    """Build per-team rolling corner averages from history."""
-    team_home = {}
-    team_away = {}
+def get_yc_avgs(history_df):
+    """Build per-team rolling yellow card averages from history (venue-specific)."""
+    team_home_yc = {}
+    team_away_yc = {}
     for _, row in history_df.iterrows():
         ht, at = row['home_team'], row['away_team']
-        hc = row.get('home_corners')
-        ac = row.get('away_corners')
-        if pd.notna(hc) and pd.notna(ac):
-            team_home.setdefault(ht, []).append(float(hc))
-            team_away.setdefault(at, []).append(float(ac))
-    return team_home, team_away
+        hyc = row.get('home_yellow')
+        ayc = row.get('away_yellow')
+        if pd.notna(hyc):
+            team_home_yc.setdefault(ht, []).append(float(hyc))
+        if pd.notna(ayc):
+            team_away_yc.setdefault(at, []).append(float(ayc))
+    return team_home_yc, team_away_yc
 
 
 def get_form(history_df, team, venue, n=5):
@@ -155,8 +156,8 @@ def generate_picks():
     history['date'] = pd.to_datetime(history['date'])
     history = history.sort_values('date').reset_index(drop=True)
 
-    # Build corner averages from history (SportAPI doesn't provide corners)
-    team_home_crn, team_away_crn = get_corner_avgs(history)
+    # Build yellow card averages from history (venue-specific rolling avgs)
+    team_home_yc, team_away_yc = get_yc_avgs(history)
 
     # ── Fetch upcoming fixtures + team IDs from SportAPI ──────────────────────
     print("Fetching upcoming fixtures from SportAPI...")
@@ -166,7 +167,7 @@ def generate_picks():
     pinnacle_odds['home_team'] = pinnacle_odds['home_team'].map(lambda x: NAME_MAP.get(x, x))
     pinnacle_odds['away_team'] = pinnacle_odds['away_team'].map(lambda x: NAME_MAP.get(x, x))
 
-    ha_picks, corner_picks, draw_picks = [], [], []
+    ha_picks, yc_picks, btts_picks, draw_picks = [], [], [], []
 
     for fix in sportapi_fixtures:
         ht_raw, at_raw = fix['home'], fix['away']
@@ -238,44 +239,72 @@ def generate_picks():
                 'why': f"pd={pd_:.0%} gap={pts5_diff} home_dr={hf['dr10']:.0%} away_dr={af['dr10']:.0%}",
             })
 
-        # ── Corner scorer ──────────────────────────────────────────────────
-        h_cf = sum(team_home_crn.get(ht, [0])[-5:]) / max(len(team_home_crn.get(ht, [0])[-5:]), 1)
-        a_cf = sum(team_away_crn.get(at, [0])[-5:]) / max(len(team_away_crn.get(at, [0])[-5:]), 1)
-        total = h_cf + a_cf
-        exp_h = h_cf / max(total, 0.1)
-        if exp_h > 0.65:
-            corner_picks.append({
+        # ── YC Over 3.5 scorer (La Liga only) @ 1.85x ─────────────────────
+        if league == 'La_Liga':
+            h_yc_hist = team_home_yc.get(ht, [])[-5:]
+            a_yc_hist = team_away_yc.get(at, [])[-5:]
+            h_yc5 = sum(h_yc_hist) / max(len(h_yc_hist), 1)
+            a_yc5 = sum(a_yc_hist) / max(len(a_yc_hist), 1)
+            yc_pred = h_yc5 + a_yc5
+            if yc_pred >= 3.5:
+                yc_picks.append({
+                    'market': 'YC Over 3.5',
+                    'match': f"{ht} vs {at}", 'league': league, 'kickoff': kickoff,
+                    'pick': 'Over 3.5', 'odds': 1.85, 'conf': round(yc_pred, 2),
+                    'why': f"yc_pred={yc_pred:.1f} (home_avg={h_yc5:.1f} + away_avg={a_yc5:.1f})",
+                })
+
+        # ── Over 2.5 + BTTS scorer @ 2.63x ───────────────────────────────
+        if hf['gf5'] >= 1.8 and af['gf5'] >= 1.5:
+            btts_picks.append({
+                'market': 'O2.5+BTTS',
                 'match': f"{ht} vs {at}", 'league': league, 'kickoff': kickoff,
-                'pick': 'H', 'odds': 1.80, 'conf': round((exp_h - 0.50) * 20, 1),
-                'why': f"home generates {exp_h:.0%} of corners (h_avg={h_cf:.1f} vs a_avg={a_cf:.1f})",
-            })
-        elif exp_h < 0.35:
-            corner_picks.append({
-                'match': f"{ht} vs {at}", 'league': league, 'kickoff': kickoff,
-                'pick': 'A', 'odds': 1.80, 'conf': round((0.50 - exp_h) * 20, 1),
-                'why': f"away generates {1-exp_h:.0%} of corners (h_avg={h_cf:.1f} vs a_avg={a_cf:.1f})",
+                'pick': 'Over 2.5 And Yes', 'odds': 2.63,
+                'conf': round(hf['gf5'] + af['gf5'], 2),
+                'why': f"home_gf5={hf['gf5']} away_gf5={af['gf5']}",
             })
 
-    # ── Select best picks ──────────────────────────────────────────────────
+    # ── Select best picks — decision tree ─────────────────────────────────
     ha_picks.sort(key=lambda x: -x['conf'])
+    yc_picks.sort(key=lambda x: -x['conf'])
+    btts_picks.sort(key=lambda x: -x['conf'])
     draw_picks.sort(key=lambda x: -x['conf'])
-    corner_picks.sort(key=lambda x: -x['conf'])
 
     best_ha = ha_picks[0] if ha_picks else None
+    ha_match = best_ha['match'] if best_ha else None
 
-    # Best corner from a different match than H/A pick
-    best_crn = None
-    for c in corner_picks:
-        if best_ha is None or c['match'] != best_ha['match']:
-            best_crn = c
+    # Priority: YC Over 4.5 (La Liga) > BTTS Yes > 2nd H/A (different match)
+    best_leg2 = None
+
+    # 1. YC Over 4.5 — must be from a different match than H/A
+    for yc in yc_picks:
+        if yc['match'] != ha_match:
+            best_leg2 = yc
             break
+
+    # 2. BTTS Yes fallback
+    if best_leg2 is None:
+        for btts in btts_picks:
+            if btts['match'] != ha_match:
+                best_leg2 = btts
+                break
+
+    # 3. 2nd H/A pick fallback (from ha_picks[1:])
+    if best_leg2 is None and len(ha_picks) > 1:
+        for ha in ha_picks[1:]:
+            if ha['match'] != ha_match:
+                leg2 = dict(ha)
+                leg2['market'] = 'H/A'
+                leg2['pick'] = f"{'Home' if ha['pick'] == 'H' else 'Away'}"
+                best_leg2 = leg2
+                break
 
     best_draw = draw_picks[0] if draw_picks else None
 
-    return best_ha, best_crn, best_draw, ha_picks, draw_picks
+    return best_ha, best_leg2, best_draw, ha_picks, draw_picks
 
 
-def format_email(best_ha, best_crn, best_draw, all_ha, all_draws):
+def format_email(best_ha, best_leg2, best_draw, all_ha, all_draws):
     today = datetime.today().strftime('%Y-%m-%d')
     lines = [f"Winner Picks — {today}", "=" * 40, ""]
 
@@ -283,16 +312,17 @@ def format_email(best_ha, best_crn, best_draw, all_ha, all_draws):
     lines.append("SLIP 1 — COMBINED BET")
     lines.append("-" * 30)
     if best_ha:
-        combined_odds = round(best_ha['odds'] * (best_crn['odds'] if best_crn else 1), 2)
-        lines.append(f"Leg 1 (H/A):    {best_ha['match']} → {best_ha['pick']} @ {best_ha['odds']:.2f}")
+        combined_odds = round(best_ha['odds'] * (best_leg2['odds'] if best_leg2 else 1), 2)
+        lines.append(f"Leg 1 (H/A):  {best_ha['match']} → {best_ha['pick']} @ {best_ha['odds']:.2f}")
         lines.append(f"  Why: {best_ha['why']}")
-        if best_crn:
-            lines.append(f"Leg 2 (Corner): {best_crn['match']} → 1st corner {best_crn['pick']} @ {best_crn['odds']:.2f}")
-            lines.append(f"  Why: {best_crn['why']}")
-            lines.append(f"Combined odds:  {combined_odds:.2f}x")
+        if best_leg2:
+            mkt = best_leg2.get('market', '')
+            lines.append(f"Leg 2 ({mkt}): {best_leg2['match']} → {best_leg2['pick']} @ {best_leg2['odds']:.2f}")
+            lines.append(f"  Why: {best_leg2['why']}")
+            lines.append(f"Combined odds: {combined_odds:.2f}x")
         else:
-            lines.append("Leg 2 (Corner): No qualifying corner pick this week")
-            lines.append(f"Combined odds:  {best_ha['odds']:.2f}x (single leg)")
+            lines.append("Leg 2: No qualifying second leg this week")
+            lines.append(f"Combined odds: {best_ha['odds']:.2f}x (single leg)")
     else:
         lines.append("No qualifying H/A pick this week — SKIP SLIP 1")
 
@@ -351,10 +381,10 @@ if __name__ == "__main__":
 
     # 2. Generate picks
     print("Generating picks...")
-    best_ha, best_crn, best_draw, all_ha, all_draws = generate_picks()
+    best_ha, best_leg2, best_draw, all_ha, all_draws = generate_picks()
 
     # 3. Format & send
-    body = format_email(best_ha, best_crn, best_draw, all_ha, all_draws)
+    body = format_email(best_ha, best_leg2, best_draw, all_ha, all_draws)
     print("\n" + body)
 
     today = datetime.today().strftime('%Y-%m-%d')
