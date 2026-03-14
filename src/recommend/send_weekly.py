@@ -22,6 +22,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from recommend.combined_slip_backtest import (
     build_features, score_ha, score_corner, score_draw
 )
+from data.sportapi_form import get_fixtures_with_ids, get_league_form, LEAGUE_TO_TOURNEY
 
 import pandas as pd
 
@@ -135,24 +136,10 @@ def generate_picks():
     history = pd.read_sql("""
         SELECT league, date, home_team, away_team,
                home_goals, away_goals, result,
-               home_corners, away_corners,
-               pinnacle_prob_h, pinnacle_prob_d, pinnacle_prob_a,
-               avg_prob_h, avg_prob_d, avg_prob_a,
-               pinnacle_h, pinnacle_d, pinnacle_a,
-               avg_h, avg_d, avg_a
+               home_corners, away_corners
         FROM matches_history
         WHERE result IS NOT NULL
         ORDER BY date
-    """, conn)
-
-    # Only pick games within the next 5 days — avoid stale early-week odds
-    upcoming_raw = pd.read_sql("""
-        SELECT DISTINCT home_team, away_team, commence_time, sport
-        FROM odds_raw
-        WHERE market = 'h2h'
-          AND commence_time <= datetime('now', '+5 days')
-          AND commence_time >= datetime('now', '-1 hours')
-        ORDER BY commence_time
     """, conn)
 
     pinnacle_odds = pd.read_sql("""
@@ -168,25 +155,28 @@ def generate_picks():
     history['date'] = pd.to_datetime(history['date'])
     history = history.sort_values('date').reset_index(drop=True)
 
-    # Build corner averages
+    # Build corner averages from history (SportAPI doesn't provide corners)
     team_home_crn, team_away_crn = get_corner_avgs(history)
 
-    # Map upcoming fixtures
-    upcoming_raw['league'] = upcoming_raw['sport'].map(SPORT_LEAGUE)
-    upcoming_raw = upcoming_raw[upcoming_raw['league'].notna()].copy()
-    upcoming_raw['home_team'] = upcoming_raw['home_team'].map(lambda x: NAME_MAP.get(x, x))
-    upcoming_raw['away_team'] = upcoming_raw['away_team'].map(lambda x: NAME_MAP.get(x, x))
+    # ── Fetch upcoming fixtures + team IDs from SportAPI ──────────────────────
+    print("Fetching upcoming fixtures from SportAPI...")
+    sportapi_fixtures = get_fixtures_with_ids(days=5)
+    print(f"  {len(sportapi_fixtures)} fixtures found across 4 leagues")
+
     pinnacle_odds['home_team'] = pinnacle_odds['home_team'].map(lambda x: NAME_MAP.get(x, x))
     pinnacle_odds['away_team'] = pinnacle_odds['away_team'].map(lambda x: NAME_MAP.get(x, x))
 
     ha_picks, corner_picks, draw_picks = [], [], []
 
-    for _, fix in upcoming_raw.iterrows():
-        ht, at = fix['home_team'], fix['away_team']
+    for fix in sportapi_fixtures:
+        ht_raw, at_raw = fix['home'], fix['away']
+        ht = NAME_MAP.get(ht_raw, ht_raw)
+        at = NAME_MAP.get(at_raw, at_raw)
         league = fix['league']
-        kickoff = fix['commence_time'][:10]
+        kickoff = fix['date']
+        tournament_id = fix['tournament_id']
 
-        # Get Pinnacle odds for this fixture
+        # Get Pinnacle odds — match by our internal names
         p = pinnacle_odds[(pinnacle_odds['home_team'] == ht) &
                           (pinnacle_odds['away_team'] == at)]
         ph_odds = p[p['outcome_name'] == ht]['price'].values
@@ -206,9 +196,10 @@ def generate_picks():
         pa = (1/pa_o) / vig if pa_o else 0
         pd_ = (1/pd_o) / vig if pd_o else 0
 
-        # Form
-        hf = get_form(history[history['league'] == league], ht, 'home')
-        af = get_form(history[history['league'] == league], at, 'away')
+        # ── Real-time form from SportAPI ──────────────────────────────────────
+        print(f"  Form: {ht} vs {at} ({league})...")
+        hf = get_league_form(fix['home_id'], tournament_id, 'home')
+        af = get_league_form(fix['away_id'], tournament_id, 'away')
         venue_gap = hf['pts'] - af['pts']
         pts5_diff = hf['pts'] - af['pts']
 
