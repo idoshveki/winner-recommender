@@ -145,15 +145,22 @@ def generate_picks():
         ORDER BY date
     """, conn)
 
+    # Only pick games within the next 5 days — avoid stale early-week odds
     upcoming_raw = pd.read_sql("""
         SELECT DISTINCT home_team, away_team, commence_time, sport
-        FROM odds_raw WHERE market = 'h2h'
+        FROM odds_raw
+        WHERE market = 'h2h'
+          AND commence_time <= datetime('now', '+5 days')
+          AND commence_time >= datetime('now', '-1 hours')
         ORDER BY commence_time
     """, conn)
 
     pinnacle_odds = pd.read_sql("""
         SELECT home_team, away_team, outcome_name, price
-        FROM odds_raw WHERE bookmaker = 'pinnacle' AND market = 'h2h'
+        FROM odds_raw
+        WHERE bookmaker = 'pinnacle' AND market = 'h2h'
+          AND commence_time <= datetime('now', '+5 days')
+          AND commence_time >= datetime('now', '-1 hours')
     """, conn)
 
     conn.close()
