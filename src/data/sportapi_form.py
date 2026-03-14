@@ -16,7 +16,15 @@ from dotenv import load_dotenv
 ROOT = Path(__file__).resolve().parents[2]
 load_dotenv(ROOT / ".env")
 
-API_KEY = os.getenv("SOFASCORE_API_KEY")
+def _get_api_key():
+    # Streamlit Cloud secrets take priority, fallback to .env
+    try:
+        import streamlit as st
+        return st.secrets["SOFASCORE_API_KEY"]
+    except Exception:
+        return os.getenv("SOFASCORE_API_KEY")
+
+API_KEY = _get_api_key()
 HOST = "sportapi7.p.rapidapi.com"
 BASE = f"https://{HOST}/api/v1"
 HEADERS = {

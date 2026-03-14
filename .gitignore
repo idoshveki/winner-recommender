@@ -4,8 +4,7 @@ __pycache__/
 *.pyc
 *.pyo
 
-# DB and raw data (large files, re-downloadable)
-data/db/
+# Raw data (large CSVs, re-downloadable)
 data/raw/
 
 # Generated reports
@@ -14,6 +13,7 @@ data/reports/*.md
 
 # Secrets
 .env
+.streamlit/secrets.toml
 
 # OS
 .DS_Store

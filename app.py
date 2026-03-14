@@ -16,7 +16,11 @@ ROOT = Path(__file__).resolve().parent
 DB_PATH = ROOT / "data" / "db" / "winner.db"
 sys.path.insert(0, str(ROOT / "src"))
 
-from recommend.send_weekly import generate_picks
+from recommend.send_weekly import generate_picks as _generate_picks
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def generate_picks():
+    return _generate_picks()
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -83,8 +87,7 @@ with st.sidebar:
     st.divider()
     st.markdown("**Slip structure**")
     st.markdown("- Slip 1: H/A + 1st Corner")
-    st.markdown("- Slip 2: Draw single")
-    st.markdown("- Stretch: optional H/A single")
+    st.markdown("- Stretch: optional H/A single + draw")
     st.divider()
 
     with st.expander("📖 Term glossary"):
@@ -165,7 +168,7 @@ with tab1:
             best_ha = best_crn = best_draw = None
             all_ha = all_draws = []
 
-    col_s1, col_s2, col_stretch = st.columns(3)
+    col_s1, col_stretch = st.columns(2)
 
     # ── Slip 1 ────────────────────────────────────────────────────────────────
     with col_s1:
@@ -222,15 +225,29 @@ with tab1:
         else:
             st.warning("No qualifying H/A pick — skip Slip 1")
 
-    # ── Slip 2 ────────────────────────────────────────────────────────────────
-    with col_s2:
-        st.markdown("**Slip 2 — Draw Single**")
-        if best_draw:
-            st.metric("Odds", f"{best_draw['odds']:.2f}×")
+    # ── Stretch + Draw ────────────────────────────────────────────────────────
+    with col_stretch:
+        st.markdown("**Stretch — Optional**")
+        st.caption("Lower-conviction picks — bet smaller or skip.")
+
+        if len(all_ha) > 1:
+            stretch = all_ha[1]
             st.markdown(f"""
 <div class="slip-box">
   <div class="leg-row">
-    <span class="tag">Draw</span> <b>{best_draw['match']}</b><br>
+    <span class="tag stretch-tag">H/A</span> <b>{stretch['match']}</b><br>
+    <small>{stretch['league']} · {stretch['kickoff']} · {'Home' if stretch['pick']=='H' else 'Away'} @ {stretch['odds']:.2f}</small>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+            with st.expander("Why this H/A pick?"):
+                st.markdown(f"_{stretch['why']}_  \nConfidence: **{stretch['conf']}** _(lower than primary)_")
+
+        if best_draw:
+            st.markdown(f"""
+<div class="slip-box">
+  <div class="leg-row">
+    <span class="tag stretch-tag">Draw</span> <b>{best_draw['match']}</b><br>
     <small>{best_draw['league']} · {best_draw['kickoff']} · Draw @ {best_draw['odds']:.2f}</small>
   </div>
 </div>
@@ -238,40 +255,8 @@ with tab1:
             with st.expander("Why this draw?"):
                 st.markdown(f"_{best_draw['why']}_  \nConfidence: **{best_draw['conf']}**")
 
-            if len(all_draws) > 1:
-                with st.expander(f"{len(all_draws)-1} other draw candidates"):
-                    df_d = pd.DataFrame(all_draws[1:])
-                    st.dataframe(df_d[['match','league','kickoff','odds','conf','why']],
-                                 hide_index=True, use_container_width=True)
-        else:
-            st.warning("No qualifying draw — skip Slip 2")
-
-    # ── Stretch bet ───────────────────────────────────────────────────────────
-    with col_stretch:
-        st.markdown("**Stretch — Optional Single**")
-        st.caption("Higher confidence threshold not met. Lower-conviction pick — bet smaller or skip.")
-        if len(all_ha) > 1:
-            stretch = all_ha[1]
-            st.metric("Odds", f"{stretch['odds']:.2f}×")
-            st.markdown(f"""
-<div class="slip-box">
-  <div class="leg-row">
-    <span class="tag stretch-tag">Optional</span> <b>{stretch['match']}</b><br>
-    <small>{stretch['league']} · {stretch['kickoff']} · {'Home' if stretch['pick']=='H' else 'Away'} @ {stretch['odds']:.2f}</small>
-  </div>
-</div>
-""", unsafe_allow_html=True)
-            with st.expander("Why this pick?"):
-                st.markdown(f"_{stretch['why']}_  \nConfidence: **{stretch['conf']}** _(lower than primary)_")
-
-            if len(all_ha) > 2:
-                with st.expander(f"{len(all_ha)-2} more H/A candidates"):
-                    df_ha = pd.DataFrame(all_ha[2:])
-                    df_ha['pick'] = df_ha['pick'].map({'H':'Home','A':'Away'})
-                    st.dataframe(df_ha[['match','league','kickoff','pick','odds','conf','why']],
-                                 hide_index=True, use_container_width=True)
-        else:
-            st.info("No stretch candidate this week.")
+        if len(all_ha) <= 1 and not best_draw:
+            st.info("No stretch candidates this week.")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
