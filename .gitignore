@@ -7,9 +7,8 @@ __pycache__/
 # Raw data (large CSVs, re-downloadable)
 data/raw/
 
-# Generated reports
-data/reports/*.csv
-data/reports/*.md
+# Generated reports (keep CSVs and MDs for cloud app)
+data/reports/2026-*.md
 
 # Secrets
 .env

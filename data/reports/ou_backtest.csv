@@ -1,0 +1,203 @@
+week,match,league,pick,odds,actual_goals,over25,correct,confidence,pin_over_prob,pin_under_prob,combined_gf,combined_ga,h_over_rate,a_over_rate
+2020-09-07/2020-09-13,Cadiz vs Osasuna,La_Liga,UNDER,1.48,2,False,True,12.3,0.343,0.657,0.0,0.0,0.0,0.0
+2020-09-14/2020-09-20,Granada vs Alaves,La_Liga,UNDER,1.46,3,True,False,12.4,0.337,0.663,2.0,0.0,0.0,0.0
+2020-09-21/2020-09-27,Alaves vs Getafe,La_Liga,UNDER,1.4,0,False,True,12.9,0.309,0.691,0.0,1.0,0.0,0.0
+2020-09-28/2020-10-04,Bayern Munich vs Hertha,Bundesliga,OVER,1.26,7,True,True,14.3,0.763,0.237,12.0,1.0,1.0,1.0
+2020-10-12/2020-10-18,Napoli vs Atalanta,Serie_A,OVER,1.46,5,True,True,12.4,0.663,0.337,10.0,1.5,1.0,1.0
+2020-10-19/2020-10-25,Bayern Munich vs Ein Frankfurt,Bundesliga,OVER,1.22,5,True,True,14.7,0.786,0.214,8.0,2.5,1.0,0.5
+2020-10-26/2020-11-01,FC Koln vs Bayern Munich,Bundesliga,OVER,1.23,3,True,True,14.4,0.772,0.228,3.83,4.83,0.67,1.0
+2020-11-02/2020-11-08,Dortmund vs Bayern Munich,Bundesliga,OVER,1.37,5,True,True,13.2,0.705,0.295,5.67,2.0,1.0,1.0
+2020-11-16/2020-11-22,Bayern Munich vs Werder Bremen,Bundesliga,OVER,1.17,2,False,False,15.2,0.812,0.188,7.33,2.0,1.0,0.33
+2020-11-23/2020-11-29,Stuttgart vs Bayern Munich,Bundesliga,OVER,1.27,4,True,True,14.2,0.757,0.243,4.0,3.75,0.5,1.0
+2020-11-30/2020-12-06,Bayern Munich vs RB Leipzig,Bundesliga,OVER,1.32,6,True,True,11.4,0.734,0.266,5.5,1.75,0.75,0.0
+2020-12-07/2020-12-13,Union Berlin vs Bayern Munich,Bundesliga,OVER,1.35,2,False,False,13.3,0.712,0.288,5.4,3.2,0.8,1.0
+2020-12-14/2020-12-20,Barcelona vs Valencia,La_Liga,OVER,1.39,4,True,True,13.0,0.697,0.303,3.6,2.4,0.8,0.6
+2020-12-21/2020-12-27,Napoli vs Torino,Serie_A,OVER,1.51,2,False,False,12.0,0.641,0.359,4.0,4.0,0.8,1.0
+2020-12-28/2021-01-03,Bayern Munich vs Mainz,Bundesliga,OVER,1.22,7,True,True,14.7,0.788,0.212,4.0,3.6,0.8,0.8
+2021-01-04/2021-01-10,Atalanta vs Parma,Serie_A,OVER,1.4,3,True,True,12.8,0.686,0.314,4.0,3.0,0.6,1.0
+2021-01-11/2021-01-17,Stuttgart vs M'gladbach,Bundesliga,OVER,1.5,4,True,True,12.1,0.645,0.355,3.6,4.0,0.6,0.8
+2021-01-18/2021-01-24,M'gladbach vs Dortmund,Bundesliga,OVER,1.49,6,True,True,12.1,0.649,0.351,3.6,2.6,0.6,0.8
+2021-01-25/2021-01-31,Bayern Munich vs Hoffenheim,Bundesliga,OVER,1.21,5,True,True,14.9,0.795,0.205,4.0,3.6,0.8,0.8
+2021-02-01/2021-02-07,Freiburg vs Dortmund,Bundesliga,OVER,1.53,3,True,True,11.9,0.634,0.366,4.8,2.8,0.8,1.0
+2021-02-08/2021-02-14,Getafe vs Sociedad,La_Liga,UNDER,1.51,1,False,True,10.0,0.356,0.644,1.6,2.2,0.0,0.6
+2021-02-15/2021-02-21,Bayern Munich vs Bielefeld,Bundesliga,OVER,1.3,6,True,True,13.8,0.736,0.264,3.8,3.0,1.0,0.4
+2021-02-22/2021-02-28,Bayern Munich vs FC Koln,Bundesliga,OVER,1.3,6,True,True,13.8,0.736,0.264,4.0,4.0,1.0,0.8
+2021-03-01/2021-03-07,Bayern Munich vs Dortmund,Bundesliga,OVER,1.34,6,True,True,13.5,0.723,0.277,6.0,3.4,1.0,1.0
+2021-03-08/2021-03-14,Atalanta vs Spezia,Serie_A,OVER,1.58,4,True,True,11.5,0.614,0.386,3.6,4.0,0.8,0.8
+2021-03-15/2021-03-21,Bayern Munich vs Stuttgart,Bundesliga,OVER,1.24,4,True,True,14.5,0.775,0.225,4.6,3.8,1.0,0.6
+2021-03-29/2021-04-04,Dortmund vs Ein Frankfurt,Bundesliga,OVER,1.49,3,True,True,12.2,0.65,0.35,4.6,2.2,0.6,0.8
+2021-04-05/2021-04-11,Bayern Munich vs Union Berlin,Bundesliga,OVER,1.56,2,False,False,11.6,0.622,0.378,4.8,3.0,1.0,0.4
+2021-04-12/2021-04-18,M'gladbach vs Ein Frankfurt,Bundesliga,OVER,1.5,4,True,True,12.1,0.645,0.355,4.0,2.8,0.8,0.8
+2021-04-19/2021-04-25,Juventus vs Parma,Serie_A,OVER,1.47,4,True,True,12.0,0.642,0.358,4.4,3.4,0.8,1.0
+2021-04-26/2021-05-02,Barcelona vs Granada,La_Liga,OVER,1.36,3,True,True,13.3,0.709,0.291,4.2,2.8,0.6,1.0
+2021-05-03/2021-05-09,Bayern Munich vs M'gladbach,Bundesliga,OVER,1.3,6,True,True,13.9,0.742,0.258,5.2,3.0,0.6,1.0
+2021-05-10/2021-05-16,Barcelona vs Celta,La_Liga,OVER,1.33,3,True,True,13.5,0.723,0.277,4.6,2.6,0.6,0.8
+2021-05-17/2021-05-23,Inter vs Udinese,Serie_A,OVER,1.38,6,True,True,12.8,0.685,0.315,4.4,3.0,0.6,0.8
+2021-08-09/2021-08-15,Dortmund vs Ein Frankfurt,Bundesliga,OVER,1.37,7,True,True,13.2,0.706,0.294,3.8,3.6,0.6,0.8
+2021-08-16/2021-08-22,Freiburg vs Dortmund,Bundesliga,OVER,1.5,3,True,True,12.1,0.645,0.355,4.2,3.0,0.6,0.8
+2021-08-23/2021-08-29,Mallorca vs Espanol,La_Liga,UNDER,1.51,1,False,True,12.1,0.355,0.645,1.0,1.0,0.0,0.0
+2021-09-06/2021-09-12,Leverkusen vs Dortmund,Bundesliga,OVER,1.44,7,True,True,12.6,0.673,0.327,4.8,2.0,0.8,0.8
+2021-09-13/2021-09-19,Man City vs Southampton,EPL,OVER,1.42,0,False,False,12.7,0.678,0.322,6.5,2.5,1.0,1.0
+2021-09-20/2021-09-26,M'gladbach vs Dortmund,Bundesliga,OVER,1.38,1,False,False,13.2,0.703,0.297,5.4,2.4,0.8,0.8
+2021-09-27/2021-10-03,Bayern Munich vs Ein Frankfurt,Bundesliga,OVER,1.18,3,True,True,15.0,0.801,0.199,6.2,3.2,0.8,0.6
+2021-10-11/2021-10-17,Leverkusen vs Bayern Munich,Bundesliga,OVER,1.36,6,True,True,13.3,0.712,0.288,4.6,2.6,0.6,0.8
+2021-10-18/2021-10-24,Bayern Munich vs Hoffenheim,Bundesliga,OVER,1.2,4,True,True,14.7,0.786,0.214,6.0,2.2,1.0,0.6
+2021-10-25/2021-10-31,Dortmund vs FC Koln,Bundesliga,OVER,1.41,2,False,False,12.8,0.686,0.314,4.2,3.6,1.0,0.4
+2021-11-01/2021-11-07,Bayern Munich vs Freiburg,Bundesliga,OVER,1.24,3,True,True,14.3,0.762,0.238,5.4,1.4,1.0,0.4
+2021-11-15/2021-11-21,Augsburg vs Bayern Munich,Bundesliga,OVER,1.34,3,True,True,13.4,0.717,0.283,5.0,3.2,0.6,0.8
+2021-11-22/2021-11-28,Bayern Munich vs Bielefeld,Bundesliga,OVER,1.21,1,False,False,12.1,0.775,0.225,4.6,1.8,1.0,0.2
+2021-11-29/2021-12-05,Dortmund vs Bayern Munich,Bundesliga,OVER,1.36,5,True,True,13.3,0.71,0.29,6.2,2.4,0.8,1.0
+2021-12-06/2021-12-12,Bayern Munich vs Mainz,Bundesliga,OVER,1.34,3,True,True,13.5,0.72,0.28,4.2,2.0,0.8,0.6
+2021-12-13/2021-12-19,Stuttgart vs Bayern Munich,Bundesliga,OVER,1.35,5,True,True,13.3,0.712,0.288,5.0,2.8,0.6,1.0
+2021-12-20/2021-12-26,Man City vs Leicester,EPL,OVER,1.38,9,True,True,13.0,0.692,0.308,4.2,2.2,0.6,0.8
+2021-12-27/2022-01-02,Leicester vs Liverpool,EPL,OVER,1.34,1,False,False,13.5,0.721,0.279,5.2,3.0,0.8,0.8
+2022-01-03/2022-01-09,Empoli vs Sassuolo,Serie_A,OVER,1.46,6,True,True,12.3,0.656,0.344,4.0,3.8,0.8,1.0
+2022-01-10/2022-01-16,Dortmund vs Freiburg,Bundesliga,OVER,1.43,6,True,True,12.7,0.676,0.324,4.2,2.0,0.8,0.6
+2022-01-17/2022-01-23,Hertha vs Bayern Munich,Bundesliga,OVER,1.37,5,True,True,13.0,0.696,0.304,5.4,2.8,0.4,1.0
+2022-01-31/2022-02-06,Dortmund vs Leverkusen,Bundesliga,OVER,1.38,7,True,True,13.0,0.696,0.304,4.6,3.2,0.8,0.8
+2022-02-07/2022-02-13,Liverpool vs Leicester,EPL,OVER,1.34,2,False,False,13.4,0.718,0.282,4.8,2.6,0.8,0.8
+2022-02-14/2022-02-20,Inter vs Sassuolo,Serie_A,OVER,1.4,2,False,False,12.9,0.688,0.312,4.0,2.8,0.8,0.8
+2022-02-21/2022-02-27,Liverpool vs Leeds,EPL,OVER,1.33,6,True,True,13.6,0.725,0.275,4.0,4.0,0.6,1.0
+2022-02-28/2022-03-06,Bayern Munich vs Leverkusen,Bundesliga,OVER,1.33,2,False,False,13.3,0.708,0.292,4.6,3.6,0.8,1.0
+2022-03-07/2022-03-13,Hoffenheim vs Bayern Munich,Bundesliga,OVER,1.33,2,False,False,13.3,0.711,0.289,4.8,2.2,0.6,0.8
+2022-03-14/2022-03-20,Genoa vs Torino,Serie_A,UNDER,1.62,1,False,True,11.2,0.4,0.6,0.8,1.4,0.0,0.2
+2022-03-28/2022-04-03,Dortmund vs RB Leipzig,Bundesliga,OVER,1.55,5,True,True,11.7,0.627,0.373,6.6,2.8,0.8,0.6
+2022-04-04/2022-04-10,Levante vs Barcelona,La_Liga,OVER,1.49,5,True,True,10.1,0.65,0.35,4.2,2.2,0.4,0.8
+2022-04-11/2022-04-17,Dortmund vs Wolfsburg,Bundesliga,OVER,1.57,7,True,True,11.6,0.618,0.382,4.2,4.0,0.8,0.6
+2022-04-18/2022-04-24,Liverpool vs Everton,EPL,OVER,1.45,2,False,False,12.4,0.664,0.336,4.0,3.2,0.6,0.8
+2022-04-25/2022-05-01,Dortmund vs Bochum,Bundesliga,OVER,1.46,7,True,True,12.4,0.663,0.337,4.2,3.6,0.8,0.6
+2022-05-02/2022-05-08,Getafe vs Vallecano,La_Liga,UNDER,1.48,0,False,True,12.3,0.342,0.658,1.6,1.8,0.4,0.2
+2022-05-09/2022-05-15,Real Madrid vs Levante,La_Liga,OVER,1.4,6,True,True,12.9,0.691,0.309,4.2,2.8,0.8,0.6
+2022-05-16/2022-05-22,Man City vs Aston Villa,EPL,OVER,1.43,5,True,True,12.6,0.672,0.328,5.4,1.8,1.0,0.8
+2022-08-01/2022-08-07,West Ham vs Man City,EPL,OVER,1.56,2,False,False,11.7,0.624,0.376,4.2,2.0,0.8,0.6
+2022-08-08/2022-08-14,Man City vs Bournemouth,EPL,OVER,1.33,4,True,True,11.3,0.722,0.278,3.6,1.0,1.0,0.0
+2022-08-15/2022-08-21,Getafe vs Ath Madrid,La_Liga,UNDER,1.49,3,True,False,12.2,0.347,0.653,1.4,1.2,0.2,0.2
+2022-08-22/2022-08-28,Girona vs Getafe,La_Liga,UNDER,1.42,4,True,False,12.7,0.32,0.68,1.0,1.4,0.0,0.2
+2022-08-29/2022-09-04,Dortmund vs Hoffenheim,Bundesliga,OVER,1.43,1,False,False,12.7,0.678,0.322,4.2,4.4,0.8,1.0
+2022-09-05/2022-09-11,Getafe vs Sociedad,La_Liga,UNDER,1.52,3,True,False,12.0,0.359,0.641,1.2,1.4,0.2,0.4
+2022-09-12/2022-09-18,Betis vs Girona,La_Liga,UNDER,1.74,3,True,False,10.5,0.442,0.558,2.1,1.4,0.4,0.0
+2022-09-26/2022-10-02,RB Leipzig vs Bochum,Bundesliga,OVER,1.43,4,True,True,12.6,0.674,0.326,4.2,3.4,0.8,0.8
+2022-10-03/2022-10-09,Dortmund vs Bayern Munich,Bundesliga,OVER,1.38,4,True,True,10.9,0.699,0.301,4.0,2.2,0.4,0.8
+2022-10-10/2022-10-16,Bayern Munich vs Freiburg,Bundesliga,OVER,1.38,5,True,True,13.1,0.698,0.302,4.6,2.0,0.8,0.6
+2022-10-17/2022-10-23,Hoffenheim vs Bayern Munich,Bundesliga,OVER,1.36,2,False,False,13.3,0.712,0.288,4.2,2.8,0.6,0.8
+2022-10-24/2022-10-30,Bayern Munich vs Mainz,Bundesliga,OVER,1.33,8,True,True,13.5,0.723,0.277,4.4,2.2,0.8,0.6
+2022-10-31/2022-11-06,Man City vs Fulham,EPL,OVER,1.31,3,True,True,13.4,0.713,0.287,6.4,3.4,1.0,1.0
+2022-11-07/2022-11-13,Man City vs Brentford,EPL,OVER,1.34,3,True,True,13.4,0.717,0.283,5.0,3.8,1.0,0.6
+2022-12-26/2023-01-01,Man City vs Everton,EPL,OVER,1.4,2,False,False,12.9,0.688,0.312,4.0,2.8,1.0,0.4
+2023-01-02/2023-01-08,Sevilla vs Getafe,La_Liga,UNDER,1.57,3,True,False,11.6,0.381,0.619,1.4,1.8,0.2,0.0
+2023-01-09/2023-01-15,Osasuna vs Mallorca,La_Liga,UNDER,1.46,1,False,True,10.3,0.337,0.663,2.0,2.2,0.4,0.2
+2023-01-16/2023-01-22,Dortmund vs Augsburg,Bundesliga,OVER,1.43,7,True,True,12.6,0.675,0.325,4.2,2.2,0.6,0.8
+2023-01-23/2023-01-29,Bayern Munich vs Ein Frankfurt,Bundesliga,OVER,1.35,2,False,False,13.4,0.715,0.285,5.4,2.4,1.0,0.6
+2023-01-30/2023-02-05,Ath Madrid vs Getafe,La_Liga,UNDER,1.59,2,False,True,11.4,0.389,0.611,2.0,1.6,0.2,0.2
+2023-02-06/2023-02-12,Valladolid vs Osasuna,La_Liga,UNDER,1.56,0,False,True,11.6,0.379,0.621,1.6,1.8,0.2,0.2
+2023-02-13/2023-02-19,M'gladbach vs Bayern Munich,Bundesliga,OVER,1.36,5,True,True,13.3,0.712,0.288,4.4,3.2,0.8,0.6
+2023-02-20/2023-02-26,Bayern Munich vs Union Berlin,Bundesliga,OVER,1.6,3,True,True,11.4,0.608,0.392,4.8,3.4,0.8,0.8
+2023-02-27/2023-03-05,Villarreal vs Getafe,La_Liga,UNDER,1.66,3,True,False,11.0,0.415,0.585,1.6,1.8,0.4,0.2
+2023-03-06/2023-03-12,Cadiz vs Getafe,La_Liga,UNDER,1.38,4,True,False,13.1,0.3,0.7,2.0,1.8,0.0,0.4
+2023-03-13/2023-03-19,Sampdoria vs Verona,Serie_A,UNDER,1.61,4,True,False,11.3,0.399,0.601,0.6,1.8,0.2,0.0
+2023-03-27/2023-04-02,Bayern Munich vs Dortmund,Bundesliga,OVER,1.36,6,True,True,11.1,0.709,0.291,5.2,1.6,0.8,0.4
+2023-04-03/2023-04-09,Sociedad vs Getafe,La_Liga,UNDER,1.49,2,False,True,12.2,0.349,0.651,2.0,1.8,0.2,0.4
+2023-04-10/2023-04-16,Bayern Munich vs Hoffenheim,Bundesliga,OVER,1.34,2,False,False,13.4,0.716,0.284,4.8,3.0,0.8,0.6
+2023-04-17/2023-04-23,Mainz vs Bayern Munich,Bundesliga,OVER,1.53,4,True,True,11.8,0.629,0.371,4.2,2.4,0.6,0.8
+2023-04-24/2023-04-30,Real Madrid vs Almeria,La_Liga,OVER,1.36,6,True,True,13.2,0.704,0.296,4.4,3.6,0.6,1.0
+2023-05-01/2023-05-07,Man City vs Leeds,EPL,OVER,1.32,3,True,True,13.6,0.724,0.276,4.6,3.2,0.8,0.8
+2023-05-08/2023-05-14,Dortmund vs M'gladbach,Bundesliga,OVER,1.34,7,True,True,13.2,0.705,0.295,4.4,2.6,1.0,0.6
+2023-05-15/2023-05-21,Man City vs Chelsea,EPL,OVER,1.55,1,False,False,11.7,0.623,0.377,4.6,2.4,1.0,0.6
+2023-05-22/2023-05-28,Dortmund vs Mainz,Bundesliga,OVER,1.32,4,True,True,13.4,0.717,0.283,5.6,2.4,1.0,0.6
+2023-05-29/2023-06-04,Villarreal vs Ath Madrid,La_Liga,OVER,1.6,4,True,True,11.2,0.6,0.4,5.0,2.8,0.8,0.6
+2023-08-07/2023-08-13,Arsenal vs Nott'm Forest,EPL,OVER,1.42,3,True,True,12.6,0.674,0.326,4.2,3.6,1.0,0.6
+2023-08-14/2023-08-20,Dortmund vs FC Koln,Bundesliga,OVER,1.43,1,False,False,12.6,0.671,0.329,5.8,3.0,1.0,0.8
+2023-08-21/2023-08-27,Bochum vs Dortmund,Bundesliga,OVER,1.38,2,False,False,13.1,0.697,0.303,4.2,4.2,0.8,0.8
+2023-08-28/2023-09-03,Hoffenheim vs Wolfsburg,Bundesliga,OVER,1.56,4,True,True,11.6,0.62,0.38,3.6,4.0,0.8,0.6
+2023-09-11/2023-09-17,RB Leipzig vs Augsburg,Bundesliga,OVER,1.37,3,True,True,13.1,0.701,0.299,4.4,3.4,0.8,0.6
+2023-09-18/2023-09-24,Dortmund vs Wolfsburg,Bundesliga,OVER,1.45,1,False,False,12.4,0.664,0.336,4.8,3.8,0.8,0.8
+2023-09-25/2023-10-01,Hoffenheim vs Dortmund,Bundesliga,OVER,1.4,4,True,True,12.9,0.687,0.313,4.8,3.2,1.0,0.6
+2023-10-02/2023-10-08,RB Leipzig vs Bochum,Bundesliga,OVER,1.36,0,False,False,13.2,0.704,0.296,4.0,3.4,1.0,0.4
+2023-10-16/2023-10-22,Man City vs Brighton,EPL,OVER,1.39,3,True,True,13.0,0.692,0.308,4.2,3.2,0.4,1.0
+2023-10-23/2023-10-29,Leverkusen vs Freiburg,Bundesliga,OVER,1.48,3,True,True,12.1,0.646,0.354,4.4,3.6,1.0,0.8
+2023-10-30/2023-11-05,Hoffenheim vs Leverkusen,Bundesliga,OVER,1.34,5,True,True,13.4,0.718,0.282,4.0,3.4,1.0,1.0
+2023-11-06/2023-11-12,Augsburg vs Hoffenheim,Bundesliga,OVER,1.48,2,False,False,12.2,0.651,0.349,5.2,3.6,1.0,0.8
+2023-11-20/2023-11-26,Dortmund vs M'gladbach,Bundesliga,OVER,1.33,6,True,True,13.5,0.721,0.279,4.4,4.4,0.6,1.0
+2023-11-27/2023-12-03,Man City vs Tottenham,EPL,OVER,1.36,6,True,True,13.2,0.703,0.297,5.4,2.2,0.6,0.8
+2023-12-04/2023-12-10,Aston Villa vs Man City,EPL,OVER,1.55,1,False,False,11.7,0.624,0.376,6.0,2.6,1.0,0.8
+2023-12-11/2023-12-17,Bayern Munich vs Stuttgart,Bundesliga,OVER,1.36,3,True,True,13.2,0.706,0.294,4.2,2.4,0.8,0.6
+2023-12-18/2023-12-24,Wolfsburg vs Bayern Munich,Bundesliga,OVER,1.41,3,True,True,12.8,0.682,0.318,3.8,2.6,0.6,0.8
+2023-12-25/2023-12-31,Tottenham vs Bournemouth,EPL,OVER,1.4,4,True,True,12.8,0.685,0.315,4.2,3.8,1.0,0.8
+2024-01-01/2024-01-07,Getafe vs Vallecano,La_Liga,UNDER,1.52,2,False,True,11.9,0.363,0.637,1.6,1.8,0.2,0.4
+2024-01-08/2024-01-14,Genoa vs Torino,Serie_A,UNDER,1.47,0,False,True,12.3,0.343,0.657,1.4,1.4,0.0,0.0
+2024-01-15/2024-01-21,M'gladbach vs Augsburg,Bundesliga,OVER,1.56,3,True,True,11.5,0.612,0.388,4.0,2.8,1.0,0.4
+2024-01-22/2024-01-28,Leverkusen vs M'gladbach,Bundesliga,OVER,1.37,0,False,False,13.0,0.697,0.303,4.4,3.4,0.8,1.0
+2024-01-29/2024-02-04,Liverpool vs Chelsea,EPL,OVER,1.46,5,True,True,12.3,0.658,0.342,3.6,3.6,0.6,0.8
+2024-02-05/2024-02-11,Leverkusen vs Bayern Munich,Bundesliga,OVER,1.49,3,True,True,12.1,0.645,0.355,4.6,1.8,0.6,0.8
+2024-02-12/2024-02-18,Tottenham vs Wolves,EPL,OVER,1.43,3,True,True,12.6,0.671,0.329,4.6,2.8,1.0,0.8
+2024-02-19/2024-02-25,Dortmund vs Hoffenheim,Bundesliga,OVER,1.34,5,True,True,13.4,0.717,0.283,4.0,3.6,0.8,0.8
+2024-02-26/2024-03-03,Luton vs Aston Villa,EPL,OVER,1.46,5,True,True,12.3,0.66,0.34,4.0,2.6,0.8,0.8
+2024-03-04/2024-03-10,Aston Villa vs Tottenham,EPL,OVER,1.39,4,True,True,13.0,0.695,0.305,4.2,4.2,0.8,0.8
+2024-03-11/2024-03-17,Chelsea vs Newcastle,EPL,OVER,1.49,5,True,True,12.1,0.648,0.352,3.8,3.8,0.6,0.8
+2024-03-25/2024-03-31,Tottenham vs Luton,EPL,OVER,1.32,3,True,True,13.4,0.715,0.285,4.4,4.2,1.0,0.6
+2024-04-01/2024-04-07,Man United vs Liverpool,EPL,OVER,1.35,4,True,True,13.4,0.714,0.286,4.6,2.0,0.8,0.6
+2024-04-08/2024-04-14,Newcastle vs Tottenham,EPL,OVER,1.38,4,True,True,13.1,0.699,0.301,4.6,3.6,0.8,0.8
+2024-04-15/2024-04-21,Fulham vs Liverpool,EPL,OVER,1.43,4,True,True,12.6,0.671,0.329,4.4,2.0,0.8,0.8
+2024-04-22/2024-04-28,Newcastle vs Sheffield United,EPL,OVER,1.34,6,True,True,13.4,0.714,0.286,4.2,3.2,0.8,0.6
+2024-04-29/2024-05-05,Dortmund vs Augsburg,Bundesliga,OVER,1.35,6,True,True,13.3,0.711,0.289,4.0,2.8,0.6,0.8
+2024-05-06/2024-05-12,Newcastle vs Brighton,EPL,OVER,1.33,2,False,False,13.5,0.721,0.279,3.8,2.8,0.8,0.6
+2024-05-13/2024-05-19,Girona vs Villarreal,La_Liga,OVER,1.34,1,False,False,13.5,0.72,0.28,5.4,2.6,0.8,0.8
+2024-05-20/2024-05-26,Real Madrid vs Betis,La_Liga,OVER,1.38,0,False,False,13.0,0.695,0.305,5.0,2.0,0.8,0.6
+2024-05-27/2024-06-02,Atalanta vs Fiorentina,Serie_A,OVER,1.56,5,True,True,8.0,0.619,0.381,3.2,2.0,0.8,0.4
+2024-08-12/2024-08-18,Newcastle vs Southampton,EPL,OVER,1.4,1,False,False,12.9,0.688,0.312,4.6,4.0,0.6,0.8
+2024-08-19/2024-08-25,Liverpool vs Brentford,EPL,OVER,1.36,2,False,False,13.2,0.704,0.296,4.2,2.6,0.6,0.8
+2024-08-26/2024-09-01,Ein Frankfurt vs Hoffenheim,Bundesliga,OVER,1.47,4,True,True,12.2,0.654,0.346,3.6,4.2,0.6,1.0
+2024-09-09/2024-09-15,Hoffenheim vs Leverkusen,Bundesliga,OVER,1.34,5,True,True,13.4,0.717,0.283,5.4,2.8,1.0,0.6
+2024-09-16/2024-09-22,Mallorca vs Sociedad,La_Liga,UNDER,1.38,1,False,True,13.1,0.301,0.699,1.8,1.6,0.4,0.0
+2024-09-23/2024-09-29,Bayern Munich vs Leverkusen,Bundesliga,OVER,1.35,2,False,False,13.3,0.712,0.288,6.8,1.6,0.6,0.8
+2024-09-30/2024-10-06,Ein Frankfurt vs Bayern Munich,Bundesliga,OVER,1.37,6,True,True,13.1,0.701,0.299,5.4,3.6,0.8,1.0
+2024-10-14/2024-10-20,Leverkusen vs Ein Frankfurt,Bundesliga,OVER,1.38,3,True,True,13.0,0.697,0.303,4.6,3.4,1.0,0.6
+2024-10-21/2024-10-27,Stuttgart vs Holstein Kiel,Bundesliga,OVER,1.34,3,True,True,13.4,0.715,0.285,5.6,3.5,1.0,1.0
+2024-10-28/2024-11-03,Leverkusen vs Stuttgart,Bundesliga,OVER,1.38,0,False,False,13.1,0.7,0.3,4.4,3.8,1.0,0.8
+2024-11-04/2024-11-10,Tottenham vs Ipswich,EPL,OVER,1.32,3,True,True,13.6,0.726,0.274,4.2,3.4,0.8,0.6
+2024-11-18/2024-11-24,Man City vs Tottenham,EPL,OVER,1.34,4,True,True,13.4,0.717,0.283,3.8,2.6,0.8,0.6
+2024-11-25/2024-12-01,Dortmund vs Bayern Munich,Bundesliga,OVER,1.41,2,False,False,12.7,0.681,0.319,6.6,2.2,1.0,0.8
+2024-12-02/2024-12-08,Tottenham vs Chelsea,EPL,OVER,1.36,7,True,True,13.3,0.709,0.291,5.0,2.2,0.8,0.8
+2024-12-09/2024-12-15,M'gladbach vs Holstein Kiel,Bundesliga,OVER,1.52,5,True,True,11.8,0.633,0.367,3.6,3.2,0.4,1.0
+2024-12-16/2024-12-22,Tottenham vs Liverpool,EPL,OVER,1.33,9,True,True,13.3,0.711,0.289,4.8,3.4,0.8,0.8
+2024-12-23/2024-12-29,Tottenham vs Wolves,EPL,OVER,1.33,4,True,True,13.5,0.719,0.281,4.4,4.6,0.8,1.0
+2024-12-30/2025-01-05,Tottenham vs Newcastle,EPL,OVER,1.35,3,True,True,13.3,0.709,0.291,4.4,4.2,0.8,0.6
+2025-01-06/2025-01-12,Venezia vs Inter,Serie_A,OVER,1.58,1,False,False,11.4,0.61,0.39,5.0,1.4,0.6,0.8
+2025-01-13/2025-01-19,Brentford vs Liverpool,EPL,OVER,1.36,2,False,False,13.2,0.705,0.295,5.8,3.8,0.8,0.8
+2025-01-20/2025-01-26,Sociedad vs Getafe,La_Liga,UNDER,1.37,3,True,False,13.1,0.302,0.698,1.4,1.6,0.0,0.2
+2025-01-27/2025-02-02,Barcelona vs Alaves,La_Liga,OVER,1.37,1,False,False,13.0,0.696,0.304,4.4,3.0,0.6,1.0
+2025-02-03/2025-02-09,Alaves vs Getafe,La_Liga,UNDER,1.38,1,False,True,13.0,0.304,0.696,1.8,1.8,0.0,0.4
+2025-02-10/2025-02-16,Man City vs Newcastle,EPL,OVER,1.47,4,True,True,12.2,0.652,0.348,5.0,2.2,0.8,0.8
+2025-02-17/2025-02-23,Las Palmas vs Barcelona,La_Liga,OVER,1.33,2,False,False,13.4,0.718,0.282,4.0,2.6,0.6,0.8
+2025-02-24/2025-03-02,Tottenham vs Man City,EPL,OVER,1.36,1,False,False,13.2,0.704,0.296,4.0,4.2,0.8,0.8
+2025-03-03/2025-03-09,Bayern Munich vs Bochum,Bundesliga,OVER,1.3,5,True,True,13.7,0.733,0.267,4.8,2.2,1.0,0.4
+2025-03-10/2025-03-16,Man City vs Brighton,EPL,OVER,1.48,4,True,True,12.1,0.648,0.352,4.6,3.0,0.6,0.8
+2025-03-24/2025-03-30,Alaves vs Vallecano,La_Liga,UNDER,1.46,2,False,True,12.4,0.34,0.66,1.2,1.8,0.0,0.2
+2025-03-31/2025-04-06,Chelsea vs Tottenham,EPL,OVER,1.41,1,False,False,12.7,0.679,0.321,4.2,2.4,0.8,0.6
+2025-04-07/2025-04-13,Bayern Munich vs Dortmund,Bundesliga,OVER,1.4,4,True,True,12.8,0.685,0.315,5.0,2.8,1.0,0.4
+2025-04-14/2025-04-20,Dortmund vs M'gladbach,Bundesliga,OVER,1.37,5,True,True,13.1,0.7,0.3,4.8,2.2,0.8,0.8
+2025-04-21/2025-04-27,Bayern Munich vs Mainz,Bundesliga,OVER,1.34,3,True,True,13.4,0.714,0.286,4.4,3.2,1.0,0.6
+2025-04-28/2025-05-04,Dortmund vs Wolfsburg,Bundesliga,OVER,1.33,4,True,True,13.5,0.722,0.278,3.8,2.4,0.8,0.6
+2025-05-05/2025-05-11,Newcastle vs Chelsea,EPL,OVER,1.59,2,False,False,11.4,0.606,0.394,4.2,2.4,1.0,0.6
+2025-05-12/2025-05-18,Dortmund vs Holstein Kiel,Bundesliga,OVER,1.12,3,True,True,13.2,0.844,0.156,4.6,2.0,0.8,0.4
+2025-05-19/2025-05-25,Man City vs Bournemouth,EPL,OVER,1.55,4,True,True,11.7,0.624,0.376,3.8,2.4,0.6,0.8
+2025-08-11/2025-08-17,Liverpool vs Bournemouth,EPL,OVER,1.37,6,True,True,13.2,0.704,0.296,3.6,2.6,0.6,0.8
+2025-08-18/2025-08-24,Levante vs Barcelona,La_Liga,OVER,1.37,5,True,True,13.0,0.692,0.308,4.4,1.8,0.8,0.6
+2025-08-25/2025-08-31,Augsburg vs Bayern Munich,Bundesliga,OVER,1.34,5,True,True,13.2,0.707,0.293,3.8,2.6,0.6,0.8
+2025-09-08/2025-09-14,Heidenheim vs Dortmund,Bundesliga,OVER,1.48,2,False,False,12.1,0.644,0.356,3.6,4.4,0.6,1.0
+2025-09-15/2025-09-21,Hoffenheim vs Bayern Munich,Bundesliga,OVER,1.32,5,True,True,13.5,0.723,0.277,4.6,3.4,0.6,1.0
+2025-09-22/2025-09-28,Levante vs Real Madrid,La_Liga,OVER,1.45,5,True,True,12.3,0.659,0.341,4.4,3.0,1.0,0.6
+2025-09-29/2025-10-05,Ein Frankfurt vs Bayern Munich,Bundesliga,OVER,1.32,3,True,True,13.5,0.719,0.281,6.8,2.6,1.0,1.0
+2025-10-13/2025-10-19,Bayern Munich vs Dortmund,Bundesliga,OVER,1.34,3,True,True,13.3,0.712,0.288,6.4,1.8,0.8,0.6
+2025-10-20/2025-10-26,Vallecano vs Alaves,La_Liga,UNDER,1.51,1,False,True,11.9,0.365,0.635,1.4,1.6,0.2,0.0
+2025-10-27/2025-11-02,Barcelona vs Elche,La_Liga,OVER,1.37,4,True,True,13.0,0.695,0.305,4.4,3.0,1.0,0.4
+2025-11-03/2025-11-09,Union Berlin vs Bayern Munich,Bundesliga,OVER,1.37,4,True,True,13.0,0.692,0.308,4.8,2.4,0.6,1.0
+2025-11-17/2025-11-23,RB Leipzig vs Werder Bremen,Bundesliga,OVER,1.34,2,False,False,13.4,0.714,0.286,4.8,2.8,0.8,0.8
+2025-11-24/2025-11-30,Man City vs Leeds,EPL,OVER,1.53,5,True,True,11.7,0.627,0.373,4.0,2.4,0.8,0.6
+2025-12-01/2025-12-07,Stuttgart vs Bayern Munich,Bundesliga,OVER,1.36,5,True,True,13.2,0.707,0.293,5.0,1.6,0.4,1.0
+2025-12-08/2025-12-14,Getafe vs Espanol,La_Liga,UNDER,1.37,1,False,True,13.1,0.302,0.698,1.6,1.6,0.2,0.2
+2025-12-15/2025-12-21,Villarreal vs Barcelona,La_Liga,OVER,1.32,2,False,False,13.4,0.717,0.283,5.0,3.0,0.6,1.0
+2025-12-22/2025-12-28,Lecce vs Como,Serie_A,UNDER,1.63,3,True,False,11.1,0.408,0.592,1.6,1.6,0.2,0.4
+2025-12-29/2026-01-04,Man City vs Chelsea,EPL,OVER,1.5,2,False,False,12.0,0.64,0.36,4.2,1.6,1.0,0.4
+2026-01-05/2026-01-11,Getafe vs Sociedad,La_Liga,UNDER,1.38,3,True,False,13.0,0.304,0.696,1.8,1.8,0.2,0.2
+2026-01-12/2026-01-18,Hoffenheim vs M'gladbach,Bundesliga,OVER,1.6,6,True,True,11.3,0.602,0.398,4.4,1.8,0.8,0.6

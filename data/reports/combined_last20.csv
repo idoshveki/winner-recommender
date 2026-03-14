@@ -1,0 +1,21 @@
+week,accum_legs,accum_odds,accum_correct,draw_match,draw_odds,draw_correct,ht_match,ht_pick,ht_actual,ht_correct,co_match,co_pick,co_correct
+2025-08-11/2025-08-17,,,,,,,,,,,Villarreal vs Oviedo,First corner: Home,True
+2025-08-18/2025-08-24,Oviedo vs Real Madrid (A@1.32) + Bayern Munich vs RB Leipzig (H@1.23) + Man City vs Tottenham (H@1.49),2.42,False,,,,Real Madrid vs Osasuna,H,D,False,Burnley vs Sunderland,First corner: Home,True
+2025-08-25/2025-08-31,,,,,,,,,,,Pisa vs Roma,First corner: Away,True
+2025-09-08/2025-09-14,,,,,,,Bayern Munich vs Hamburg,H,H,True,Barcelona vs Valencia,First corner: Home,True
+2025-09-15/2025-09-21,,,,Vallecano vs Celta,3.31,True,Barcelona vs Getafe,H,H,True,Bologna vs Genoa,First corner: Home,True
+2025-09-22/2025-09-28,Napoli vs Pisa (H@1.26) + Barcelona vs Sociedad (H@1.29) + Levante vs Real Madrid (A@1.33),2.16,True,,,,,,,,Oviedo vs Barcelona,First corner: Away,True
+2025-09-29/2025-10-05,,,,,,,Inter vs Cremonese,H,H,True,Hamburg vs Mainz,First corner: Away,True
+2025-10-13/2025-10-19,,,,Pisa vs Verona,3.15,True,,,,,Barcelona vs Girona,First corner: Home,True
+2025-10-20/2025-10-26,,,,Lazio vs Juventus,3.12,False,M'gladbach vs Bayern Munich,A,D,False,Hamburg vs Wolfsburg,First corner: Away,False
+2025-10-27/2025-11-02,,,,,,,,,,,Barcelona vs Elche,First corner: Home,True
+2025-11-03/2025-11-09,,,,Pisa vs Cremonese,3.05,False,,,,,Inter vs Lazio,First corner: Home,True
+2025-11-17/2025-11-23,,,,Alaves vs Celta,3.12,False,Bayern Munich vs Freiburg,H,D,False,Inter vs Milan,First corner: Home,True
+2025-11-24/2025-11-30,Ath Madrid vs Oviedo (H@1.23) + Barcelona vs Alaves (H@1.19) + Man City vs Leeds (H@1.25),1.83,True,Torino vs Como,3.24,False,Barcelona vs Alaves,H,H,True,Sociedad vs Villarreal,First corner: Home,True
+2025-12-01/2025-12-07,,,,Cremonese vs Lecce,3.05,False,,,,,Man City vs Sunderland,First corner: Home,True
+2025-12-08/2025-12-14,,,,Mallorca vs Elche,3.09,False,Arsenal vs Wolves,H,D,False,Sociedad vs Girona,First corner: Home,True
+2025-12-15/2025-12-21,,,,Elche vs Vallecano,3.08,False,Heidenheim vs Bayern Munich,A,A,True,Wolves vs Brentford,First corner: Away,True
+2025-12-22/2025-12-28,,,,,,,Liverpool vs Wolves,H,H,True,Liverpool vs Wolves,First corner: Home,True
+2025-12-29/2026-01-04,,,,Verona vs Torino,3.02,False,,,,,Man United vs Wolves,First corner: Home,True
+2026-01-05/2026-01-11,,,,Girona vs Osasuna,3.2,False,,,,,Bayern Munich vs Wolfsburg,First corner: Home,True
+2026-01-12/2026-01-18,,,,Como vs Milan,3.27,False,,,,,Sevilla vs Celta,First corner: Home,True

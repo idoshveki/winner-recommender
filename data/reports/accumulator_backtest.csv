@@ -1,0 +1,152 @@
+week,match,pick,actual,odds,correct,week_won,combo_odds
+2021-10-25/2021-10-31,Newcastle vs Chelsea,A,A,1.4,True,False,1.61
+2021-10-25/2021-10-31,Man City vs Crystal Palace,H,A,1.15,False,False,1.61
+2021-11-01/2021-11-07,Arsenal vs Watford,H,H,1.41,True,False,1.79
+2021-11-01/2021-11-07,Chelsea vs Burnley,H,D,1.27,False,False,1.79
+2021-11-29/2021-12-05,Watford vs Man City,A,A,1.21,True,True,2.41
+2021-11-29/2021-12-05,Aston Villa vs Man City,A,A,1.39,True,True,2.41
+2021-11-29/2021-12-05,Everton vs Liverpool,A,A,1.43,True,True,2.41
+2021-12-13/2021-12-19,Liverpool vs Newcastle,H,H,1.13,True,False,1.65
+2021-12-13/2021-12-19,Chelsea vs Everton,H,D,1.24,False,False,1.65
+2021-12-13/2021-12-19,Newcastle vs Man City,A,A,1.18,True,False,1.65
+2021-12-20/2021-12-26,Man City vs Leicester,H,H,1.19,True,True,1.69
+2021-12-20/2021-12-26,Norwich vs Arsenal,A,A,1.42,True,True,1.69
+2021-12-27/2022-01-02,Brentford vs Man City,A,A,1.17,True,False,2.41
+2021-12-27/2022-01-02,Leicester vs Liverpool,A,H,1.38,False,False,2.41
+2021-12-27/2022-01-02,Newcastle vs Man United,A,D,1.49,False,False,2.41
+2022-01-17/2022-01-23,Arsenal vs Burnley,H,D,1.36,False,False,1.73
+2022-01-17/2022-01-23,Southampton vs Man City,A,D,1.27,False,False,1.73
+2022-02-07/2022-02-13,Man City vs Brentford,H,H,1.12,True,True,1.7
+2022-02-07/2022-02-13,Norwich vs Man City,A,A,1.18,True,True,1.7
+2022-02-07/2022-02-13,Burnley vs Liverpool,A,A,1.29,True,True,1.7
+2022-02-14/2022-02-20,Liverpool vs Norwich,H,H,1.13,True,False,2.14
+2022-02-14/2022-02-20,Man City vs Tottenham,H,A,1.29,False,False,2.14
+2022-02-14/2022-02-20,Arsenal vs Brentford,H,H,1.47,True,False,2.14
+2022-02-21/2022-02-27,Liverpool vs Leeds,H,H,1.16,True,True,1.5
+2022-02-21/2022-02-27,Everton vs Man City,A,A,1.29,True,True,1.5
+2022-02-28/2022-03-06,Liverpool vs West Ham,H,H,1.3,True,True,2.11
+2022-02-28/2022-03-06,Watford vs Arsenal,A,A,1.62,True,True,2.11
+2022-03-07/2022-03-13,Brighton vs Liverpool,A,A,1.54,True,True,1.97
+2022-03-07/2022-03-13,Norwich vs Chelsea,A,A,1.28,True,True,1.97
+2022-03-28/2022-04-03,Liverpool vs Watford,H,H,1.13,True,True,1.39
+2022-03-28/2022-04-03,Burnley vs Man City,A,A,1.23,True,True,1.39
+2022-04-18/2022-04-24,Man City vs Watford,H,H,1.13,True,True,1.88
+2022-04-18/2022-04-24,Liverpool vs Everton,H,H,1.18,True,True,1.88
+2022-04-18/2022-04-24,Liverpool vs Man United,H,H,1.41,True,True,1.88
+2022-05-09/2022-05-15,Wolves vs Man City,A,A,1.26,True,False,1.75
+2022-05-09/2022-05-15,West Ham vs Man City,A,D,1.39,False,False,1.75
+2022-05-16/2022-05-22,Liverpool vs Wolves,H,H,1.15,True,True,2.02
+2022-05-16/2022-05-22,Norwich vs Tottenham,A,A,1.27,True,True,2.02
+2022-05-16/2022-05-22,Southampton vs Liverpool,A,A,1.38,True,True,2.02
+2022-08-01/2022-08-07,Fulham vs Liverpool,A,D,1.28,False,False,1.77
+2022-08-01/2022-08-07,West Ham vs Man City,A,A,1.38,True,False,1.77
+2022-08-22/2022-08-28,Arsenal vs Fulham,H,H,1.33,True,True,1.98
+2022-08-22/2022-08-28,Nott'm Forest vs Tottenham,A,A,1.49,True,True,1.98
+2022-08-29/2022-09-04,Arsenal vs Aston Villa,H,H,1.5,True,False,2.15
+2022-08-29/2022-09-04,Aston Villa vs Man City,A,D,1.33,False,False,2.15
+2022-08-29/2022-09-04,Man City vs Nott'm Forest,H,H,1.08,True,False,2.15
+2022-10-17/2022-10-23,Southampton vs Arsenal,A,D,1.58,False,False,2.05
+2022-10-17/2022-10-23,Nott'm Forest vs Liverpool,A,H,1.3,False,False,2.05
+2022-10-24/2022-10-30,Arsenal vs Nott'm Forest,H,H,1.2,True,False,1.58
+2022-10-24/2022-10-30,Liverpool vs Leeds,H,A,1.32,False,False,1.58
+2022-11-07/2022-11-13,Man City vs Brentford,H,A,1.15,False,False,1.79
+2022-11-07/2022-11-13,Wolves vs Arsenal,A,A,1.56,True,False,1.79
+2022-12-26/2023-01-01,Newcastle vs Leeds,H,D,1.49,False,False,1.73
+2022-12-26/2023-01-01,Man City vs Everton,H,D,1.16,False,False,1.73
+2023-03-06/2023-03-12,Crystal Palace vs Man City,A,A,1.37,True,False,1.97
+2023-03-06/2023-03-12,Bournemouth vs Liverpool,A,H,1.44,False,False,1.97
+2023-04-10/2023-04-16,Man City vs Leicester,H,H,1.16,True,False,1.82
+2023-04-10/2023-04-16,West Ham vs Arsenal,A,D,1.57,False,False,1.82
+2023-04-24/2023-04-30,Newcastle vs Southampton,H,H,1.33,True,False,2.59
+2023-04-24/2023-04-30,Fulham vs Man City,A,A,1.25,True,False,2.59
+2023-04-24/2023-04-30,Nott'm Forest vs Brighton,A,H,1.56,False,False,2.59
+2023-05-01/2023-05-07,Man City vs Leeds,H,H,1.18,True,True,1.81
+2023-05-01/2023-05-07,Man City vs West Ham,H,H,1.21,True,True,1.81
+2023-05-01/2023-05-07,Liverpool vs Fulham,H,H,1.27,True,True,1.81
+2023-05-15/2023-05-21,Man City vs Chelsea,H,H,1.26,True,True,2.5
+2023-05-15/2023-05-21,Brighton vs Southampton,H,H,1.23,True,True,2.5
+2023-05-15/2023-05-21,Leicester vs Liverpool,A,A,1.61,True,True,2.5
+2023-09-11/2023-09-17,Wolves vs Liverpool,A,A,1.47,True,True,2.25
+2023-09-11/2023-09-17,Everton vs Arsenal,A,A,1.53,True,True,2.25
+2023-09-25/2023-10-01,Wolves vs Man City,A,H,1.33,False,False,2.07
+2023-09-25/2023-10-01,Bournemouth vs Arsenal,A,A,1.56,True,False,2.07
+2023-10-23/2023-10-29,Arsenal vs Sheffield United,H,H,1.13,True,True,1.84
+2023-10-23/2023-10-29,Aston Villa vs Luton,H,H,1.28,True,True,1.84
+2023-10-23/2023-10-29,Liverpool vs Nott'm Forest,H,H,1.27,True,True,1.84
+2023-10-30/2023-11-05,Man City vs Bournemouth,H,H,1.08,True,False,1.34
+2023-10-30/2023-11-05,Luton vs Liverpool,A,D,1.24,False,False,1.34
+2023-12-04/2023-12-10,Sheffield United vs Liverpool,A,A,1.19,True,True,2.19
+2023-12-04/2023-12-10,Luton vs Arsenal,A,A,1.22,True,True,2.19
+2023-12-04/2023-12-10,Crystal Palace vs Liverpool,A,A,1.51,True,True,2.19
+2024-02-05/2024-02-11,Liverpool vs Burnley,H,H,1.16,True,True,1.95
+2024-02-05/2024-02-11,Man City vs Everton,H,H,1.19,True,True,1.95
+2024-02-05/2024-02-11,Brentford vs Man City,A,A,1.41,True,True,1.95
+2024-02-12/2024-02-18,Burnley vs Arsenal,A,A,1.31,True,False,2.79
+2024-02-12/2024-02-18,Man City vs Chelsea,H,D,1.34,False,False,2.79
+2024-02-12/2024-02-18,Brentford vs Liverpool,A,A,1.59,True,False,2.79
+2024-02-19/2024-02-25,Bournemouth vs Man City,A,A,1.42,True,True,1.98
+2024-02-19/2024-02-25,Man City vs Brentford,H,H,1.17,True,True,1.98
+2024-02-19/2024-02-25,Liverpool vs Luton,H,H,1.19,True,True,1.98
+2024-03-04/2024-03-10,Sheffield United vs Arsenal,A,A,1.16,True,True,1.43
+2024-03-04/2024-03-10,Arsenal vs Brentford,H,H,1.23,True,True,1.43
+2024-03-25/2024-03-31,Tottenham vs Luton,H,H,1.21,True,True,1.66
+2024-03-25/2024-03-31,Liverpool vs Brighton,H,H,1.37,True,True,1.66
+2024-04-01/2024-04-07,Liverpool vs Sheffield United,H,H,1.08,True,True,1.57
+2024-04-01/2024-04-07,Arsenal vs Luton,H,H,1.11,True,True,1.57
+2024-04-01/2024-04-07,Crystal Palace vs Man City,A,A,1.31,True,True,1.57
+2024-04-08/2024-04-14,Man City vs Luton,H,H,1.09,True,False,1.67
+2024-04-08/2024-04-14,Arsenal vs Aston Villa,H,A,1.29,False,False,1.67
+2024-04-08/2024-04-14,Liverpool vs Crystal Palace,H,A,1.19,False,False,1.67
+2024-04-22/2024-04-28,Newcastle vs Sheffield United,H,H,1.24,True,True,2.34
+2024-04-22/2024-04-28,Nott'm Forest vs Man City,A,A,1.3,True,True,2.34
+2024-04-22/2024-04-28,Brighton vs Man City,A,A,1.45,True,True,2.34
+2024-05-06/2024-05-12,Fulham vs Man City,A,A,1.21,True,True,2.34
+2024-05-06/2024-05-12,Everton vs Sheffield United,H,H,1.4,True,True,2.34
+2024-05-06/2024-05-12,Man United vs Arsenal,A,A,1.38,True,True,2.34
+2024-05-13/2024-05-19,Tottenham vs Man City,A,A,1.36,True,True,1.48
+2024-05-13/2024-05-19,Man City vs West Ham,H,H,1.09,True,True,1.48
+2024-08-12/2024-08-18,Arsenal vs Wolves,H,H,1.16,True,True,2.1
+2024-08-12/2024-08-18,Newcastle vs Southampton,H,H,1.35,True,True,2.1
+2024-08-12/2024-08-18,Ipswich vs Liverpool,A,A,1.34,True,True,2.1
+2024-08-26/2024-09-01,West Ham vs Man City,A,A,1.37,True,False,1.84
+2024-08-26/2024-09-01,Arsenal vs Brighton,H,D,1.34,False,False,1.84
+2024-09-23/2024-09-29,Wolves vs Liverpool,A,A,1.36,True,True,1.6
+2024-09-23/2024-09-29,Arsenal vs Leicester,H,H,1.18,True,True,1.6
+2024-09-30/2024-10-06,Crystal Palace vs Liverpool,A,A,1.5,True,True,1.69
+2024-09-30/2024-10-06,Arsenal vs Southampton,H,H,1.13,True,True,1.69
+2024-11-04/2024-11-10,Tottenham vs Ipswich,H,A,1.25,False,False,1.77
+2024-11-04/2024-11-10,Liverpool vs Aston Villa,H,H,1.42,True,False,1.77
+2024-12-23/2024-12-29,Liverpool vs Leicester,H,H,1.08,True,True,1.24
+2024-12-23/2024-12-29,Arsenal vs Ipswich,H,H,1.15,True,True,1.24
+2024-12-30/2025-01-05,Liverpool vs Man United,H,D,1.29,False,False,2.42
+2024-12-30/2025-01-05,Aston Villa vs Leicester,H,H,1.32,True,False,2.42
+2024-12-30/2025-01-05,Ipswich vs Chelsea,A,H,1.42,False,False,2.42
+2025-01-13/2025-01-19,Nott'm Forest vs Southampton,H,H,1.4,True,True,2.67
+2025-01-13/2025-01-19,Arsenal vs Tottenham,H,H,1.4,True,True,2.67
+2025-01-13/2025-01-19,Newcastle vs Wolves,H,H,1.36,True,True,2.67
+2025-01-20/2025-01-26,Southampton vs Newcastle,A,A,1.42,True,True,2.3
+2025-01-20/2025-01-26,Liverpool vs Ipswich,H,H,1.1,True,True,2.3
+2025-01-20/2025-01-26,Wolves vs Arsenal,A,A,1.47,True,True,2.3
+2025-02-10/2025-02-16,Liverpool vs Wolves,H,H,1.19,True,False,2.25
+2025-02-10/2025-02-16,Leicester vs Arsenal,A,A,1.34,True,False,2.25
+2025-02-10/2025-02-16,Aston Villa vs Ipswich,H,D,1.41,False,False,2.25
+2025-02-17/2025-02-23,Arsenal vs West Ham,H,A,1.25,False,False,1.96
+2025-02-17/2025-02-23,Southampton vs Brighton,A,A,1.57,True,False,1.96
+2025-03-31/2025-04-06,Man City vs Leicester,H,H,1.2,True,True,1.63
+2025-03-31/2025-04-06,Liverpool vs Everton,H,H,1.36,True,True,1.63
+2025-04-07/2025-04-13,Southampton vs Aston Villa,A,A,1.56,True,False,2.48
+2025-04-07/2025-04-13,Brighton vs Leicester,H,D,1.27,False,False,2.48
+2025-04-07/2025-04-13,Chelsea vs Ipswich,H,D,1.25,False,False,2.48
+2025-04-21/2025-04-27,Liverpool vs Tottenham,H,H,1.27,True,False,2.13
+2025-04-21/2025-04-27,Newcastle vs Ipswich,H,H,1.18,True,False,2.13
+2025-04-21/2025-04-27,Arsenal vs Crystal Palace,H,D,1.42,False,False,2.13
+2025-11-17/2025-11-23,Burnley vs Chelsea,A,A,1.49,True,True,2.13
+2025-11-17/2025-11-23,Arsenal vs Tottenham,H,H,1.43,True,True,2.13
+2025-11-24/2025-11-30,Aston Villa vs Wolves,H,H,1.48,True,True,1.85
+2025-11-24/2025-11-30,Man City vs Leeds,H,H,1.25,True,True,1.85
+2025-12-01/2025-12-07,Newcastle vs Burnley,H,H,1.27,True,True,1.57
+2025-12-01/2025-12-07,Man City vs Sunderland,H,H,1.24,True,True,1.57
+2025-12-22/2025-12-28,Liverpool vs Wolves,H,H,1.23,True,True,1.97
+2025-12-22/2025-12-28,Nott'm Forest vs Man City,A,A,1.6,True,True,1.97
+2025-12-29/2026-01-04,Sunderland vs Man City,A,D,1.4,False,False,2.07
+2025-12-29/2026-01-04,Bournemouth vs Arsenal,A,A,1.48,True,False,2.07
