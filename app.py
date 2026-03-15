@@ -81,7 +81,12 @@ with st.sidebar:
             venv_py = ROOT / ".venv" / "bin" / "python"
             subprocess.run([str(venv_py), str(ROOT / "src" / "data" / "fetch_odds.py")],
                            cwd=str(ROOT), capture_output=True)
+        st.cache_data.clear()
         st.success("Done!")
+        st.rerun()
+
+    if st.button("Clear picks cache", use_container_width=True):
+        st.cache_data.clear()
         st.rerun()
 
     st.divider()
