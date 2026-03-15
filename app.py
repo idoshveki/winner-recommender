@@ -37,15 +37,15 @@ st.markdown("""
     h2 { font-size: 1.2rem; font-weight: 600; }
     h3 { font-size: 1.05rem; font-weight: 600; }
     .slip-box {
-        border: 1px solid #e0e0e0;
+        border: 1px solid rgba(128,128,128,0.25);
         border-radius: 8px;
         padding: 1.2rem 1.4rem;
         margin-bottom: 1rem;
-        background: #fafafa;
+        background: rgba(128,128,128,0.07);
     }
     .leg-row {
         padding: 0.5rem 0;
-        border-bottom: 1px solid #efefef;
+        border-bottom: 1px solid rgba(128,128,128,0.15);
         font-size: 0.95rem;
     }
     .leg-row:last-child { border-bottom: none; }
@@ -55,15 +55,15 @@ st.markdown("""
         font-weight: 600;
         padding: 2px 8px;
         border-radius: 4px;
-        background: #ececec;
-        color: #444;
+        background: rgba(128,128,128,0.18);
+        color: inherit;
         margin-right: 6px;
         letter-spacing: 0.3px;
     }
-    .stretch-tag { background: #f0f0f0; color: #888; }
+    .stretch-tag { background: rgba(128,128,128,0.12); opacity: 0.75; }
     .metric-label { font-size: 0.78rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
-    .metric-value { font-size: 1.5rem; font-weight: 700; color: #111; }
-    div[data-testid="stMetric"] { background: #f7f7f7; border-radius: 8px; padding: 0.7rem 1rem; }
+    .metric-value { font-size: 1.5rem; font-weight: 700; }
+    div[data-testid="stMetric"] { background: rgba(128,128,128,0.07); border-radius: 8px; padding: 0.7rem 1rem; }
     div[data-testid="stMetricValue"] { font-size: 1.4rem; }
     .stTabs [data-baseweb="tab"] { font-size: 0.9rem; font-weight: 500; }
     footer { visibility: hidden; }
