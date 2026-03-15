@@ -177,7 +177,39 @@ def generate_picks():
         kickoff = fix['date']
         tournament_id = fix['tournament_id']
 
-        # Get Pinnacle odds — match by our internal names
+        # ── Real-time form from SportAPI (needed by all scorers) ──────────
+        print(f"  Form: {ht} vs {at} ({league})...")
+        hf = get_league_form(fix['home_id'], tournament_id, 'home')
+        af = get_league_form(fix['away_id'], tournament_id, 'away')
+        venue_gap = hf['pts'] - af['pts']
+        pts5_diff = hf['pts'] - af['pts']
+
+        # ── YC Over 3.5 scorer (La Liga only, no Pinnacle odds needed) ────
+        if league == 'La_Liga':
+            h_yc_hist = team_home_yc.get(ht, [])[-5:]
+            a_yc_hist = team_away_yc.get(at, [])[-5:]
+            h_yc5 = sum(h_yc_hist) / max(len(h_yc_hist), 1)
+            a_yc5 = sum(a_yc_hist) / max(len(a_yc_hist), 1)
+            yc_pred = h_yc5 + a_yc5
+            if yc_pred >= 3.5:
+                yc_picks.append({
+                    'market': 'YC Over 3.5',
+                    'match': f"{ht} vs {at}", 'league': league, 'kickoff': kickoff,
+                    'pick': 'Over 3.5', 'odds': 1.85, 'conf': round(yc_pred, 2),
+                    'why': f"yc_pred={yc_pred:.1f} (home_avg={h_yc5:.1f} + away_avg={a_yc5:.1f})",
+                })
+
+        # ── Over 2.5 + BTTS scorer (no Pinnacle odds needed) ──────────────
+        if hf['gf5'] >= 1.8 and af['gf5'] >= 1.5:
+            btts_picks.append({
+                'market': 'O2.5+BTTS',
+                'match': f"{ht} vs {at}", 'league': league, 'kickoff': kickoff,
+                'pick': 'Over 2.5 And Yes', 'odds': 2.63,
+                'conf': round(hf['gf5'] + af['gf5'], 2),
+                'why': f"home_gf5={hf['gf5']} away_gf5={af['gf5']}",
+            })
+
+        # ── H/A + Draw scorers need Pinnacle odds — skip if not available ──
         p = pinnacle_odds[(pinnacle_odds['home_team'] == ht) &
                           (pinnacle_odds['away_team'] == at)]
         ph_odds = p[p['outcome_name'] == ht]['price'].values
@@ -196,13 +228,6 @@ def generate_picks():
         ph = (1/ph_o) / vig
         pa = (1/pa_o) / vig if pa_o else 0
         pd_ = (1/pd_o) / vig if pd_o else 0
-
-        # ── Real-time form from SportAPI ──────────────────────────────────────
-        print(f"  Form: {ht} vs {at} ({league})...")
-        hf = get_league_form(fix['home_id'], tournament_id, 'home')
-        af = get_league_form(fix['away_id'], tournament_id, 'away')
-        venue_gap = hf['pts'] - af['pts']
-        pts5_diff = hf['pts'] - af['pts']
 
         # ── H/A scorer ─────────────────────────────────────────────────────
         if ph >= 0.63 and venue_gap >= 5 and pts5_diff >= 5 and hf['trend'] >= 0:
@@ -237,31 +262,6 @@ def generate_picks():
                 'match': f"{ht} vs {at}", 'league': league, 'kickoff': kickoff,
                 'pick': 'D', 'odds': pd_o, 'conf': round(pd_ * 100, 1),
                 'why': f"pd={pd_:.0%} gap={pts5_diff} home_dr={hf['dr10']:.0%} away_dr={af['dr10']:.0%}",
-            })
-
-        # ── YC Over 3.5 scorer (La Liga only) @ 1.85x ─────────────────────
-        if league == 'La_Liga':
-            h_yc_hist = team_home_yc.get(ht, [])[-5:]
-            a_yc_hist = team_away_yc.get(at, [])[-5:]
-            h_yc5 = sum(h_yc_hist) / max(len(h_yc_hist), 1)
-            a_yc5 = sum(a_yc_hist) / max(len(a_yc_hist), 1)
-            yc_pred = h_yc5 + a_yc5
-            if yc_pred >= 3.5:
-                yc_picks.append({
-                    'market': 'YC Over 3.5',
-                    'match': f"{ht} vs {at}", 'league': league, 'kickoff': kickoff,
-                    'pick': 'Over 3.5', 'odds': 1.85, 'conf': round(yc_pred, 2),
-                    'why': f"yc_pred={yc_pred:.1f} (home_avg={h_yc5:.1f} + away_avg={a_yc5:.1f})",
-                })
-
-        # ── Over 2.5 + BTTS scorer @ 2.63x ───────────────────────────────
-        if hf['gf5'] >= 1.8 and af['gf5'] >= 1.5:
-            btts_picks.append({
-                'market': 'O2.5+BTTS',
-                'match': f"{ht} vs {at}", 'league': league, 'kickoff': kickoff,
-                'pick': 'Over 2.5 And Yes', 'odds': 2.63,
-                'conf': round(hf['gf5'] + af['gf5'], 2),
-                'why': f"home_gf5={hf['gf5']} away_gf5={af['gf5']}",
             })
 
     # ── Select best picks — decision tree ─────────────────────────────────

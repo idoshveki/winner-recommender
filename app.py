@@ -86,7 +86,7 @@ with st.sidebar:
 
     st.divider()
     st.markdown("**Slip structure**")
-    st.markdown("- Slip 1: H/A + YC Over 4.5 / BTTS / 2nd H/A")
+    st.markdown("- Slip 1: H/A + YC Over 3.5 / O2.5+BTTS / 2nd H/A")
     st.markdown("- Stretch: optional H/A single + draw")
     st.divider()
 
