@@ -172,11 +172,11 @@ with tab1:
 
     with st.spinner("Generating picks..."):
         try:
-            best_ha, best_leg2, best_draw, all_ha, all_draws = generate_picks()
+            best_ha, best_leg2, best_draw, all_ha, all_draws, all_yc, all_btts = generate_picks()
         except Exception as e:
             st.error(f"Error generating picks: {e}")
             best_ha = best_leg2 = best_draw = None
-            all_ha = all_draws = []
+            all_ha = all_draws = all_yc = all_btts = []
 
     col_s1, col_stretch = st.columns(2)
 
@@ -237,6 +237,43 @@ with tab1:
             if best_leg2:
                 with st.expander(f"Why Leg 2 ({leg2_tag})?"):
                     st.markdown(f"_{best_leg2['why']}_  \nConfidence: **{best_leg2['conf']}**")
+
+            # ── All candidates ────────────────────────────────────────────────
+            st.divider()
+            st.markdown("**All candidates**")
+
+            if all_ha:
+                st.caption("H/A — all leagues (sorted by confidence)")
+                ha_rows = [{'Match': p['match'], 'League': p['league'],
+                            'Kickoff': p['kickoff'],
+                            'Pick': 'Home' if p['pick'] == 'H' else 'Away',
+                            'Odds': p['odds'], 'Pin prob %': round(p['conf'] / 10 * 100)}
+                           for p in all_ha[:5]]
+                st.dataframe(pd.DataFrame(ha_rows), hide_index=True,
+                             use_container_width=True)
+
+            if all_yc:
+                st.caption("YC Over 3.5 — all leagues (sorted by predicted cards)")
+                yc_rows = [{'Match': p['match'], 'League': p['league'],
+                             'Kickoff': p['kickoff'], 'YC avg': p['conf'], 'Odds': p['odds']}
+                           for p in all_yc[:5]]
+                st.dataframe(pd.DataFrame(yc_rows), hide_index=True,
+                             use_container_width=True)
+            else:
+                st.caption("No YC candidates this week.")
+
+            if all_btts:
+                st.caption("O2.5 + BTTS — all leagues (sorted by goal output)")
+                btts_rows = [{'Match': p['match'], 'League': p['league'],
+                               'Kickoff': p['kickoff'],
+                               'Home gf5': float(p['why'].split('home_gf5=')[1].split(' ')[0]),
+                               'Away gf5': float(p['why'].split('away_gf5=')[1]),
+                               'Avg goals': p['conf'], 'Odds': p['odds']}
+                             for p in all_btts[:5]]
+                st.dataframe(pd.DataFrame(btts_rows), hide_index=True,
+                             use_container_width=True)
+            else:
+                st.caption("No O2.5+BTTS candidates this week.")
         else:
             st.warning("No qualifying H/A pick — skip Slip 1")
 

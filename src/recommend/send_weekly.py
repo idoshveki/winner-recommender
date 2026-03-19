@@ -64,6 +64,16 @@ NAME_MAP = {
     'Deportivo Alaves': 'Alaves', 'Celta Vigo': 'Celta',
     'Real Betis': 'Betis', 'Espanyol': 'Espanol',
     'West Ham United': 'West Ham', 'Crystal Palace': 'Crystal Palace',
+    # La Liga — SportAPI variants missing from original map
+    'Levante UD': 'Levante', 'Real Oviedo': 'Oviedo', 'Girona FC': 'Girona',
+    'Deportivo Alavés': 'Alaves', 'Athletic Club': 'Ath Bilbao',
+    # Bundesliga — SportAPI variants missing from original map
+    'FC Bayern München': 'Bayern Munich', '1. FC Union Berlin': 'Union Berlin',
+    '1. FSV Mainz 05': 'Mainz', 'Bayer 04 Leverkusen': 'Leverkusen',
+    "Borussia M'gladbach": "M'gladbach", 'SV Werder Bremen': 'Werder Bremen',
+    '1. FC Köln': 'FC Koln',
+    # EPL — SportAPI variants missing from original map
+    'Brighton & Hove Albion': 'Brighton',
 }
 
 UNRELIABLE_HOME = {'Tottenham', 'Man United', 'Chelsea', 'Brighton',
@@ -137,7 +147,8 @@ def generate_picks():
     history = pd.read_sql("""
         SELECT league, date, home_team, away_team,
                home_goals, away_goals, result,
-               home_corners, away_corners
+               home_corners, away_corners,
+               home_yellow, away_yellow
         FROM matches_history
         WHERE result IS NOT NULL
         ORDER BY date
@@ -186,21 +197,20 @@ def generate_picks():
         venue_gap = hf['pts'] - af['pts']
         pts5_diff = hf['pts'] - af['pts']
 
-        # ── YC Over 3.5 scorer (La Liga only, no Pinnacle odds needed) ────
-        if league == 'La_Liga':
-            h_yc_hist = team_home_yc.get(ht, [])[-5:]
-            a_yc_hist = team_away_yc.get(at, [])[-5:]
-            h_yc5 = sum(h_yc_hist) / max(len(h_yc_hist), 1)
-            a_yc5 = sum(a_yc_hist) / max(len(a_yc_hist), 1)
-            yc_pred = h_yc5 + a_yc5
-            if yc_pred >= 3.5:
-                yc_picks.append({
-                    'market': 'YC Over 3.5',
-                    'match': f"{ht} vs {at}", 'league': league, 'kickoff': kickoff,
-                    'kickoff_ts': kickoff_ts, 'event_id': event_id,
-                    'pick': 'Over 3.5', 'odds': 1.85, 'conf': round(yc_pred, 2),
-                    'why': f"yc_pred={yc_pred:.1f} (home_avg={h_yc5:.1f} + away_avg={a_yc5:.1f})",
-                })
+        # ── YC Over 3.5 scorer (all leagues, no Pinnacle odds needed) ─────
+        h_yc_hist = team_home_yc.get(ht, [])[-5:]
+        a_yc_hist = team_away_yc.get(at, [])[-5:]
+        h_yc5 = sum(h_yc_hist) / max(len(h_yc_hist), 1)
+        a_yc5 = sum(a_yc_hist) / max(len(a_yc_hist), 1)
+        yc_pred = h_yc5 + a_yc5
+        if yc_pred >= 3.5 and len(h_yc_hist) >= 3 and len(a_yc_hist) >= 3:
+            yc_picks.append({
+                'market': 'YC Over 3.5',
+                'match': f"{ht} vs {at}", 'league': league, 'kickoff': kickoff,
+                'kickoff_ts': kickoff_ts, 'event_id': event_id,
+                'pick': 'Over 3.5', 'odds': 1.50, 'conf': round(yc_pred, 2),
+                'why': f"yc_pred={yc_pred:.1f} (home_avg={h_yc5:.1f} + away_avg={a_yc5:.1f})",
+            })
 
         # ── Over 2.5 + BTTS scorer (no Pinnacle odds needed) ──────────────
         if hf['gf5'] >= 1.8 and af['gf5'] >= 1.5:
@@ -305,7 +315,7 @@ def generate_picks():
 
     best_draw = draw_picks[0] if draw_picks else None
 
-    return best_ha, best_leg2, best_draw, ha_picks, draw_picks
+    return best_ha, best_leg2, best_draw, ha_picks, draw_picks, yc_picks, btts_picks
 
 
 def format_email(best_ha, best_leg2, best_draw, all_ha, all_draws):
@@ -447,7 +457,7 @@ if __name__ == "__main__":
 
     # 2. Generate picks
     print("Generating picks...")
-    best_ha, best_leg2, best_draw, all_ha, all_draws = generate_picks()
+    best_ha, best_leg2, best_draw, all_ha, all_draws, _yc, _btts = generate_picks()
 
     # 3. Save picks to DB (permanent record)
     save_picks_to_db(best_ha, best_leg2, best_draw)
