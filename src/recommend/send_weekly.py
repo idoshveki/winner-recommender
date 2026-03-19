@@ -173,9 +173,11 @@ def generate_picks():
         ht_raw, at_raw = fix['home'], fix['away']
         ht = NAME_MAP.get(ht_raw, ht_raw)
         at = NAME_MAP.get(at_raw, at_raw)
-        league = fix['league']
-        kickoff = fix['date']
+        league        = fix['league']
+        kickoff       = fix['date']
+        kickoff_ts    = fix['kickoff_ts']
         tournament_id = fix['tournament_id']
+        event_id      = fix['event_id']
 
         # ── Real-time form from SportAPI (needed by all scorers) ──────────
         print(f"  Form: {ht} vs {at} ({league})...")
@@ -195,6 +197,7 @@ def generate_picks():
                 yc_picks.append({
                     'market': 'YC Over 3.5',
                     'match': f"{ht} vs {at}", 'league': league, 'kickoff': kickoff,
+                    'kickoff_ts': kickoff_ts, 'event_id': event_id,
                     'pick': 'Over 3.5', 'odds': 1.85, 'conf': round(yc_pred, 2),
                     'why': f"yc_pred={yc_pred:.1f} (home_avg={h_yc5:.1f} + away_avg={a_yc5:.1f})",
                 })
@@ -204,6 +207,7 @@ def generate_picks():
             btts_picks.append({
                 'market': 'O2.5+BTTS',
                 'match': f"{ht} vs {at}", 'league': league, 'kickoff': kickoff,
+                'kickoff_ts': kickoff_ts, 'event_id': event_id,
                 'pick': 'Over 2.5 And Yes', 'odds': 2.63,
                 'conf': round(hf['gf5'] + af['gf5'], 2),
                 'why': f"home_gf5={hf['gf5']} away_gf5={af['gf5']}",
@@ -354,6 +358,68 @@ def format_email(best_ha, best_leg2, best_draw, all_ha, all_draws):
     return "\n".join(lines)
 
 
+def save_picks_to_db(best_ha, best_leg2, best_draw):
+    """Persist this week's live picks to weekly_picks table. INSERT OR IGNORE so re-runs are safe."""
+    from datetime import timedelta
+    today = datetime.today()
+    week_start = today - timedelta(days=today.weekday())  # Monday
+    week_end   = week_start + timedelta(days=6)           # Sunday
+    week_label = f"{week_start.strftime('%Y-%m-%d')}/{week_end.strftime('%Y-%m-%d')}"
+
+    n_legs = 0
+    combined_odds = None
+    if best_ha:
+        n_legs = 1
+        combined_odds = best_ha['odds']
+        if best_leg2:
+            n_legs = 2
+            combined_odds = round(best_ha['odds'] * best_leg2['odds'], 2)
+
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS weekly_picks (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            week          TEXT UNIQUE NOT NULL,
+            generated_at  TEXT NOT NULL,
+            n_legs        INTEGER,
+            combined_odds REAL,
+            slip_won      INTEGER,
+            leg1_market   TEXT, leg1_match TEXT, leg1_pick TEXT,
+            leg1_odds     REAL, leg1_why   TEXT, leg1_hit  INTEGER,
+            leg2_market   TEXT, leg2_match TEXT, leg2_pick TEXT,
+            leg2_odds     REAL, leg2_why   TEXT, leg2_hit  INTEGER,
+            draw_match    TEXT, draw_pick  TEXT,
+            draw_odds     REAL, draw_hit   INTEGER
+        )
+    """)
+    conn.execute("""
+        INSERT OR IGNORE INTO weekly_picks
+            (week, generated_at, n_legs, combined_odds, slip_won,
+             leg1_market, leg1_match, leg1_pick, leg1_odds, leg1_why, leg1_hit,
+             leg2_market, leg2_match, leg2_pick, leg2_odds, leg2_why, leg2_hit,
+             draw_match, draw_pick, draw_odds, draw_hit)
+        VALUES (?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, NULL, ?, ?, ?, NULL)
+    """, (
+        week_label, datetime.now().isoformat(), n_legs, combined_odds,
+        'H/A',
+        best_ha['match'] if best_ha else None,
+        best_ha['pick']  if best_ha else None,
+        best_ha['odds']  if best_ha else None,
+        best_ha['why']   if best_ha else None,
+        best_leg2.get('market', 'H/A') if best_leg2 else None,
+        best_leg2['match'] if best_leg2 else None,
+        best_leg2['pick']  if best_leg2 else None,
+        best_leg2['odds']  if best_leg2 else None,
+        best_leg2['why']   if best_leg2 else None,
+        best_draw['match'] if best_draw else None,
+        'D'                if best_draw else None,
+        best_draw['odds']  if best_draw else None,
+    ))
+    conn.commit()
+    conn.close()
+    print(f"Picks saved to DB — week {week_label}")
+
+
 def send_email(subject, body):
     cfg = EMAIL_CONFIG
     msg = MIMEMultipart()
@@ -383,7 +449,10 @@ if __name__ == "__main__":
     print("Generating picks...")
     best_ha, best_leg2, best_draw, all_ha, all_draws = generate_picks()
 
-    # 3. Format & send
+    # 3. Save picks to DB (permanent record)
+    save_picks_to_db(best_ha, best_leg2, best_draw)
+
+    # 4. Format & send
     body = format_email(best_ha, best_leg2, best_draw, all_ha, all_draws)
     print("\n" + body)
 

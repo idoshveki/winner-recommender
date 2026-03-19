@@ -82,6 +82,7 @@ def get_fixtures_with_ids(days=5):
             fixtures.append({
                 "league":        TOURNAMENT_IDS[tid],
                 "tournament_id": tid,
+                "event_id":      e["id"],
                 "home":          e["homeTeam"]["name"],
                 "home_id":       e["homeTeam"]["id"],
                 "away":          e["awayTeam"]["name"],

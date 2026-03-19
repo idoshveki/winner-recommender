@@ -278,49 +278,66 @@ with tab1:
 # TAB 2 — PAST RESULTS
 # ═══════════════════════════════════════════════════════════════════════════════
 with tab2:
-    st.markdown("### Past Results — Current Season")
+    st.markdown("### Past Results — Live Picks")
 
-    csv_path = ROOT / "data" / "reports" / "combined_slip_last20.csv"
-    if not csv_path.exists():
-        st.warning("No past results file found. Run the backtest first.")
+    # ── Load from DB (weekly_picks table) ────────────────────────────────────
+    _conn = sqlite3.connect(DB_PATH)
+    _conn.execute("""
+        CREATE TABLE IF NOT EXISTS weekly_picks (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            week          TEXT UNIQUE NOT NULL,
+            generated_at  TEXT NOT NULL,
+            n_legs        INTEGER,
+            combined_odds REAL,
+            slip_won      INTEGER,
+            leg1_market   TEXT, leg1_match TEXT, leg1_pick TEXT,
+            leg1_odds     REAL, leg1_why   TEXT, leg1_hit  INTEGER,
+            leg2_market   TEXT, leg2_match TEXT, leg2_pick TEXT,
+            leg2_odds     REAL, leg2_why   TEXT, leg2_hit  INTEGER,
+            draw_match    TEXT, draw_pick  TEXT,
+            draw_odds     REAL, draw_hit   INTEGER
+        )
+    """)
+    _conn.commit()
+    df = pd.read_sql("SELECT * FROM weekly_picks ORDER BY week", _conn)
+    _conn.close()
+
+    # ── Add this week as pending if picks generated but not yet saved to DB ──
+    from datetime import timedelta as _td
+    _today = pd.Timestamp.today()
+    _week_start = _today - pd.Timedelta(days=_today.weekday())
+    _week_end   = _week_start + pd.Timedelta(days=6)
+    current_week_label = f"{_week_start.strftime('%Y-%m-%d')}/{_week_end.strftime('%Y-%m-%d')}"
+
+    already_saved = current_week_label in df['week'].values
+    if best_ha and not already_saved:
+        combined_odds = round(best_ha['odds'] * (best_leg2['odds'] if best_leg2 else 1), 2)
+        pending_row = {
+            'week': current_week_label, 'generated_at': None,
+            'n_legs': 2 if best_leg2 else 1, 'combined_odds': combined_odds,
+            'slip_won': None,
+            'leg1_market': 'H/A', 'leg1_match': best_ha['match'],
+            'leg1_pick': best_ha['pick'], 'leg1_odds': best_ha['odds'],
+            'leg1_why': best_ha['why'], 'leg1_hit': None,
+            'leg2_market': best_leg2.get('market', '') if best_leg2 else None,
+            'leg2_match': best_leg2['match'] if best_leg2 else None,
+            'leg2_pick':  best_leg2['pick']  if best_leg2 else None,
+            'leg2_odds':  best_leg2['odds']  if best_leg2 else None,
+            'leg2_why':   best_leg2['why']   if best_leg2 else None,
+            'leg2_hit': None,
+            'draw_match': best_draw['match'] if best_draw else None,
+            'draw_pick':  'D'               if best_draw else None,
+            'draw_odds':  best_draw['odds'] if best_draw else None,
+            'draw_hit': None,
+        }
+        df = pd.concat([df, pd.DataFrame([pending_row])], ignore_index=True)
+
+    if df.empty:
+        st.info("No picks recorded yet. Run send_weekly.py to generate this week's picks.")
     else:
-        df = pd.read_csv(csv_path)
-
-        # Add this week as pending if not already present
-        current_week_label = str(pd.Timestamp.today().to_period('W'))
-        already_has_picks = (
-            df['week'].eq(current_week_label) & df['n_legs'].fillna(0).gt(0)
-        ).any()
-        if best_ha and not already_has_picks:
-            df = df[df['week'] != current_week_label]
-            combined_odds = round(best_ha['odds'] * (best_leg2['odds'] if best_leg2 else 1), 2)
-            pending_row = {
-                'week': current_week_label,
-                'odds_source': 'pinnacle',
-                'slip_won': None,
-                'combined_odds': combined_odds,
-                'n_legs': 2 if best_leg2 else 1,
-                'leg1_market': 'H/A', 'leg1_match': best_ha['match'],
-                'leg1_pick': best_ha['pick'], 'leg1_odds': best_ha['odds'],
-                'leg1_why': best_ha['why'], 'leg1_hit': None,
-                'leg2_market': best_leg2.get('market', '') if best_leg2 else '',
-                'leg2_match': best_leg2['match'] if best_leg2 else '',
-                'leg2_pick': best_leg2['pick'] if best_leg2 else '',
-                'leg2_odds': best_leg2['odds'] if best_leg2 else '',
-                'leg2_why': best_leg2['why'] if best_leg2 else '',
-                'leg2_hit': None,
-                'leg3_market': '', 'leg3_match': '', 'leg3_pick': '',
-                'leg3_odds': '', 'leg3_why': '', 'leg3_hit': '',
-                'draw_match': best_draw['match'] if best_draw else '',
-                'draw_pick': 'D' if best_draw else '',
-                'draw_odds': best_draw['odds'] if best_draw else '',
-                'draw_hit': None,
-            }
-            df = pd.concat([df, pd.DataFrame([pending_row])], ignore_index=True)
-
         # ── Summary metrics ───────────────────────────────────────────────────
-        has_result = df[df['slip_won'].notna() & (df['slip_won'] != '')]
-        wins  = (has_result['slip_won'] == True).sum()
+        has_result = df[df['slip_won'].notna()]
+        wins  = (has_result['slip_won'] == 1).sum()
         total = len(has_result)
         avg_odds = has_result['combined_odds'].dropna().mean()
 
@@ -331,9 +348,9 @@ with tab2:
         balance_series = []
         for _, r in df.iterrows():
             won = r.get('slip_won')
-            if won is True or won == True:
+            if won == 1 or won is True:
                 balance += round(stake * r['combined_odds'] - stake, 1)
-            elif won is False or won == False:
+            elif won == 0 or won is False:
                 balance -= stake
             balance_series.append(balance)
         df['_balance'] = balance_series
@@ -347,58 +364,105 @@ with tab2:
                   delta=f"{balance/(total*stake)*100:.1f}% ROI" if total else None)
 
         # ── Running balance chart ─────────────────────────────────────────────
-        chart_df = df[df['slip_won'].notna() & (df['slip_won'] != '')].copy()
+        chart_df = df[df['slip_won'].notna()].copy()
         chart_df['week_short'] = chart_df['week'].str[:10]
-        st.line_chart(chart_df.set_index('week_short')['_balance'], height=160,
-                      use_container_width=True)
+        if not chart_df.empty:
+            st.line_chart(chart_df.set_index('week_short')['_balance'], height=160,
+                          use_container_width=True)
+
+        st.divider()
+
+        # ── Mark Results ──────────────────────────────────────────────────────
+        pending_weeks = df[df['slip_won'].isna()]['week'].tolist()
+        if pending_weeks:
+            with st.expander("Mark Results", expanded=True):
+                sel_week = st.selectbox("Week", pending_weeks, index=len(pending_weeks)-1)
+                row = df[df['week'] == sel_week].iloc[0]
+                col_a, col_b, col_c = st.columns(3)
+                l1_res = col_a.radio(
+                    f"Leg 1 — {row['leg1_match']} ({row['leg1_pick']} @ {row['leg1_odds']}×)",
+                    ['Pending', 'Hit ✅', 'Miss ❌'], horizontal=True,
+                    key='l1_res'
+                )
+                l2_res = col_b.radio(
+                    f"Leg 2 — {row['leg2_match'] or '—'} ({row.get('leg2_market','')} @ {row['leg2_odds'] or '—'}×)",
+                    ['Pending', 'Hit ✅', 'Miss ❌'], horizontal=True,
+                    key='l2_res'
+                ) if row.get('leg2_match') else 'Pending'
+                draw_res = col_c.radio(
+                    f"Draw — {row['draw_match'] or '—'} @ {row['draw_odds'] or '—'}×",
+                    ['Pending', 'Hit ✅', 'Miss ❌'], horizontal=True,
+                    key='draw_res'
+                ) if row.get('draw_match') else 'Pending'
+                slip_res = st.radio("Slip result", ['Pending', 'Won ✅', 'Lost ❌'], horizontal=True, key='slip_res')
+
+                if st.button("Save Results"):
+                    def _to_int(val):
+                        if 'Hit' in val or 'Won' in val: return 1
+                        if 'Miss' in val or 'Lost' in val: return 0
+                        return None
+                    _c = sqlite3.connect(DB_PATH)
+                    _c.execute("""
+                        UPDATE weekly_picks
+                        SET slip_won=?, leg1_hit=?, leg2_hit=?, draw_hit=?
+                        WHERE week=?
+                    """, (_to_int(slip_res), _to_int(l1_res), _to_int(l2_res), _to_int(draw_res), sel_week))
+                    _c.commit()
+                    _c.close()
+                    st.success(f"Results saved for {sel_week}")
+                    st.rerun()
 
         st.divider()
 
         # ── Full results timeline ─────────────────────────────────────────────
-        st.markdown("#### What really happened — week by week")
+        st.markdown("#### Week by week")
 
         timeline_rows = []
         running_bal = 0
         for _, r in df.iterrows():
             won = r.get('slip_won')
-            is_pending = (won is None or won == '')
+            is_pending = (won is None or pd.isna(won) if won != won else False)
 
-            # Leg 1
-            l1_hit = r.get('leg1_hit')
-            l1_icon = '✅' if l1_hit is True else ('❌' if l1_hit is False else '⏳')
+            def _hit_icon(v):
+                if v == 1 or v is True: return '✅'
+                if v == 0 or v is False: return '❌'
+                return '⏳'
+
             l1_pick_disp = 'Home' if r.get('leg1_pick') == 'H' else ('Away' if r.get('leg1_pick') == 'A' else str(r.get('leg1_pick', '')))
-            l1_cell = f"{l1_icon} {r.get('leg1_match','')}\n{l1_pick_disp} @ {r.get('leg1_odds','')}×"
+            l1_cell = f"{_hit_icon(r.get('leg1_hit'))} {r.get('leg1_match','')}\n{l1_pick_disp} @ {r.get('leg1_odds','')}×"
 
-            # Leg 2
-            l2_hit = r.get('leg2_hit')
-            l2_icon = '✅' if l2_hit is True else ('❌' if l2_hit is False else '⏳')
-            l2_market = r.get('leg2_market', '')
-            l2_match = r.get('leg2_match', '')
-            l2_odds = r.get('leg2_odds', '')
-            l2_cell = f"{l2_icon} [{l2_market}] {l2_match}\n@ {l2_odds}×" if l2_match else '—'
+            l2_match = r.get('leg2_match') or ''
+            l2_cell = f"{_hit_icon(r.get('leg2_hit'))} [{r.get('leg2_market','')}] {l2_match}\n@ {r.get('leg2_odds','')}×" if l2_match else '—'
 
-            # Slip result
+            draw_match = r.get('draw_match') or ''
+            draw_cell = f"{_hit_icon(r.get('draw_hit'))} {draw_match} @ {r.get('draw_odds','')}×" if draw_match else '—'
+
+            try:
+                is_pending = pd.isna(won)
+            except Exception:
+                is_pending = won is None
+
             if is_pending:
-                slip_cell = f"⏳ Pending\n@ {r['combined_odds']}×"
+                slip_cell = f"⏳ Pending @ {r['combined_odds']}×"
                 pnl_cell = '—'
                 bal_cell = f"{'+' if running_bal >= 0 else ''}{running_bal:.0f}"
-            elif won is True or won == True:
+            elif won == 1 or won is True:
                 profit = round(stake * r['combined_odds'] - stake, 1)
                 running_bal += profit
-                slip_cell = f"✅ WON\n@ {r['combined_odds']}×"
+                slip_cell = f"✅ WON @ {r['combined_odds']}×"
                 pnl_cell = f"+{profit:.0f}"
                 bal_cell = f"{'+' if running_bal >= 0 else ''}{running_bal:.0f}"
             else:
                 running_bal -= stake
-                slip_cell = f"❌ LOST\n@ {r['combined_odds']}×"
+                slip_cell = f"❌ LOST @ {r['combined_odds']}×"
                 pnl_cell = f"-{stake}"
                 bal_cell = f"{'+' if running_bal >= 0 else ''}{running_bal:.0f}"
 
-            src = '📌' if r.get('odds_source') == 'pinnacle' else '📊'
             timeline_rows.append({
-                'Week': f"{src} {str(r['week'])[:10]}",
+                'Week': str(r['week'])[:10],
                 'Leg 1 — H/A': l1_cell,
-                'Leg 2 — YC/BTTS': l2_cell,
+                'Leg 2': l2_cell,
+                'Draw': draw_cell,
                 'Slip': slip_cell,
                 'P&L': pnl_cell,
                 'Balance': bal_cell,
@@ -411,12 +475,13 @@ with tab2:
             use_container_width=True,
             height=min(50 + len(tl_df) * 52, 1100),
             column_config={
-                'Week':            st.column_config.TextColumn(width='small'),
-                'Leg 1 — H/A':    st.column_config.TextColumn(width='large'),
-                'Leg 2 — YC/BTTS':st.column_config.TextColumn(width='large'),
-                'Slip':            st.column_config.TextColumn(width='medium'),
-                'P&L':             st.column_config.TextColumn(width='small'),
-                'Balance':         st.column_config.TextColumn(width='small'),
+                'Week':         st.column_config.TextColumn(width='small'),
+                'Leg 1 — H/A': st.column_config.TextColumn(width='large'),
+                'Leg 2':        st.column_config.TextColumn(width='large'),
+                'Draw':         st.column_config.TextColumn(width='medium'),
+                'Slip':         st.column_config.TextColumn(width='medium'),
+                'P&L':          st.column_config.TextColumn(width='small'),
+                'Balance':      st.column_config.TextColumn(width='small'),
             }
         )
 
