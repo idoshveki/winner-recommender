@@ -204,11 +204,12 @@ def generate_picks():
         a_yc5 = sum(a_yc_hist) / max(len(a_yc_hist), 1)
         yc_pred = h_yc5 + a_yc5
         if yc_pred >= 3.5 and len(h_yc_hist) >= 3 and len(a_yc_hist) >= 3:
+            yc_odds = 1.60 if league == 'Bundesliga' else 1.50
             yc_picks.append({
                 'market': 'YC Over 3.5',
                 'match': f"{ht} vs {at}", 'league': league, 'kickoff': kickoff,
                 'kickoff_ts': kickoff_ts, 'event_id': event_id,
-                'pick': 'Over 3.5', 'odds': 1.50, 'conf': round(yc_pred, 2),
+                'pick': 'Over 3.5', 'odds': yc_odds, 'conf': round(yc_pred, 2),
                 'why': f"yc_pred={yc_pred:.1f} (home_avg={h_yc5:.1f} + away_avg={a_yc5:.1f})",
             })
 
