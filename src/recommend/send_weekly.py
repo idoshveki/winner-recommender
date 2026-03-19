@@ -27,11 +27,12 @@ from data.sportapi_form import get_fixtures_with_ids, get_league_form, LEAGUE_TO
 import pandas as pd
 
 # ── CONFIG — edit these ───────────────────────────────────────────────────────
+import os as _os
 EMAIL_CONFIG = {
-    "smtp_host":  "smtp.gmail.com",
+    "smtp_host":  "smtp.sendgrid.net",
     "smtp_port":  587,
-    "from_addr":  "idoshveki@gmail.com",
-    "app_password": "YOUR_APP_PASSWORD",        # ← fill in from myaccount.google.com/apppasswords
+    "from_addr":  _os.getenv("SENDGRID_FROM_ADDR", "picks@winner-recommender.com"),
+    "api_key":    _os.getenv("SENDGRID_API_KEY", ""),
     "to_addr":    "idoshveki@gmail.com",
 }
 DB_PATH    = ROOT / "data" / "db" / "winner.db"
@@ -441,7 +442,7 @@ def send_email(subject, body):
 
     with smtplib.SMTP(cfg['smtp_host'], cfg['smtp_port']) as server:
         server.starttls()
-        server.login(cfg['from_addr'], cfg['app_password'])
+        server.login("apikey", cfg['api_key'])  # SendGrid SMTP: username is always "apikey"
         server.send_message(msg)
     print(f"Email sent to {cfg['to_addr']}")
 

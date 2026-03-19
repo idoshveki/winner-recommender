@@ -1,0 +1,40 @@
+name: Send Weekly Picks (Saturday)
+
+on:
+  schedule:
+    - cron: '0 6 * * 6'   # 8am Israel (UTC+2), Saturday
+  workflow_dispatch:
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -q pandas requests python-dotenv
+
+      - name: Fetch latest odds
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: python src/data/fetch_odds.py
+
+      - name: Generate + send picks
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          SOFASCORE_API_KEY: ${{ secrets.SOFASCORE_API_KEY }}
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          SENDGRID_FROM_ADDR: ${{ secrets.SENDGRID_FROM_ADDR }}
+        run: python src/recommend/send_weekly.py
+
+      - name: Commit updated DB (picks saved)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase
+          git add data/db/winner.db
+          git diff --staged --quiet || (git commit -m "data: save weekly picks [skip ci]" && git push)

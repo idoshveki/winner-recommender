@@ -1,0 +1,30 @@
+name: Auto-fill Pick Results (Tue + Fri)
+
+on:
+  schedule:
+    - cron: '30 4 * * 2,5'   # 6:30am Israel (UTC+2), 30min after fetch-results
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -q pandas python-dotenv
+
+      - name: Auto-fill pick results
+        run: python src/data/update_pick_results.py
+
+      - name: Commit updated DB
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase
+          git add data/db/winner.db
+          git diff --staged --quiet || (git commit -m "data: auto-fill pick results [skip ci]" && git push)
