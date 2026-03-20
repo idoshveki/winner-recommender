@@ -444,21 +444,26 @@ def format_email(best_ha, best_leg2, best_draw, all_ha, all_draws, all_yc=None, 
                 for p in all_ha[:8]]
         body += _table(["Match","League","Kickoff","Pick","Odds","Conf"], rows)
 
-    # YC table
+    # YC table — 'conf' IS yc_pred in yc_picks
     if all_yc:
         body += section_title("YC Over 3.5 — all leagues (sorted by predicted cards)")
         rows = [(p['match'], p.get('league',''), p.get('kickoff','')[:10],
-                 f"{p.get('yc_pred',0):.1f}", f"{p['odds']:.2f}")
+                 f"{p.get('conf', p.get('yc_pred', 0)):.1f}", f"{p['odds']:.2f}")
                 for p in all_yc[:8]]
         body += _table(["Match","League","Kickoff","YC avg","Odds"], rows)
 
-    # BTTS table
+    # BTTS table — 'conf' = home_gf5 + away_gf5; parse from 'why' string
     if all_btts:
         body += section_title("O2.5 + BTTS — all leagues (sorted by goal output)")
-        rows = [(p['match'], p.get('league',''), p.get('kickoff','')[:10],
-                 f"{p.get('home_gf5',0):.1f}", f"{p.get('away_gf5',0):.1f}",
-                 f"{p.get('avg_goals',0):.1f}", f"{p['odds']:.2f}")
-                for p in all_btts[:8]]
+        rows = []
+        for p in all_btts[:8]:
+            # why = "home_gf5=X away_gf5=Y"
+            import re as _re
+            m = _re.search(r'home_gf5=([\d.]+).*away_gf5=([\d.]+)', p.get('why',''))
+            hg = float(m.group(1)) if m else 0.0
+            ag = float(m.group(2)) if m else 0.0
+            rows.append((p['match'], p.get('league',''), p.get('kickoff','')[:10],
+                         f"{hg:.1f}", f"{ag:.1f}", f"{hg+ag:.1f}", f"{p['odds']:.2f}"))
         body += _table(["Match","League","Kickoff","Home gf5","Away gf5","Avg goals","Odds"], rows)
 
     # Footer
