@@ -373,11 +373,11 @@ def format_email(best_ha, best_leg2, best_draw, all_ha, all_draws, all_yc=None, 
         return (
             f'<div style="background:#f9fafb;border-left:4px solid {color};'
             f'border-radius:4px;padding:12px 16px;margin-bottom:10px">'
-            f'<div style="display:flex;justify-content:space-between;align-items:center">'
-            f'<span style="font-size:12px;color:{GRAY};font-weight:600">{label}</span>'
-            f'<span style="font-size:13px;font-weight:700;color:{color}">{odds:.2f}x</span>'
-            f'</div>'
-            f'<div style="font-size:15px;font-weight:700;color:{DARK};margin:4px 0">'
+            f'<table width="100%" cellpadding="0" cellspacing="0"><tr>'
+            f'<td style="font-size:12px;color:{GRAY};font-weight:600">{label}</td>'
+            f'<td align="right" style="font-size:16px;font-weight:800;color:{color}">{odds:.2f}x</td>'
+            f'</tr></table>'
+            f'<div style="font-size:15px;font-weight:700;color:{DARK};margin:6px 0 2px">'
             f'{match}</div>'
             f'<div style="font-size:13px;color:#374151">{pick}</div>'
             f'<div style="font-size:11px;color:{GRAY};margin-top:4px">{why}</div>'
@@ -412,12 +412,12 @@ def format_email(best_ha, best_leg2, best_draw, all_ha, all_draws, all_yc=None, 
             mkt = best_leg2.get('market', 'H/A')
             body += pick_card(f"LEG 2 · {mkt}", best_leg2['match'],
                               best_leg2['pick'], best_leg2['odds'], best_leg2['why'], AMBER)
-        body += (f'<div style="background:#1e3a5f;color:#fff;border-radius:6px;'
-                 f'padding:12px 16px;margin-bottom:20px;display:flex;'
-                 f'justify-content:space-between;align-items:center">'
-                 f'<span style="font-size:13px">Combined odds</span>'
-                 f'<span style="font-size:20px;font-weight:800">{combined_odds:.2f}x</span>'
-                 f'</div>')
+        body += (f'<table width="100%" cellpadding="0" cellspacing="0" style="background:#1e3a5f;'
+                 f'border-radius:6px;margin-bottom:20px"><tr>'
+                 f'<td style="padding:12px 16px;color:#fff;font-size:13px">Combined odds</td>'
+                 f'<td align="right" style="padding:12px 16px;color:#fff;font-size:22px;'
+                 f'font-weight:800">{combined_odds:.2f}x</td>'
+                 f'</tr></table>')
     else:
         body += f'<p style="color:{GRAY}">No qualifying H/A pick this week — skip Slip 1.</p>'
 
