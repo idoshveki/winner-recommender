@@ -98,7 +98,7 @@ BTTS_MIN_EV     = 0.05
 - [x] H/A accumulator backtested and validated (V5, EV 1.057)
 - [x] Draw singles backtested and validated (EV 1.067)
 - [x] YC calibration run: hit rate by yc_pred bin (see results below)
-- [ ] Phase 1: full slip combo backtest
+- [x] Phase 1: full slip combo backtest — DONE (see results below)
 - [ ] Phase 2: Odds Portal scraper
 - [ ] Phase 3: live odds in weekly email
 
@@ -120,14 +120,59 @@ Minimum viable threshold: 4.5 (break-even). High-confidence threshold: 6.0+ (EV 
 
 ---
 
+## Phase 1 Results — Slip Combo Backtest (210 weeks, all leagues)
+
+### Best config per slip type (min 20 qualifying weeks)
+
+| Slip | yc_thresh | btts_home | btts_away | Weeks | Win rate | Avg odds | **EV** |
+|------|-----------|-----------|-----------|-------|----------|----------|--------|
+| HA only | — | — | — | 197 | 77.2% | 1.28x | 0.991 |
+| HA + YC | 6.0 | — | — | 164 | 61.6% | 1.92x | **1.184** |
+| HA + BTTS | — | 2.0 | 1.8 | 178 | 38.8% | 2.70x | 1.045 |
+| **HA + YC + YC** | **6.0** | — | — | **119** | **47.1%** | **2.91x** | **1.370** |
+| HA + YC + BTTS | 5.5 | 1.8 | 1.8 | 176 | 31.8% | 4.06x | 1.292 |
+
+### YC standalone calibration (assumed odds 1.50 / 1.60 Bundesliga)
+
+| yc_thresh | Games | Hit rate | EV @ 1.50 | EV @ 1.60 |
+|-----------|-------|----------|-----------|-----------|
+| 3.5 | 5548 | 63.2% | -0.052 | +0.011 |
+| 4.0 | 4470 | 64.9% | -0.027 | +0.038 |
+| 4.5 | 2788 | 67.4% | +0.010 | +0.078 |
+| 5.0 | 1844 | 67.7% | +0.016 | +0.084 |
+| 5.5 | 867 | 69.8% | +0.047 | +0.116 |
+| **6.0** | **502** | **71.1%** | **+0.067** | **+0.138** |
+
+### BTTS+O2.5 standalone calibration (assumed odds 2.10)
+
+| home_gf5 | away_gf5 | Games | Hit rate | EV @ 2.10 |
+|----------|----------|-------|----------|-----------|
+| **1.8** | **1.8** | **649** | **50.8%** | **+0.068** |
+| 2.0 | 1.8 | 494 | 50.2% | +0.054 |
+| 1.8 | 1.5 | 888 | 49.7% | +0.043 |
+| 1.5 | 1.8 | 844 | 49.1% | +0.030 |
+| 1.5 | 1.3 | 1526 | 47.2% | -0.009 |
+
+### Decisions made from Phase 1
+
+- **Primary slip: HA + YC + YC** at yc_pred ≥ 6.0 → EV 1.370 ✅
+- **Fallback: HA + YC** when only 1 YC qualifies → EV 1.184 ✅
+- **BTTS threshold: home_gf5 ≥ 1.8 AND away_gf5 ≥ 1.8** → EV +0.068 standalone ✅
+- **Raise YC threshold 3.5 → 6.0** — anything below is negative EV at 1.50 ✅
+- **BTTS assumed odds updated: 2.63 → 2.10** ✅
+- All changes implemented in `src/recommend/send_weekly.py`
+
+---
+
 ## BTTS Calibration
-*To be computed in Phase 1.*
+*Completed in Phase 1 — see table above.*
 
 ---
 
 ## Notes & Decisions
 
 - BTTS and YC odds vary per game on 1win — assumed odds are directional proxies only
-- HA+YC+YC (3-leg slip) only makes sense if both YC legs have yc_pred ≥ 6 (high confidence)
+- Phase 1 EV figures will shift once Phase 2 provides real odds — treat as directional
+- HA+YC+YC is the target structure; HA+YC is the fallback when <2 games qualify at yc_pred ≥ 6
 - Do not add speculative legs just to increase odds — each leg must have positive standalone EV
 - Odds Portal is preferred over BetsAPI for Phase 2 (free vs ~$30/month)

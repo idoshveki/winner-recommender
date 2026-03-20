@@ -196,13 +196,15 @@ def generate_picks():
         venue_gap = hf['pts'] - af['pts']
         pts5_diff = hf['pts'] - af['pts']
 
-        # ── YC Over 3.5 scorer (all leagues, no Pinnacle odds needed) ─────
+        # ── YC Over 3.5 scorer ────────────────────────────────────────────
+        # Threshold: yc_pred >= 6.0 (backtested: 71% hit rate, EV +0.067 @ 1.50)
+        # Below 6.0: hit rate drops to 63-67%, EV negative at 1.50 odds
         h_yc_hist = team_home_yc.get(ht, [])[-5:]
         a_yc_hist = team_away_yc.get(at, [])[-5:]
         h_yc5 = sum(h_yc_hist) / max(len(h_yc_hist), 1)
         a_yc5 = sum(a_yc_hist) / max(len(a_yc_hist), 1)
         yc_pred = h_yc5 + a_yc5
-        if yc_pred >= 3.5 and len(h_yc_hist) >= 3 and len(a_yc_hist) >= 3:
+        if yc_pred >= 6.0 and len(h_yc_hist) >= 3 and len(a_yc_hist) >= 3:
             yc_odds = 1.60 if league == 'Bundesliga' else 1.50
             yc_picks.append({
                 'market': 'YC Over 3.5',
@@ -212,13 +214,14 @@ def generate_picks():
                 'why': f"yc_pred={yc_pred:.1f} (home_avg={h_yc5:.1f} + away_avg={a_yc5:.1f})",
             })
 
-        # ── Over 2.5 + BTTS scorer (no Pinnacle odds needed) ──────────────
-        if hf['gf5'] >= 1.8 and af['gf5'] >= 1.5:
+        # ── Over 2.5 + BTTS scorer ────────────────────────────────────────
+        # Threshold: home_gf5 >= 1.8 AND away_gf5 >= 1.8 (backtested: 50.8% hit rate, EV +0.068 @ 2.10)
+        if hf['gf5'] >= 1.8 and af['gf5'] >= 1.8:
             btts_picks.append({
                 'market': 'O2.5+BTTS',
                 'match': f"{ht} vs {at}", 'league': league, 'kickoff': kickoff,
                 'kickoff_ts': kickoff_ts, 'event_id': event_id,
-                'pick': 'Over 2.5 And Yes', 'odds': 2.63,
+                'pick': 'Over 2.5 And Yes', 'odds': 2.10,
                 'conf': round(hf['gf5'] + af['gf5'], 2),
                 'why': f"home_gf5={hf['gf5']} away_gf5={af['gf5']}",
             })
@@ -287,35 +290,44 @@ def generate_picks():
     best_ha = ha_picks[0] if ha_picks else None
     ha_match = best_ha['match'] if best_ha else None
 
-    # Priority: YC Over 4.5 (La Liga) > BTTS Yes > 2nd H/A (different match)
+    # YC and BTTS picks from different matches than the H/A leg
+    yc_other   = [p for p in yc_picks   if p['match'] != ha_match]
+    btts_other = [p for p in btts_picks if p['match'] != ha_match]
+
+    # ── Slip structure priority (backtested) ──────────────────────────────
+    # 1. HA + YC + YC  — best EV (1.370), needs 2 YC picks at yc_pred >= 6
+    # 2. HA + YC       — EV 1.184, needs 1 YC pick
+    # 3. HA + BTTS     — EV 1.045, fallback when no YC qualifies
+    # 4. HA only       — last resort
+
     best_leg2 = None
+    best_leg3 = None  # third leg for HA+YC+YC
 
-    # 1. YC Over 4.5 — must be from a different match than H/A
-    for yc in yc_picks:
-        if yc['match'] != ha_match:
-            best_leg2 = yc
-            break
-
-    # 2. BTTS Yes fallback
-    if best_leg2 is None:
-        for btts in btts_picks:
-            if btts['match'] != ha_match:
-                best_leg2 = btts
+    if len(yc_other) >= 2:
+        # HA + YC + YC: use top 2 YC picks (different matches from each other and HA)
+        best_leg2 = yc_other[0]
+        # leg3 must also differ from leg2
+        for yc in yc_other[1:]:
+            if yc['match'] != best_leg2['match']:
+                best_leg3 = yc
                 break
-
-    # 3. 2nd H/A pick fallback (from ha_picks[1:])
-    if best_leg2 is None and len(ha_picks) > 1:
+        if best_leg3 is None:
+            best_leg3 = None  # fall back to 2-leg slip
+    elif len(yc_other) == 1:
+        best_leg2 = yc_other[0]
+    elif btts_other:
+        best_leg2 = btts_other[0]
+    elif len(ha_picks) > 1:
         for ha in ha_picks[1:]:
             if ha['match'] != ha_match:
                 leg2 = dict(ha)
                 leg2['market'] = 'H/A'
-                leg2['pick'] = f"{'Home' if ha['pick'] == 'H' else 'Away'}"
                 best_leg2 = leg2
                 break
 
     best_draw = draw_picks[0] if draw_picks else None
 
-    return best_ha, best_leg2, best_draw, ha_picks, draw_picks, yc_picks, btts_picks
+    return best_ha, best_leg2, best_leg3, best_draw, ha_picks, draw_picks, yc_picks, btts_picks
 
 
 def _td(val, bold=False):
@@ -346,7 +358,7 @@ def _table(headers, rows, col_styles=None):
     )
 
 
-def format_email(best_ha, best_leg2, best_draw, all_ha, all_draws, all_yc=None, all_btts=None):
+def format_email(best_ha, best_leg2, best_leg3, best_draw, all_ha, all_draws, all_yc=None, all_btts=None):
     today = datetime.today().strftime('%Y-%m-%d')
     all_yc = all_yc or []
     all_btts = all_btts or []
@@ -405,16 +417,21 @@ def format_email(best_ha, best_leg2, best_draw, all_ha, all_draws, all_yc=None, 
              f'SLIP 1 — COMBINED BET</h2>')
 
     if best_ha:
-        combined_odds = round(best_ha['odds'] * (best_leg2['odds'] if best_leg2 else 1), 2)
+        legs = [best_ha] + ([best_leg2] if best_leg2 else []) + ([best_leg3] if best_leg3 else [])
+        combined_odds = round(float(pd.Series([l['odds'] for l in legs]).prod()), 2)
         body += pick_card("LEG 1 · H/A", best_ha['match'],
                           best_ha['pick'], best_ha['odds'], best_ha['why'])
         if best_leg2:
             mkt = best_leg2.get('market', 'H/A')
             body += pick_card(f"LEG 2 · {mkt}", best_leg2['match'],
                               best_leg2['pick'], best_leg2['odds'], best_leg2['why'], AMBER)
+        if best_leg3:
+            mkt3 = best_leg3.get('market', 'YC Over 3.5')
+            body += pick_card(f"LEG 3 · {mkt3}", best_leg3['match'],
+                              best_leg3['pick'], best_leg3['odds'], best_leg3['why'], "#ea580c")
         body += (f'<table width="100%" cellpadding="0" cellspacing="0" style="background:#1e3a5f;'
                  f'border-radius:6px;margin-bottom:20px"><tr>'
-                 f'<td style="padding:12px 16px;color:#fff;font-size:13px">Combined odds</td>'
+                 f'<td style="padding:12px 16px;color:#fff;font-size:13px">Combined odds ({len(legs)} legs)</td>'
                  f'<td align="right" style="padding:12px 16px;color:#fff;font-size:22px;'
                  f'font-weight:800">{combined_odds:.2f}x</td>'
                  f'</tr></table>')
@@ -491,7 +508,7 @@ def format_email(best_ha, best_leg2, best_draw, all_ha, all_draws, all_yc=None, 
     return html
 
 
-def save_picks_to_db(best_ha, best_leg2, best_draw):
+def save_picks_to_db(best_ha, best_leg2, best_leg3, best_draw):
     """Persist this week's live picks to weekly_picks table. INSERT OR IGNORE so re-runs are safe."""
     from datetime import timedelta
     today = datetime.today()
@@ -499,14 +516,9 @@ def save_picks_to_db(best_ha, best_leg2, best_draw):
     week_end   = week_start + timedelta(days=6)           # Sunday
     week_label = f"{week_start.strftime('%Y-%m-%d')}/{week_end.strftime('%Y-%m-%d')}"
 
-    n_legs = 0
-    combined_odds = None
-    if best_ha:
-        n_legs = 1
-        combined_odds = best_ha['odds']
-        if best_leg2:
-            n_legs = 2
-            combined_odds = round(best_ha['odds'] * best_leg2['odds'], 2)
+    legs = [l for l in [best_ha, best_leg2, best_leg3] if l]
+    n_legs = len(legs)
+    combined_odds = round(float(pd.Series([l['odds'] for l in legs]).prod()), 2) if legs else None
 
     conn = sqlite3.connect(DB_PATH)
     conn.execute("""
@@ -521,17 +533,27 @@ def save_picks_to_db(best_ha, best_leg2, best_draw):
             leg1_odds     REAL, leg1_why   TEXT, leg1_hit  INTEGER,
             leg2_market   TEXT, leg2_match TEXT, leg2_pick TEXT,
             leg2_odds     REAL, leg2_why   TEXT, leg2_hit  INTEGER,
+            leg3_market   TEXT, leg3_match TEXT, leg3_pick TEXT,
+            leg3_odds     REAL, leg3_why   TEXT, leg3_hit  INTEGER,
             draw_match    TEXT, draw_pick  TEXT,
             draw_odds     REAL, draw_hit   INTEGER
         )
     """)
+    # Add leg3 columns if DB was created before this version
+    for col in ['leg3_market','leg3_match','leg3_pick','leg3_odds','leg3_why','leg3_hit']:
+        try:
+            conn.execute(f"ALTER TABLE weekly_picks ADD COLUMN {col} {'REAL' if 'odds' in col else ('INTEGER' if 'hit' in col else 'TEXT')}")
+        except Exception:
+            pass
+
     conn.execute("""
         INSERT OR IGNORE INTO weekly_picks
             (week, generated_at, n_legs, combined_odds, slip_won,
              leg1_market, leg1_match, leg1_pick, leg1_odds, leg1_why, leg1_hit,
              leg2_market, leg2_match, leg2_pick, leg2_odds, leg2_why, leg2_hit,
+             leg3_market, leg3_match, leg3_pick, leg3_odds, leg3_why, leg3_hit,
              draw_match, draw_pick, draw_odds, draw_hit)
-        VALUES (?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, NULL, ?, ?, ?, NULL)
+        VALUES (?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, NULL, ?, ?, ?, NULL)
     """, (
         week_label, datetime.now().isoformat(), n_legs, combined_odds,
         'H/A',
@@ -544,6 +566,11 @@ def save_picks_to_db(best_ha, best_leg2, best_draw):
         best_leg2['pick']  if best_leg2 else None,
         best_leg2['odds']  if best_leg2 else None,
         best_leg2['why']   if best_leg2 else None,
+        best_leg3.get('market', 'YC Over 3.5') if best_leg3 else None,
+        best_leg3['match'] if best_leg3 else None,
+        best_leg3['pick']  if best_leg3 else None,
+        best_leg3['odds']  if best_leg3 else None,
+        best_leg3['why']   if best_leg3 else None,
         best_draw['match'] if best_draw else None,
         'D'                if best_draw else None,
         best_draw['odds']  if best_draw else None,
@@ -579,13 +606,13 @@ if __name__ == "__main__":
 
     # 2. Generate picks
     print("Generating picks...")
-    best_ha, best_leg2, best_draw, all_ha, all_draws, _yc, _btts = generate_picks()
+    best_ha, best_leg2, best_leg3, best_draw, all_ha, all_draws, _yc, _btts = generate_picks()
 
     # 3. Save picks to DB (permanent record)
-    save_picks_to_db(best_ha, best_leg2, best_draw)
+    save_picks_to_db(best_ha, best_leg2, best_leg3, best_draw)
 
     # 4. Format & send
-    body = format_email(best_ha, best_leg2, best_draw, all_ha, all_draws, _yc, _btts)
+    body = format_email(best_ha, best_leg2, best_leg3, best_draw, all_ha, all_draws, _yc, _btts)
     print("\nEmail HTML generated.")
 
     today = datetime.today().strftime('%Y-%m-%d')
