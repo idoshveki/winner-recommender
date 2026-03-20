@@ -29,11 +29,9 @@ import pandas as pd
 # ── CONFIG — edit these ───────────────────────────────────────────────────────
 import os as _os
 EMAIL_CONFIG = {
-    "smtp_host":  "smtp.sendgrid.net",
-    "smtp_port":  587,
-    "from_addr":  _os.getenv("SENDGRID_FROM_ADDR", "picks@winner-recommender.com"),
-    "api_key":    _os.getenv("SENDGRID_API_KEY", ""),
-    "to_addr":    ["idoshveki@gmail.com", "adicang@gmail.com", "tal@milgapo.co.il", "shvekiasaf@gmail.com"],
+    "from_addr": "Winner Recommender <onboarding@resend.dev>",
+    "api_key":   _os.getenv("RESEND_API_KEY", ""),
+    "to_addr":   ["idoshveki@gmail.com", "adicang@gmail.com", "tal@milgapo.co.il", "shvekiasaf@gmail.com"],
 }
 DB_PATH    = ROOT / "data" / "db" / "winner.db"
 REPORT_DIR = ROOT / "data" / "reports"
@@ -433,18 +431,16 @@ def save_picks_to_db(best_ha, best_leg2, best_draw):
 
 
 def send_email(subject, body):
+    import resend
     cfg = EMAIL_CONFIG
-    msg = MIMEMultipart()
     to_list = cfg['to_addr'] if isinstance(cfg['to_addr'], list) else [cfg['to_addr']]
-    msg['From']    = cfg['from_addr']
-    msg['To']      = ', '.join(to_list)
-    msg['Subject'] = subject
-    msg.attach(MIMEText(body, 'plain'))
-
-    with smtplib.SMTP(cfg['smtp_host'], cfg['smtp_port']) as server:
-        server.starttls()
-        server.login("apikey", cfg['api_key'])  # SendGrid SMTP: username is always "apikey"
-        server.sendmail(cfg['from_addr'], to_list, msg.as_string())
+    resend.api_key = cfg['api_key']
+    resend.Emails.send({
+        "from":    cfg['from_addr'],
+        "to":      to_list,
+        "subject": subject,
+        "text":    body,
+    })
     print(f"Email sent to {', '.join(to_list)}")
 
 
@@ -452,11 +448,11 @@ if __name__ == "__main__":
     import subprocess, os
 
     # 1. Refresh odds
+    import sys as _sys
     script_dir = Path(__file__).resolve().parents[2]
-    venv_python = script_dir / ".venv" / "bin" / "python"
     fetch_script = script_dir / "src" / "data" / "fetch_odds.py"
     print("Fetching latest odds...")
-    subprocess.run([str(venv_python), str(fetch_script)], cwd=str(script_dir))
+    subprocess.run([_sys.executable, str(fetch_script)], cwd=str(script_dir))
 
     # 2. Generate picks
     print("Generating picks...")

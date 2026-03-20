@@ -14,3 +14,4 @@ jupyter>=1.0
 matplotlib>=3.8
 seaborn>=0.13
 tqdm>=4.66
+resend>=2.0

@@ -16,7 +16,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install -q pandas requests python-dotenv
+        run: pip install -q pandas requests python-dotenv resend
 
       - name: Fetch latest odds
         env:
@@ -27,8 +27,7 @@ jobs:
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           SOFASCORE_API_KEY: ${{ secrets.SOFASCORE_API_KEY }}
-          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
-          SENDGRID_FROM_ADDR: ${{ secrets.SENDGRID_FROM_ADDR }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         run: python src/recommend/send_weekly.py
 
       - name: Commit updated DB (picks saved)
