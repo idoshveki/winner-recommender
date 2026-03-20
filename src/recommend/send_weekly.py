@@ -318,54 +318,172 @@ def generate_picks():
     return best_ha, best_leg2, best_draw, ha_picks, draw_picks, yc_picks, btts_picks
 
 
-def format_email(best_ha, best_leg2, best_draw, all_ha, all_draws):
-    today = datetime.today().strftime('%Y-%m-%d')
-    lines = [f"Winner Picks — {today}", "=" * 40, ""]
+def _td(val, bold=False):
+    b = "font-weight:600;" if bold else ""
+    return f'<td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;{b}">{val}</td>'
 
-    # Slip 1
-    lines.append("SLIP 1 — COMBINED BET")
-    lines.append("-" * 30)
+
+def _table(headers, rows, col_styles=None):
+    """Render a simple HTML table. col_styles: list of extra CSS per column."""
+    col_styles = col_styles or [""] * len(headers)
+    ths = "".join(
+        f'<th style="padding:8px 12px;text-align:left;background:#f3f4f6;'
+        f'font-size:11px;text-transform:uppercase;color:#6b7280;'
+        f'letter-spacing:.05em;border-bottom:2px solid #e5e7eb;{col_styles[i]}">'
+        f'{h}</th>'
+        for i, h in enumerate(headers)
+    )
+    trs = ""
+    for row in rows:
+        trs += "<tr>" + "".join(
+            f'<td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;'
+            f'font-size:13px;color:#111827;{col_styles[i]}">{v}</td>'
+            for i, v in enumerate(row)
+        ) + "</tr>"
+    return (
+        '<table style="width:100%;border-collapse:collapse;margin-bottom:24px">'
+        f'<thead><tr>{ths}</tr></thead><tbody>{trs}</tbody></table>'
+    )
+
+
+def format_email(best_ha, best_leg2, best_draw, all_ha, all_draws, all_yc=None, all_btts=None):
+    today = datetime.today().strftime('%Y-%m-%d')
+    all_yc = all_yc or []
+    all_btts = all_btts or []
+
+    # ── colour helpers ────────────────────────────────────────────────────────
+    GREEN  = "#16a34a"
+    AMBER  = "#d97706"
+    GRAY   = "#6b7280"
+    DARK   = "#111827"
+
+    def badge(text, color):
+        return (f'<span style="display:inline-block;padding:2px 8px;border-radius:12px;'
+                f'background:{color}22;color:{color};font-size:11px;font-weight:700;'
+                f'letter-spacing:.04em">{text}</span>')
+
+    def odds_pill(val):
+        return (f'<span style="font-weight:700;color:{DARK}">{val:.2f}x</span>')
+
+    def section_title(text):
+        return (f'<p style="margin:0 0 8px;font-size:11px;font-weight:700;'
+                f'text-transform:uppercase;letter-spacing:.08em;color:{GRAY}">{text}</p>')
+
+    def pick_card(label, match, pick, odds, why, color=GREEN):
+        return (
+            f'<div style="background:#f9fafb;border-left:4px solid {color};'
+            f'border-radius:4px;padding:12px 16px;margin-bottom:10px">'
+            f'<div style="display:flex;justify-content:space-between;align-items:center">'
+            f'<span style="font-size:12px;color:{GRAY};font-weight:600">{label}</span>'
+            f'<span style="font-size:13px;font-weight:700;color:{color}">{odds:.2f}x</span>'
+            f'</div>'
+            f'<div style="font-size:15px;font-weight:700;color:{DARK};margin:4px 0">'
+            f'{match}</div>'
+            f'<div style="font-size:13px;color:#374151">{pick}</div>'
+            f'<div style="font-size:11px;color:{GRAY};margin-top:4px">{why}</div>'
+            f'</div>'
+        )
+
+    # ── build body ────────────────────────────────────────────────────────────
+    body = ""
+
+    # Header
+    body += (
+        f'<div style="background:linear-gradient(135deg,#1e3a5f,#2563eb);'
+        f'padding:28px 32px;border-radius:8px 8px 0 0">'
+        f'<h1 style="margin:0;color:#fff;font-size:22px;font-weight:800;'
+        f'letter-spacing:-.01em">🏆 Winner Picks</h1>'
+        f'<p style="margin:4px 0 0;color:#93c5fd;font-size:13px">{today}</p>'
+        f'</div>'
+    )
+
+    body += '<div style="padding:24px 32px;background:#fff">'
+
+    # ── SLIP 1 ────────────────────────────────────────────────────────────────
+    body += (f'<h2 style="margin:0 0 14px;font-size:15px;font-weight:800;'
+             f'color:{DARK};border-bottom:2px solid #e5e7eb;padding-bottom:8px">'
+             f'SLIP 1 — COMBINED BET</h2>')
+
     if best_ha:
         combined_odds = round(best_ha['odds'] * (best_leg2['odds'] if best_leg2 else 1), 2)
-        lines.append(f"Leg 1 (H/A):  {best_ha['match']} → {best_ha['pick']} @ {best_ha['odds']:.2f}")
-        lines.append(f"  Why: {best_ha['why']}")
+        body += pick_card("LEG 1 · H/A", best_ha['match'],
+                          best_ha['pick'], best_ha['odds'], best_ha['why'])
         if best_leg2:
-            mkt = best_leg2.get('market', '')
-            lines.append(f"Leg 2 ({mkt}): {best_leg2['match']} → {best_leg2['pick']} @ {best_leg2['odds']:.2f}")
-            lines.append(f"  Why: {best_leg2['why']}")
-            lines.append(f"Combined odds: {combined_odds:.2f}x")
-        else:
-            lines.append("Leg 2: No qualifying second leg this week")
-            lines.append(f"Combined odds: {best_ha['odds']:.2f}x (single leg)")
+            mkt = best_leg2.get('market', 'H/A')
+            body += pick_card(f"LEG 2 · {mkt}", best_leg2['match'],
+                              best_leg2['pick'], best_leg2['odds'], best_leg2['why'], AMBER)
+        body += (f'<div style="background:#1e3a5f;color:#fff;border-radius:6px;'
+                 f'padding:12px 16px;margin-bottom:20px;display:flex;'
+                 f'justify-content:space-between;align-items:center">'
+                 f'<span style="font-size:13px">Combined odds</span>'
+                 f'<span style="font-size:20px;font-weight:800">{combined_odds:.2f}x</span>'
+                 f'</div>')
     else:
-        lines.append("No qualifying H/A pick this week — SKIP SLIP 1")
+        body += f'<p style="color:{GRAY}">No qualifying H/A pick this week — skip Slip 1.</p>'
 
-    lines.append("")
-    lines.append("SLIP 2 — DRAW SINGLE")
-    lines.append("-" * 30)
+    # ── SLIP 2 ────────────────────────────────────────────────────────────────
+    body += (f'<h2 style="margin:20px 0 14px;font-size:15px;font-weight:800;'
+             f'color:{DARK};border-bottom:2px solid #e5e7eb;padding-bottom:8px">'
+             f'SLIP 2 — DRAW SINGLE</h2>')
     if best_draw:
-        lines.append(f"{best_draw['match']} → Draw @ {best_draw['odds']:.2f}")
-        lines.append(f"  Why: {best_draw['why']}")
+        body += pick_card("DRAW", best_draw['match'], "Draw",
+                          best_draw['odds'], best_draw['why'], "#7c3aed")
     else:
-        lines.append("No qualifying draw pick this week — SKIP SLIP 2")
+        body += f'<p style="color:{GRAY}">No qualifying draw this week — skip Slip 2.</p>'
 
-    if len(all_ha) > 1:
-        lines.append("")
-        lines.append("OTHER H/A CANDIDATES (not used):")
-        for p in all_ha[1:4]:
-            lines.append(f"  {p['match']} → {p['pick']} @ {p['odds']:.2f} (conf={p['conf']})")
+    # ── ALL CANDIDATES ────────────────────────────────────────────────────────
+    body += (f'<h2 style="margin:24px 0 14px;font-size:15px;font-weight:800;'
+             f'color:{DARK};border-bottom:2px solid #e5e7eb;padding-bottom:8px">'
+             f'All Candidates</h2>')
 
-    if len(all_draws) > 1:
-        lines.append("")
-        lines.append("OTHER DRAW CANDIDATES:")
-        for p in all_draws[1:3]:
-            lines.append(f"  {p['match']} → Draw @ {p['odds']:.2f} (conf={p['conf']})")
+    # H/A table
+    if all_ha:
+        body += section_title("H/A — all leagues (sorted by confidence)")
+        rows = [(p['match'], p.get('league',''), p.get('kickoff','')[:10],
+                 p['pick'], f"{p['odds']:.2f}", str(int(p['conf'])))
+                for p in all_ha[:8]]
+        body += _table(["Match","League","Kickoff","Pick","Odds","Conf"], rows)
 
-    lines.append("")
-    lines.append("Model: EV 1.68 | 75% slip win rate (last 27 weeks)")
-    lines.append("Good luck!")
+    # YC table
+    if all_yc:
+        body += section_title("YC Over 3.5 — all leagues (sorted by predicted cards)")
+        rows = [(p['match'], p.get('league',''), p.get('kickoff','')[:10],
+                 f"{p.get('yc_pred',0):.1f}", f"{p['odds']:.2f}")
+                for p in all_yc[:8]]
+        body += _table(["Match","League","Kickoff","YC avg","Odds"], rows)
 
-    return "\n".join(lines)
+    # BTTS table
+    if all_btts:
+        body += section_title("O2.5 + BTTS — all leagues (sorted by goal output)")
+        rows = [(p['match'], p.get('league',''), p.get('kickoff','')[:10],
+                 f"{p.get('home_gf5',0):.1f}", f"{p.get('away_gf5',0):.1f}",
+                 f"{p.get('avg_goals',0):.1f}", f"{p['odds']:.2f}")
+                for p in all_btts[:8]]
+        body += _table(["Match","League","Kickoff","Home gf5","Away gf5","Avg goals","Odds"], rows)
+
+    # Footer
+    body += (
+        f'<div style="margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb;'
+        f'font-size:12px;color:{GRAY};display:flex;justify-content:space-between">'
+        f'<span>EV 1.68 · 75% slip win rate (last 27 weeks)</span>'
+        f'<span>Good luck! 🍀</span>'
+        f'</div>'
+    )
+
+    body += '</div>'  # close padding div
+
+    # Wrap in full HTML
+    html = (
+        '<!DOCTYPE html><html><head><meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width,initial-scale=1">'
+        '</head><body style="margin:0;padding:20px;background:#f3f4f6;'
+        'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif">'
+        '<div style="max-width:600px;margin:0 auto;border-radius:8px;'
+        'overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.1)">'
+        + body +
+        '</div></body></html>'
+    )
+    return html
 
 
 def save_picks_to_db(best_ha, best_leg2, best_draw):
@@ -430,7 +548,7 @@ def save_picks_to_db(best_ha, best_leg2, best_draw):
     print(f"Picks saved to DB — week {week_label}")
 
 
-def send_email(subject, body):
+def send_email(subject, html):
     import resend
     cfg = EMAIL_CONFIG
     to_list = cfg['to_addr'] if isinstance(cfg['to_addr'], list) else [cfg['to_addr']]
@@ -439,7 +557,7 @@ def send_email(subject, body):
         "from":    cfg['from_addr'],
         "to":      to_list,
         "subject": subject,
-        "text":    body,
+        "html":    html,
     })
     print(f"Email sent to {', '.join(to_list)}")
 
@@ -462,8 +580,8 @@ if __name__ == "__main__":
     save_picks_to_db(best_ha, best_leg2, best_draw)
 
     # 4. Format & send
-    body = format_email(best_ha, best_leg2, best_draw, all_ha, all_draws)
-    print("\n" + body)
+    body = format_email(best_ha, best_leg2, best_draw, all_ha, all_draws, _yc, _btts)
+    print("\nEmail HTML generated.")
 
     today = datetime.today().strftime('%Y-%m-%d')
     send_email(f"Winner Picks {today}", body)
