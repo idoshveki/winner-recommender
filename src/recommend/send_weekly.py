@@ -31,7 +31,7 @@ import os as _os
 EMAIL_CONFIG = {
     "from_addr": "Winner Recommender <onboarding@resend.dev>",
     "api_key":   (_os.getenv("RESEND_API_KEY") or "").strip(),
-    "to_addr":   ["idoshveki@gmail.com", "adicang@gmail.com", "tal@milgapo.co.il", "shvekiasaf@gmail.com"],
+    "to_addr":   ["idoshveki@gmail.com"],  # Free Resend tier: only verified owner email. Add others after verifying a domain at resend.com/domains
 }
 DB_PATH    = ROOT / "data" / "db" / "winner.db"
 REPORT_DIR = ROOT / "data" / "reports"
