@@ -30,7 +30,7 @@ import pandas as pd
 import os as _os
 EMAIL_CONFIG = {
     "from_addr": "Winner Recommender <onboarding@resend.dev>",
-    "api_key":   _os.getenv("RESEND_API_KEY", ""),
+    "api_key":   (_os.getenv("RESEND_API_KEY") or "").strip(),
     "to_addr":   ["idoshveki@gmail.com", "adicang@gmail.com", "tal@milgapo.co.il", "shvekiasaf@gmail.com"],
 }
 DB_PATH    = ROOT / "data" / "db" / "winner.db"

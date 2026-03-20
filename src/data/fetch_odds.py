@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[2]
 from dotenv import load_dotenv
 load_dotenv(ROOT / ".env")
 
-API_KEY = os.getenv("ODDS_API_KEY")
+API_KEY = (os.getenv("ODDS_API_KEY") or "").strip()
 BASE_URL = "https://api.the-odds-api.com/v4"
 RAW_DIR = ROOT / "data" / "raw" / "odds"
 DB_PATH = ROOT / "data" / "db" / "winner.db"

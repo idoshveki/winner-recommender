@@ -24,7 +24,7 @@ def _get_api_key():
     except Exception:
         return os.getenv("SOFASCORE_API_KEY")
 
-API_KEY = _get_api_key()
+API_KEY = (_get_api_key() or "").strip()
 HOST = "sportapi7.p.rapidapi.com"
 BASE = f"https://{HOST}/api/v1"
 HEADERS = {
