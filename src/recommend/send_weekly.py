@@ -30,9 +30,11 @@ import pandas as pd
 # ── CONFIG — edit these ───────────────────────────────────────────────────────
 import os as _os
 EMAIL_CONFIG = {
-    "from_addr": "Winner Recommender <onboarding@resend.dev>",
-    "api_key":   (_os.getenv("RESEND_API_KEY") or "").strip(),
-    "to_addr":   ["idoshveki@gmail.com"],  # Free Resend tier: only verified owner email. Add others after verifying a domain at resend.com/domains
+    "smtp_host": _os.getenv("SMTP_HOST", "smtp.gmail.com"),
+    "smtp_port": int(_os.getenv("SMTP_PORT", "587")),
+    "from_addr": _os.getenv("SMTP_FROM", ""),        # e.g. yourname@gmail.com
+    "password":  _os.getenv("SMTP_PASSWORD", ""),    # Gmail: use App Password
+    "to_addr":   [a.strip() for a in _os.getenv("SMTP_TO", "idoshveki@gmail.com").split(",")],
 }
 DB_PATH    = ROOT / "data" / "db" / "winner.db"
 REPORT_DIR = ROOT / "data" / "reports"
@@ -647,16 +649,21 @@ def save_picks_to_db(best_ha, best_leg2, best_leg3, best_draw):
 
 
 def send_email(subject, html):
-    import resend
     cfg = EMAIL_CONFIG
     to_list = cfg['to_addr'] if isinstance(cfg['to_addr'], list) else [cfg['to_addr']]
-    resend.api_key = cfg['api_key']
-    resend.Emails.send({
-        "from":    cfg['from_addr'],
-        "to":      to_list,
-        "subject": subject,
-        "html":    html,
-    })
+
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = subject
+    msg['From']    = f"Winner Picks <{cfg['from_addr']}>"
+    msg['To']      = ', '.join(to_list)
+    msg.attach(MIMEText(html, 'html'))
+
+    with smtplib.SMTP(cfg['smtp_host'], cfg['smtp_port']) as server:
+        server.ehlo()
+        server.starttls()
+        server.login(cfg['from_addr'], cfg['password'])
+        server.sendmail(cfg['from_addr'], to_list, msg.as_string())
+
     print(f"Email sent to {', '.join(to_list)}")
 
 
