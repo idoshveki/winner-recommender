@@ -31,7 +31,7 @@ import pandas as pd
 import os as _os
 EMAIL_CONFIG = {
     "smtp_host": _os.getenv("SMTP_HOST", "smtp.gmail.com"),
-    "smtp_port": int(_os.getenv("SMTP_PORT", "587")),
+    "smtp_port": int(_os.getenv("SMTP_PORT") or "587"),
     "from_addr": _os.getenv("SMTP_FROM", ""),        # e.g. yourname@gmail.com
     "password":  _os.getenv("SMTP_PASSWORD", ""),    # Gmail: use App Password
     "to_addr":   [a.strip() for a in _os.getenv("SMTP_TO", "idoshveki@gmail.com").split(",")],
