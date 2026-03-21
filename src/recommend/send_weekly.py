@@ -658,12 +658,18 @@ def send_email(subject, html):
     msg['To']      = ', '.join(to_list)
     msg.attach(MIMEText(html, 'html'))
 
-    with smtplib.SMTP(cfg['smtp_host'], cfg['smtp_port']) as server:
-        server.ehlo()
-        server.starttls()
-        server.ehlo()
-        server.login(cfg['from_addr'], cfg['password'])
-        server.sendmail(cfg['from_addr'], to_list, msg.as_string())
+    try:
+        with smtplib.SMTP_SSL(cfg['smtp_host'], 465) as server:
+            server.login(cfg['from_addr'], cfg['password'])
+            server.sendmail(cfg['from_addr'], to_list, msg.as_string())
+    except Exception as ssl_err:
+        print(f"SSL (465) failed: {ssl_err} — trying STARTTLS (587)...")
+        with smtplib.SMTP(cfg['smtp_host'], 587) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(cfg['from_addr'], cfg['password'])
+            server.sendmail(cfg['from_addr'], to_list, msg.as_string())
 
     print(f"Email sent to {', '.join(to_list)}")
 
