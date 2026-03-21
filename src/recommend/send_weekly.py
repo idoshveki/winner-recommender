@@ -661,6 +661,7 @@ def send_email(subject, html):
     with smtplib.SMTP(cfg['smtp_host'], cfg['smtp_port']) as server:
         server.ehlo()
         server.starttls()
+        server.ehlo()
         server.login(cfg['from_addr'], cfg['password'])
         server.sendmail(cfg['from_addr'], to_list, msg.as_string())
 
