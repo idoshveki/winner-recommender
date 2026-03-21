@@ -172,7 +172,7 @@ with tab1:
 
     with st.spinner("Generating picks..."):
         try:
-            best_ha, best_leg2, best_draw, all_ha, all_draws, all_yc, all_btts = generate_picks()
+            best_ha, best_leg2, best_leg3, best_draw, all_ha, all_draws, all_yc, all_btts = generate_picks()
         except Exception as e:
             st.error(f"Error generating picks: {e}")
             best_ha = best_leg2 = best_draw = None
@@ -184,14 +184,21 @@ with tab1:
     with col_s1:
         st.markdown("**Slip 1 — Combined**")
         if best_ha:
-            combined_odds = round(best_ha['odds'] * (best_leg2['odds'] if best_leg2 else 1), 2)
-            st.metric("Combined odds", f"{combined_odds:.2f}×")
+            legs = [l for l in [best_ha, best_leg2, best_leg3] if l]
+            combined_odds = round(float(__import__('pandas').Series([l['odds'] for l in legs]).prod()), 2)
+            st.metric("Combined odds", f"{combined_odds:.2f}× ({len(legs)} legs)")
 
             leg2_tag = best_leg2.get('market', '2nd Leg') if best_leg2 else '2nd Leg'
+            leg3_tag = best_leg3.get('market', '3rd Leg') if best_leg3 else ''
             leg2_detail = (
                 f"{best_leg2['league']} · {best_leg2['kickoff']} · {best_leg2['pick']} @ {best_leg2['odds']:.2f}"
                 if best_leg2 else 'No qualifying second leg'
             )
+            leg3_html = f"""
+  <div class="leg-row">
+    <span class="tag">{leg3_tag}</span> <b>{best_leg3['match']}</b><br>
+    <small>{best_leg3['league']} · {best_leg3['kickoff']} · {best_leg3['pick']} @ {best_leg3['odds']:.2f}</small>
+  </div>""" if best_leg3 else ""
             st.markdown(f"""
 <div class="slip-box">
   <div class="leg-row">
@@ -201,7 +208,7 @@ with tab1:
   <div class="leg-row">
     <span class="tag">{leg2_tag}</span> <b>{best_leg2['match'] if best_leg2 else '—'}</b><br>
     <small>{leg2_detail}</small>
-  </div>
+  </div>{leg3_html}
 </div>
 """, unsafe_allow_html=True)
 
@@ -348,10 +355,11 @@ with tab2:
 
     already_saved = current_week_label in df['week'].values
     if best_ha and not already_saved:
-        combined_odds = round(best_ha['odds'] * (best_leg2['odds'] if best_leg2 else 1), 2)
+        _legs = [l for l in [best_ha, best_leg2, best_leg3] if l]
+        combined_odds = round(float(pd.Series([l['odds'] for l in _legs]).prod()), 2)
         pending_row = {
             'week': current_week_label, 'generated_at': None,
-            'n_legs': 2 if best_leg2 else 1, 'combined_odds': combined_odds,
+            'n_legs': len(_legs), 'combined_odds': combined_odds,
             'slip_won': None,
             'leg1_market': 'H/A', 'leg1_match': best_ha['match'],
             'leg1_pick': best_ha['pick'], 'leg1_odds': best_ha['odds'],
@@ -510,7 +518,7 @@ with tab2:
             tl_df,
             hide_index=True,
             use_container_width=True,
-            height=min(50 + len(tl_df) * 52, 1100),
+            height=min(50 + len(tl_df) * 38, 900),
             column_config={
                 'Week':         st.column_config.TextColumn(width='small'),
                 'Leg 1 — H/A': st.column_config.TextColumn(width='large'),
@@ -521,6 +529,37 @@ with tab2:
                 'Balance':      st.column_config.TextColumn(width='small'),
             }
         )
+
+        # ── Reasoning drill-down ───────────────────────────────────────────────
+        st.divider()
+        st.markdown("#### Reasoning")
+        all_weeks = df['week'].tolist()[::-1]
+        sel_reason_week = st.selectbox("Select week to see reasoning", all_weeks,
+                                       key='reason_week_sel',
+                                       format_func=lambda w: str(w)[:10])
+        reason_row = df[df['week'] == sel_reason_week].iloc[0]
+        r = reason_row
+
+        col_r1, col_r2, col_r3 = st.columns(3)
+        with col_r1:
+            st.markdown(f"**Leg 1 — H/A**")
+            st.markdown(f"`{r.get('leg1_match','—')}` · {r.get('leg1_pick','')} @ {r.get('leg1_odds','')}×")
+            if r.get('leg1_why'):
+                st.caption(r['leg1_why'])
+        with col_r2:
+            st.markdown(f"**Leg 2 — {r.get('leg2_market','') or '—'}**")
+            if r.get('leg2_match'):
+                st.markdown(f"`{r['leg2_match']}` @ {r.get('leg2_odds','')}×")
+                if r.get('leg2_why'):
+                    st.caption(r['leg2_why'])
+            else:
+                st.markdown("—")
+        with col_r3:
+            st.markdown("**Draw**")
+            if r.get('draw_match'):
+                st.markdown(f"`{r['draw_match']}` @ {r.get('draw_odds','')}×")
+            else:
+                st.markdown("—")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

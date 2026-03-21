@@ -23,6 +23,7 @@ from recommend.combined_slip_backtest import (
     build_features, score_ha, score_corner, score_draw
 )
 from data.sportapi_form import get_fixtures_with_ids, get_league_form, LEAGUE_TO_TOURNEY
+from data.fetch_oddsportal import fetch_live_odds_for_picks
 
 import pandas as pd
 
@@ -77,6 +78,41 @@ NAME_MAP = {
 
 UNRELIABLE_HOME = {'Tottenham', 'Man United', 'Chelsea', 'Brighton',
                    'West Ham', 'Bournemouth'}
+
+# ── Phase 3: EV helpers ───────────────────────────────────────────────────────
+BTTS_MIN_EV = 0.02   # minimum EV to include a BTTS pick (allow slightly below 5% to not over-filter)
+YC_MIN_EV   = 0.00   # YC: already gated by yc_pred >= 6.0 which calibrates to EV +6.7%
+
+# Calibrated BTTS+O2.5 hit rates (home_gf5 + away_gf5 thresholds, from Phase 1)
+# Used to compute EV from live odds
+def btts_est_prob(hgf5, agf5):
+    """Estimate BTTS+O2.5 probability from form stats (calibrated in Phase 1)."""
+    total = hgf5 + agf5
+    # Base 50.8% at threshold (3.6), scaling up with goal output
+    return min(0.65, 0.508 + max(0, total - 3.6) * 0.025)
+
+def yc_est_prob(yc_pred):
+    """Estimate YC Over 3.5 probability from yc_pred (calibrated hit rates)."""
+    if yc_pred >= 6.0: return 0.728
+    if yc_pred >= 5.5: return 0.670
+    if yc_pred >= 5.0: return 0.658
+    if yc_pred >= 4.5: return 0.667
+    return 0.600
+
+def estimate_1win_btts_o25(ref_btts, ref_ou25):
+    """
+    Estimate 1win's BTTS+O2.5 combined odds from bet365 reference odds.
+    - Multiply component probabilities (P_btts * P_ou25), apply correlation discount (~0.88)
+      since BTTS and O2.5 are positively correlated (both teams scoring helps reach O2.5)
+    - Apply 1win markup (~+8% better odds than bet365)
+    """
+    p_btts = 1 / ref_btts
+    p_ou25 = 1 / ref_ou25
+    # Correlation-adjusted combined probability
+    p_combined = p_btts * p_ou25 / 0.88
+    # Fair odds, then 1win markup (1win ~5-8% better than bet365)
+    fair_odds = 1 / p_combined
+    return round(fair_odds * 1.06, 2)
 
 
 def get_yc_avgs(history_df):
@@ -157,7 +193,7 @@ def generate_picks():
         SELECT home_team, away_team, outcome_name, price
         FROM odds_raw
         WHERE bookmaker = 'pinnacle' AND market = 'h2h'
-          AND commence_time <= datetime('now', '+5 days')
+          AND commence_time <= datetime('now', '+7 days')
           AND commence_time >= datetime('now', '-1 hours')
     """, conn)
 
@@ -171,7 +207,7 @@ def generate_picks():
 
     # ── Fetch upcoming fixtures + team IDs from SportAPI ──────────────────────
     print("Fetching upcoming fixtures from SportAPI...")
-    sportapi_fixtures = get_fixtures_with_ids(days=5)
+    sportapi_fixtures = get_fixtures_with_ids(days=7)
     print(f"  {len(sportapi_fixtures)} fixtures found across 4 leagues")
 
     pinnacle_odds['home_team'] = pinnacle_odds['home_team'].map(lambda x: NAME_MAP.get(x, x))
@@ -280,6 +316,32 @@ def generate_picks():
                 'pick': 'D', 'odds': pd_o, 'conf': round(pd_ * 100, 1),
                 'why': f"pd={pd_:.0%} gap={pts5_diff} home_dr={hf['dr10']:.0%} away_dr={af['dr10']:.0%}",
             })
+
+    # ── Phase 3: enrich BTTS picks with live reference odds from OddsPortal ──
+    print("Fetching live reference odds from OddsPortal (Phase 3)...")
+    try:
+        live_ref = fetch_live_odds_for_picks(btts_picks)
+        for pick in btts_picks:
+            ref = live_ref.get(pick['match'])
+            if ref:
+                est_odds = estimate_1win_btts_o25(ref['btts'], ref['ou25'])
+                pick['odds'] = est_odds
+                pick['ref_note'] = f"bet365 BTTS={ref['btts']:.2f} O/U={ref['ou25']:.2f} → est={est_odds:.2f}"
+            # Compute EV for every BTTS pick (whether live odds found or not)
+            m = __import__('re').search(r'home_gf5=([\d.]+).*away_gf5=([\d.]+)', pick.get('why',''))
+            hgf5 = float(m.group(1)) if m else 1.8
+            agf5 = float(m.group(2)) if m else 1.8
+            pick['ev'] = round(btts_est_prob(hgf5, agf5) * pick['odds'] - 1, 3)
+    except Exception as e:
+        print(f"  Live odds fetch failed: {e} — using assumed odds")
+
+    # Add EV to YC picks (using calibrated hit rates, assumed odds)
+    for pick in yc_picks:
+        prob = yc_est_prob(pick.get('conf', 5.0))
+        pick['ev'] = round(prob * pick['odds'] - 1, 3)
+
+    # Filter BTTS by minimum EV
+    btts_picks = [p for p in btts_picks if p.get('ev', 0) >= BTTS_MIN_EV]
 
     # ── Select best picks — decision tree ─────────────────────────────────
     ha_picks.sort(key=lambda x: -x['conf'])
@@ -464,24 +526,28 @@ def format_email(best_ha, best_leg2, best_leg3, best_draw, all_ha, all_draws, al
     # YC table — 'conf' IS yc_pred in yc_picks
     if all_yc:
         body += section_title("YC Over 3.5 — all leagues (sorted by predicted cards)")
-        rows = [(p['match'], p.get('league',''), p.get('kickoff','')[:10],
-                 f"{p.get('conf', p.get('yc_pred', 0)):.1f}", f"{p['odds']:.2f}")
-                for p in all_yc[:8]]
-        body += _table(["Match","League","Kickoff","YC avg","Odds"], rows)
+        rows = []
+        for p in all_yc[:8]:
+            ev_str = f"+{p['ev']:.1%}" if p.get('ev', 0) >= 0 else f"{p['ev']:.1%}"
+            rows.append((p['match'], p.get('league',''), p.get('kickoff','')[:10],
+                         f"{p.get('conf', p.get('yc_pred', 0)):.1f}",
+                         f"{p['odds']:.2f}", ev_str))
+        body += _table(["Match","League","Kickoff","YC avg","Odds","EV"], rows)
 
     # BTTS table — 'conf' = home_gf5 + away_gf5; parse from 'why' string
     if all_btts:
         body += section_title("O2.5 + BTTS — all leagues (sorted by goal output)")
         rows = []
         for p in all_btts[:8]:
-            # why = "home_gf5=X away_gf5=Y"
             import re as _re
             m = _re.search(r'home_gf5=([\d.]+).*away_gf5=([\d.]+)', p.get('why',''))
             hg = float(m.group(1)) if m else 0.0
             ag = float(m.group(2)) if m else 0.0
+            ev_str = f"+{p['ev']:.1%}" if p.get('ev', 0) >= 0 else f"{p['ev']:.1%}"
+            odds_str = p.get('ref_note', f"{p['odds']:.2f}")
             rows.append((p['match'], p.get('league',''), p.get('kickoff','')[:10],
-                         f"{hg:.1f}", f"{ag:.1f}", f"{hg+ag:.1f}", f"{p['odds']:.2f}"))
-        body += _table(["Match","League","Kickoff","Home gf5","Away gf5","Avg goals","Odds"], rows)
+                         f"{hg:.1f}", f"{ag:.1f}", odds_str, ev_str))
+        body += _table(["Match","League","Kickoff","Home gf5","Away gf5","Est odds","EV"], rows)
 
     # Footer
     body += (

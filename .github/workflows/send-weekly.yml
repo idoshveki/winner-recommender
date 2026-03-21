@@ -1,8 +1,8 @@
-name: Send Weekly Picks (Saturday)
+name: Send Weekly Picks (Friday)
 
 on:
   schedule:
-    - cron: '0 6 * * 6'   # 8am Israel (UTC+2), Saturday
+    - cron: '0 6 * * 5'   # 8am Israel (UTC+2), Friday
   workflow_dispatch:
 
 jobs:
