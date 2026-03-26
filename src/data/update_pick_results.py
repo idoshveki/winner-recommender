@@ -93,7 +93,12 @@ def _get_yc_from_stats_page(eid, league, home, away):
 
 def _fuzzy_match(a, b):
     a, b = a.lower().strip(), b.lower().strip()
-    return a == b or a in b or b in a
+    if a == b or a in b or b in a:
+        return True
+    # word-level: every word in shorter must prefix-match a word in longer
+    wa, wb = a.split(), b.split()
+    shorter, longer = (wa, wb) if len(wa) <= len(wb) else (wb, wa)
+    return all(any(lw.startswith(sw) or sw.startswith(lw) for lw in longer) for sw in shorter)
 
 
 def _resolve_from_livescore(home, away, market, pick, week_start, week_end):
