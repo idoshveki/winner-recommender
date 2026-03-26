@@ -30,11 +30,9 @@ import pandas as pd
 # ── CONFIG — edit these ───────────────────────────────────────────────────────
 import os as _os
 EMAIL_CONFIG = {
-    "smtp_host": _os.getenv("SMTP_HOST", "smtp.gmail.com"),
-    "smtp_port": int(_os.getenv("SMTP_PORT") or "587"),
-    "from_addr": _os.getenv("SMTP_FROM", ""),        # e.g. yourname@gmail.com
-    "password":  _os.getenv("SMTP_PASSWORD", ""),    # Gmail: use App Password
-    "to_addr":   [a.strip() for a in _os.getenv("SMTP_TO", "idoshveki@gmail.com").split(",")],
+    "api_key":  (_os.getenv("RESEND_API_KEY") or "").strip(),
+    "from_addr": "Winner Picks <onboarding@resend.dev>",
+    "to_addr":   ["idoshveki@gmail.com"],
 }
 DB_PATH    = ROOT / "data" / "db" / "winner.db"
 REPORT_DIR = ROOT / "data" / "reports"
@@ -652,25 +650,16 @@ def send_email(subject, html):
     cfg = EMAIL_CONFIG
     to_list = cfg['to_addr'] if isinstance(cfg['to_addr'], list) else [cfg['to_addr']]
 
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = subject
-    msg['From']    = f"Winner Picks <{cfg['from_addr']}>"
-    msg['To']      = ', '.join(to_list)
-    msg.attach(MIMEText(html, 'html'))
-
-    try:
-        with smtplib.SMTP_SSL(cfg['smtp_host'], 465) as server:
-            server.login(cfg['from_addr'], cfg['password'])
-            server.sendmail(cfg['from_addr'], to_list, msg.as_string())
-    except Exception as ssl_err:
-        print(f"SSL (465) failed: {ssl_err} — trying STARTTLS (587)...")
-        with smtplib.SMTP(cfg['smtp_host'], 587) as server:
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
-            server.login(cfg['from_addr'], cfg['password'])
-            server.sendmail(cfg['from_addr'], to_list, msg.as_string())
-
+    import resend
+    cfg = EMAIL_CONFIG
+    to_list = cfg['to_addr'] if isinstance(cfg['to_addr'], list) else [cfg['to_addr']]
+    resend.api_key = cfg['api_key']
+    resend.Emails.send({
+        "from":    cfg['from_addr'],
+        "to":      to_list,
+        "subject": subject,
+        "html":    html,
+    })
     print(f"Email sent to {', '.join(to_list)}")
 
 
