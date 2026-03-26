@@ -187,6 +187,11 @@ def update_results():
         if l1_match: active_legs.append(l1_hit)
         if l2_match: active_legs.append(l2_hit)
 
+        # Skip weeks with no legs (blank weeks)
+        if not active_legs:
+            print(f"  {week}: no legs — skipping")
+            continue
+
         # If any leg is a definitive miss, slip is lost — no need to wait for others
         if any(h == 0 for h in active_legs):
             slip_won = 0
