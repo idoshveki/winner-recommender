@@ -41,7 +41,18 @@ ODDS_API_MARKETS = {
 ODDS_API_REGIONS = "eu,uk"
 
 # Books we treat as sharp when forming the fair-value consensus.
-SHARP_BOOKS = ("pinnacle", "betfair_ex_uk", "betfair_ex_eu")
+#
+# Pinnacle only, deliberately. Betfair looked attractive (an exchange should be
+# the truest price) but its BACK prices alone are not a two-way market: best
+# back Over and best back Under are separated by the bid-ask spread, so
+# 1/over + 1/under overstates the margin badly. Measured on real fixtures,
+# Betfair cards showed 21.7% "overround" against Pinnacle's 6.3%, on 2 lines
+# versus Pinnacle's 5. That is the spread, not margin.
+#
+# To use Betfair properly we would need the *_lay markets too and would price
+# off the back/lay midpoint. Until then it is a soft-book comparison, not a
+# sharp reference.
+SHARP_BOOKS = ("pinnacle",)
 
 # The lines we model and price. Chosen to bracket the observed means
 # (cards 4.20, corners 9.66) rather than to match any book's headline line.

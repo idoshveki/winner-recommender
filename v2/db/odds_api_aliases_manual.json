@@ -1,0 +1,11 @@
+{
+  "_comment": "Human-reviewed Odds API name -> canonical team. Each was checked against our roster once. Kept in git so the mapping is reproducible from source, not hand-typed into a database.",
+  "La_Liga": {
+    "Deportivo La Coruña": "Deportivo de A Coruña",
+    "Deportivo La Coruna": "Deportivo de A Coruña"
+  },
+  "Bundesliga": {
+    "Borussia Monchengladbach": "Borussia M'gladbach",
+    "Borussia Mönchengladbach": "Borussia M'gladbach"
+  }
+}
