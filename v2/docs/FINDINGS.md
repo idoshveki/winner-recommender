@@ -79,3 +79,65 @@ comes from, and it is the first thing any book prices. Therefore:
 **Strategy B (price edge: de-vigged sharp consensus vs 1win) is the primary
 mechanism and needs no model at all. Strategy A (model edge) must prove it adds
 to B, at a deliberately low blend weight.** Build B first.
+
+## 2026-08-22 — First honest backtest: NO demonstrated edge vs Pinnacle
+
+Historical cards/corners odds **do exist** on The Odds API (10 credits per
+market per region per event). Pulled Pinnacle ladders at kickoff minus 3h for
+150 matches spread Feb–May 2026, trained on the 8,080 matches before
+2026-02-01, and bet at the real captured prices.
+
+### Headline, with error bars (20k bootstrap resamples, one bet per match-market)
+
+| subset | n | ROI | 95% CI | P(ROI ≤ 0) |
+|---|---|---|---|---|
+| all | 71 | +12.0% | [−11.0%, +35.1%] | 15.0% |
+| cards | 15 | +25.6% | [−30.1%, +82.1%] | 18.7% |
+| corners | 56 | +8.4% | [−16.7%, +33.3%] | 25.8% |
+| **corners excl. May** | 36 | **−3.6%** | [−34.6%, +28.2%] | 58.7% |
+
+**Nothing here is statistically distinguishable from zero.**
+
+### Two traps this backtest walked into, both caught
+
+1. **Selection bias in the cards sample.** Pinnacle's historical archive only
+   carries a multi-line cards ladder for May 2026; every other match has a
+   single line. My ladder fit requires ≥2 two-sided lines, so the cards
+   backtest silently ran on 25 May-only matches. Those matches averaged
+   **3.12 cards against 4.14** for the rest of the sample — end-of-season
+   fixtures have fewer cards. The "+42% ROI on cards" was a period effect the
+   model happened to sit on the right side of, not an edge.
+2. **Correlated bets inflating n.** Betting every qualifying line meant one
+   match contributed up to 8 "independent" bets. With `--one-per-market` the
+   sample drops from 60 to 15 for cards. Always report the decorrelated number.
+
+### The result that actually matters
+
+Unselected calibration across all 143 priced test matches, model vs Pinnacle:
+
+| market | line | model | book | actual | model Brier | book Brier |
+|---|---|---|---|---|---|---|
+| corners | 8.5 | 61.4% | 62.2% | 61.5% | 0.2298 | 0.2289 |
+| corners | 9.5 | 49.4% | 50.4% | 49.7% | 0.2384 | 0.2382 |
+| corners | 10.5 | 37.8% | 39.1% | 38.5% | 0.2271 | **0.2297** |
+| corners | 11.5 | 27.6% | 28.9% | 30.1% | 0.2066 | 0.2042 |
+
+The model is **as accurate as Pinnacle and no better** — it wins on one line of
+four, by 0.003. That is a respectable result for a from-scratch model and a
+fatal one for the strategy: matching a sharp book and then paying its 5.7–6.3%
+margin is a guaranteed slow loss.
+
+### Consequence for the design
+
+This confirms the plan's central bet and kills the alternative:
+
+* **Strategy A (model edge vs a sharp book) does not work.** Demonstrated, not
+  assumed. Do not stake money on it.
+* **Strategy B (price difference between a sharp book and a soft one) remains
+  untested**, because we have no 1win prices — historical or live.
+
+The simplifying assumption "1win prices = Pinnacle prices" removes the only
+source of edge this project has. Under that assumption the correct expected
+return is negative and roughly equal to the margin. **The entire thesis rests
+on 1win being materially different from Pinnacle, and that is now the single
+most important unknown.**
