@@ -55,25 +55,44 @@ def _get(path, params=None, retries=3):
     r.raise_for_status()
 
 
+def _current_season_id(tournament_id):
+    """Latest season id for a unique tournament. /seasons returns newest first."""
+    seasons = _get(f"/unique-tournament/{tournament_id}/seasons").get("seasons", [])
+    return seasons[0]["id"] if seasons else None
+
+
 def get_fixtures_with_ids(days=5):
     """
     Return upcoming fixtures for our 4 leagues in the next `days` days.
     Each fixture includes SportAPI team IDs needed for form lookups.
+
+    Walks each league's season fixture list — the date-keyed
+    /sport/football/scheduled-events/{date} endpoint was removed upstream.
 
     Returns list of dicts:
         league, tournament_id, home, home_id, away, away_id, date, kickoff_ts
     """
     fixtures = []
     seen = set()
-    for i in range(days + 1):
-        d = (datetime.today() + timedelta(days=i)).strftime("%Y-%m-%d")
-        data = _get(f"/sport/football/scheduled-events/{d}")
+    today = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+    floor_ts = today.timestamp()
+    cutoff_ts = (today + timedelta(days=days + 1)).timestamp()
+
+    for tournament_id in TOURNAMENT_IDS:
+        season_id = _current_season_id(tournament_id)
+        if not season_id:
+            print(f"  no season found for tournament {tournament_id} — skipping")
+            continue
+        data = _get(f"/unique-tournament/{tournament_id}/season/{season_id}/events/next/0")
         for e in data.get("events", []):
             tid = e.get("tournament", {}).get("uniqueTournament", {}).get("id")
             if tid not in TOURNAMENT_IDS:
                 continue
             status = e.get("status", {}).get("type", "")
             if status in ("finished", "cancelled"):
+                continue
+            ko = e.get("startTimestamp")
+            if ko is None or not (floor_ts <= ko < cutoff_ts):
                 continue
             key = (e["homeTeam"]["id"], e["awayTeam"]["id"])
             if key in seen:
@@ -87,8 +106,8 @@ def get_fixtures_with_ids(days=5):
                 "home_id":       e["homeTeam"]["id"],
                 "away":          e["awayTeam"]["name"],
                 "away_id":       e["awayTeam"]["id"],
-                "date":          datetime.fromtimestamp(e["startTimestamp"]).strftime("%Y-%m-%d"),
-                "kickoff_ts":    e["startTimestamp"],
+                "date":          datetime.fromtimestamp(ko).strftime("%Y-%m-%d"),
+                "kickoff_ts":    ko,
             })
     return fixtures
 

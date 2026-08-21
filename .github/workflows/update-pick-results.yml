@@ -18,7 +18,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install -q pandas python-dotenv
+        run: pip install -q pandas requests python-dotenv
 
       - name: Auto-fill pick results
         run: python src/data/update_pick_results.py
