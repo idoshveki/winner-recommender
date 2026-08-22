@@ -141,3 +141,55 @@ source of edge this project has. Under that assumption the correct expected
 return is negative and roughly equal to the margin. **The entire thesis rests
 on 1win being materially different from Pinnacle, and that is now the single
 most important unknown.**
+
+## 2026-08-22 — First real 1win prices. The 1.50 does not exist.
+
+Four fixtures captured by hand from the 1win app (`v2/data/onewin_quotes_2026-08-22.json`)
+and compared to Pinnacle ladders fitted the same day.
+
+| match | line | Pinnacle P | 1win P | gap | Pinnacle vig | 1win vig |
+|---|---|---|---|---|---|---|
+| Hull City v Man United | 3.5 | 60.4% | 55.8% | +4.6% | 6.0% | 8.2% |
+| Hull City v Man United | 4.5 | 41.5% | 35.5% | +5.9% | 6.0% | 9.0% |
+| Nott'm Forest v Leeds | 2.5 | 70.2% | 69.2% | +1.0% | 5.8% | 9.8% |
+| Nott'm Forest v Leeds | 3.5 | 49.8% | 49.1% | +0.7% | 5.8% | 8.1% |
+| Everton v Crystal Palace | 2.5 | 70.6% | 67.2% | +3.4% | 5.8% | 8.5% |
+| Everton v Crystal Palace | 3.5 | 50.3% | 47.1% | +3.2% | 5.8% | 8.4% |
+| Ipswich v Sunderland | 2.5 | 70.1% | 66.5% | +3.6% | 5.8% | 9.9% |
+| Ipswich v Sunderland | 3.5 | 50.0% | 45.9% | +4.1% | 5.8% | 8.1% |
+
+**Three conclusions.**
+
+1. **v1's central price was fiction.** It hardcoded 1.50 for Over 3.5 cards on
+   every pick, for 32 picks. Real 1win prices for that line are **1.67, 1.88,
+   1.95, 2.00** — and they vary by fixture, as Pinnacle's do (1.32 to 2.59).
+2. **1win is not lazy.** Mean absolute gap to Pinnacle's implied probability is
+   **3.3%**, and 1win's prices move with the matchup. The "soft book prices
+   flat, sharp book prices each game" thesis is wrong for this market.
+   1win's margin is **8.8% against Pinnacle's 5.9%** — worse, but not asleep.
+   Only **1 of 16** available bets cleared +2% EV.
+3. **But there is a consistent directional bias.** All eight comparisons have
+   the same sign: 1win's implied probability is **always below** Pinnacle's, by
+   0.7–5.9%. 1win systematically expects fewer cards. That makes **Over** the
+   better side at 1win every time, and +EV wherever the gap exceeds roughly half
+   the margin (~4.4%). On this sample that is the Hull City fixture only.
+
+This is a testable, narrow thesis and the first one in the project supported by
+real prices from the book we actually bet at. n=4 matches, one timestamp — it
+needs many more observations before it means anything.
+
+### The favourite leg is what kills accumulators
+
+Priced honestly, with the cards leg at 1win and the favourite at *Pinnacle*
+(1win will be worse, so this flatters the slip):
+
+| leg | price | true P | EV |
+|---|---|---|---|
+| Hull v Man Utd, cards Over 4.5 | 2.50 | 41.5% | **+3.7%** |
+| Inter to beat Monza | 1.19 | 80.8% | **−3.8%** |
+| **combined** | **2.97** | **33.6%** | **−0.2%** |
+
+On 50 NIS: the cards leg alone returns **+1.87** expected; adding the "easy"
+favourite turns it into **−0.09**. Short favourites are the worst-priced bets
+on the board, and multiplying legs multiplies margin. Every extra leg has to
+carry its own edge or it is a tax on the leg that has one.

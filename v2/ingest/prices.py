@@ -22,7 +22,7 @@ from v2.lib.config import (
 from v2.lib.jobs import connect, job
 from v2.model.devig import fit_ladder, ladder_from_outcomes, overround
 
-ODDS_API_MARKET_KEYS = ["alternate_totals_cards", "alternate_totals_corners"]
+ODDS_API_MARKET_KEYS = ["alternate_totals_cards", "alternate_totals_corners", "h2h"]
 MONTHLY_CAP = 15000          # 75% of the 20k plan, leaving headroom
 
 
@@ -55,14 +55,17 @@ def store_snapshots(conn, match_id: int, book: str, market: str, outcomes) -> in
     """Insert only prices that differ from the most recent stored value."""
     written = 0
     for o in outcomes:
-        if o.get("point") is None:
-            continue
-        line, side, price = float(o["point"]), o["name"], float(o["price"])
+        # h2h has no point/line; totals markets do. Skipping null points here
+        # silently discarded every 1X2 price.
+        point = o.get("point")
+        line = float(point) if point is not None else None
+        side, price = o["name"], float(o["price"])
         last = conn.execute(
             """select price from odds_snapshots
-               where match_id=%s and bookmaker=%s and market=%s and line=%s and side=%s
+               where match_id=%s and bookmaker=%s and market=%s and side=%s
+                 and line is not distinct from %s
                order by fetched_at desc limit 1""",
-            (match_id, book, market, line, side),
+            (match_id, book, market, side, line),
         ).fetchone()
         if last and float(last[0]) == price:
             continue

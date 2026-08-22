@@ -1,0 +1,12 @@
+{
+  "_comment": "1win cards prices captured by hand from the app on 2026-08-22. The first real observation of the book we actually bet at. Every v1 EV number assumed a flat 1.50 for Over 3.5 cards; none of these is 1.50.",
+  "source": "1win app screenshots",
+  "captured_at": "2026-08-22",
+  "market": "yellow_cards_total",
+  "quotes": {
+    "Hull City v Manchester United":    {"3.5": [1.67, 2.07], "4.5": [2.50, 1.45]},
+    "Nottingham Forest v Leeds United": {"2.5": [1.35, 2.80], "3.5": [1.88, 1.82]},
+    "Everton v Crystal Palace":         {"2.5": [1.40, 2.70], "3.5": [1.95, 1.75]},
+    "Ipswich Town v Sunderland":        {"2.5": [1.40, 2.60], "3.5": [2.00, 1.72]}
+  }
+}
