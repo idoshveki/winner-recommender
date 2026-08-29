@@ -597,3 +597,61 @@ favourites and draws**, and its largest is on longshots. But favourites at
 Pinnacle's closing price return zero, and at 1win's 8.4% margin instead of
 Pinnacle's ~3.5% the same bets lose roughly 5%. The bias is real; it is not
 large enough to sell.
+
+## 2026-08-29 — Feature mart, rule scan, and why hit rate cannot be bought
+
+Built two tables so rules can be written against columns instead of rebuilt
+each time. Everything is as-of before kickoff; rolling stores update only after
+a row is emitted, so lookahead is structurally impossible.
+
+- **`team_match_form`** — 17,352 rows (one per team per match): league position,
+  season points, last-5/last-10 form, venue-split card/corner/goal averages,
+  win/loss/unbeaten/winless streaks, `last5` result string, days rest.
+- **`match_features`** — 8,676 rows: round number, season stage, month, the
+  v1-style combined predictors (`cards_pred`, `corners_pred`, `goals_pred`,
+  `fouls_pred`), position/points/form differentials, and every outcome.
+
+### The rules work
+
+Scanned 5,126 rules (466 filter combinations × 11 outcomes). Unlike the
+team-name rules, the top ones **held up out of sample**:
+
+| rule | explore | held out | n |
+|---|---|---|---|
+| big mismatch + home on 3+ win streak → not away win | 89.4% | **88.9%** | 63 |
+| big mismatch + home in form → not away win | 89.2% | **87.2%** | 180 |
+| Bundesliga + corners_pred≥11 → goals over 1.5 | 88.4% | 84.1% | 151 |
+| home in form + away winless → not away win | 85.6% | **88.8%** | 134 |
+
+Mean change from exploratory to held-out: **+1.1 points**. These are real
+football relationships.
+
+### And they are already in the price
+
+| rule | n | hit rate | fair odds | ROI at fair | ROI at 1win's margin |
+|---|---|---|---|---|---|
+| big mismatch + home win streak≥3 | 185 | **90.3%** | **1.13** | +1.81% | **−6.08%** |
+| big mismatch + home in form | 515 | 89.1% | 1.19 | +2.70% | −5.26% |
+| home in form + away winless≥3 | 399 | 86.5% | 1.19 | +1.45% | −6.42% |
+| *(all matches, baseline)* | 7,975 | 68.6% | 1.59 | −0.95% | −8.63% |
+
+### The relationship that ends the search
+
+Hit rate and price are the same number wearing different clothes:
+
+| market-implied band | n | actual hit rate | average fair odds |
+|---|---|---|---|
+| 85%+ | 1,409 | 90.8% | **1.11** |
+| 75–85% | 1,913 | 81.7% | 1.25 |
+| 65–75% | 1,736 | 71.9% | **1.43** |
+| 55–65% | 1,265 | 58.1% | **1.67** |
+| under 55% | 1,652 | 39.2% | 2.52 |
+
+**Bets priced at 1.50–1.60 hit at 63–67% — exactly break-even — because that is
+what 1.50–1.60 means.** Finding a 90% rule is easy and ours are genuinely good;
+they are priced at 1.13. The odds cannot be separated from the hit rate,
+because the odds *are* the hit rate.
+
+The only visible bright spot is that these short-priced rules return +1.5% to
++2.7% at fair value against the −0.95% baseline — the favourite-longshot bias
+again. It does not survive contact with any real margin.
