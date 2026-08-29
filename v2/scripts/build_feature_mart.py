@@ -20,7 +20,12 @@ def mean(xs) -> Optional[float]:
 
 
 class TeamState:
-    """Everything we track about one team within one season."""
+    """Rolling history for a team. Card/foul/corner averages carry ACROSS
+    seasons; only the league-table fields reset.
+
+    Keying the whole object by season was wrong: it left every team with no
+    card history for the first five rounds, so cards_pred was 0 in August and
+    every side looked out of form on three games played."""
 
     def __init__(self):
         self.played = 0
@@ -86,6 +91,13 @@ class TeamState:
             days_rest=min(rest, 60) if rest is not None else None,
         )
 
+    def new_season(self):
+        """Reset only what is season-specific. Rolling form persists."""
+        self.played = 0
+        self.points = 0
+        self.gf = 0
+        self.ga = 0
+
     def update(self, venue, pts, gf, ga, cards, cards_against, corners, fouls, shots, date):
         self.played += 1
         self.points += pts
@@ -119,7 +131,8 @@ def main() -> int:
             order by m.kickoff_utc, m.id""").fetchall()
         print(f"  {len(rows)} matches")
 
-        state: Dict[tuple, TeamState] = defaultdict(TeamState)
+        state: Dict[tuple, TeamState] = defaultdict(TeamState)   # (league, team)
+        seen_season: Dict[tuple, int] = {}
         standings: Dict[tuple, Dict[int, int]] = defaultdict(dict)   # (lg,season) -> team: pts
         form_rows, feat_rows = [], []
 
@@ -127,7 +140,12 @@ def main() -> int:
             (mid, lg, season, ko, ht, at, hg, ag, hy, ay, hr, ar,
              hc, ac, hf, af, hs, a_s) = r
             date = ko.date().isoformat()
-            key = lambda t: (lg, season, t)
+            key = lambda t: (lg, t)
+            for t in (ht, at):
+                if seen_season.get((lg, t)) != season:
+                    if (lg, t) in seen_season:
+                        state[(lg, t)].new_season()
+                    seen_season[(lg, t)] = season
 
             # league position as of now, from the running table
             table = standings[(lg, season)]

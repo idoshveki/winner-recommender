@@ -84,6 +84,8 @@ def match_statistics(event_id: int) -> Dict[str, int]:
         "yellow cards": ("home_yellow", "away_yellow"),
         "red cards":    ("home_red", "away_red"),
         "fouls":        ("home_fouls", "away_fouls"),
+        "total shots":  ("home_shots", "away_shots"),
+        "shots on target": ("home_shots_ot", "away_shots_ot"),
     }
     out: Dict[str, int] = {}
     for period in data.get("statistics", []):
@@ -121,3 +123,9 @@ def iter_league_seasons(from_year: int = 2020) -> Iterator[tuple]:
                 continue
             if start >= from_year:
                 yield league, tid, s["id"], label
+
+
+def finished_events(tournament_id: int, season_id: int, page: int = 0) -> List[dict]:
+    """Most recently completed matches for a league-season."""
+    data = _get(f"/unique-tournament/{tournament_id}/season/{season_id}/events/last/{page}")
+    return data.get("events", [])

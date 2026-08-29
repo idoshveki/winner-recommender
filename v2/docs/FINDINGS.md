@@ -703,3 +703,29 @@ established, and it is worth **one specific, cheap test** rather than a stake.
 Real 1win prices for foul-heavy La Liga matches. Everything above rests on a
 derived price; 20-30 observed quotes would replace the assumption that is
 currently doing the work. Screenshots are the only way to get them.
+
+## 2026-08-29 — Results ingest, a season-boundary bug, and the watchlist
+
+**Built the job v1 never had working.** `v2/ingest/results.py` pulls finished
+matches and their statistics from SofaScore by event id. Data is now current to
+today rather than 2026-05-24, and a run writing zero rows is an error.
+
+**Season-boundary bug, found while building the watchlist.** The feature mart
+keyed team state by `(league, season, team)`, so *all* rolling history reset
+each August. Consequences: `cards_pred` was 0 for the first five rounds of
+every season, and every side looked out of form on three games played, so
+"both poor form" fired spuriously on early-season matches. Fixed — points and
+league position reset each season, rolling card/foul/corner averages carry
+across.
+
+Re-ran the priced analysis on the corrected mart. The `fouls_pred >= 28` lead
+is essentially unchanged: **82.6% hit, +15.6%, CI [+2%, +29%], n=65** against
++16.8% before. So the bug neither created nor concealed it — and the earlier
+verdict stands: it rests on a derived price whose red-rate assumption moves the
+answer by 20 points, and it returns only **+0.9%** against Pinnacle's observed
+quote.
+
+**Watchlist** (`v2/scripts/watchlist.py`) lists upcoming fixtures clearing the
+threshold, so quotes get captured on the matches that matter rather than at
+random. Roughly 15-20 qualify per La Liga season, which is also the honest
+constraint: this is a thin rule.
