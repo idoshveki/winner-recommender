@@ -415,3 +415,60 @@ sign.
    most in the leagues with the most red cards, which is where v1 exclusively bet.
 3. The correct read on "La Liga odds aren't bad": compared like with like they
    are **−5% to −15%**, among the worst we have measured.
+
+## 2026-08-29 — Yellows-only model: built, and it loses to 1win by ~12%
+
+Built the model against the quantity 1win actually settles.
+
+**Predictive accuracy** (train ≤2024-06-30, test n=2,784, four lines):
+pooled GBM Brier **0.2066** vs 0.2145 league base rate — **+3.67%**. The best
+predictor this project has produced.
+
+**1win's pricing structure, measured on 10 captured quotes:**
+
+- Its implied yellows mean equals Pinnacle's book-rule mean minus 2x the
+  league red rate, to within **+0.046 cards (sd 0.084)** across the six matches
+  where we hold both books.
+- Its two-way margin is **8.4% (sd 0.4)** against Pinnacle's ~5.9%.
+
+So 1win's price is not an independent opinion. It is **Pinnacle's number,
+correctly converted to yellows, with 2.5 points more margin.** A price
+predictor built on that reproduces the real quotes to **3.0% mean absolute
+error** with no bias.
+
+**Result against those prices** (447 match-lines, 149 matches):
+
+| | Brier |
+|---|---|
+| our model | 0.2048 |
+| Pinnacle converted to yellows | **0.1958** |
+
+| threshold | n | ROI | 95% CI |
+|---|---|---|---|
+| 0% | 309 | −11.5% | [−24.1%, +1.9%] |
+| 2% | 288 | −13.7% | [−27.2%, +0.5%] |
+| 5% | 236 | −12.1% | [−26.8%, +4.1%] |
+
+**Gate: FAIL.** The arithmetic is simple and was foreseeable: we do not beat
+Pinnacle, and 1win is a wider-margin copy of Pinnacle. Betting into a worse
+version of a book you cannot beat loses the margin plus your own error.
+
+### On collecting more 1win prices
+
+More quotes would sharpen the estimate of a relationship we have already
+measured to within 0.05 cards. They cannot create an edge, because the
+bottleneck is not knowledge of 1win's prices — it is that our probabilities are
+worse than Pinnacle's. Scraping is therefore the wrong thing to automate next.
+
+### What would actually change the answer
+
+Only information Pinnacle does not have at the time it prices. Two candidates:
+
+1. **Referee assignments**, published 1–2 days before kickoff. The strongest
+   known predictor of cards, and absent from our features for three of four
+   leagues. Pinnacle almost certainly uses it, so this is more likely to close
+   our gap than to open a new one.
+2. **Confirmed lineups**, ~1 hour before kickoff, which Pinnacle also prices.
+
+Neither is obviously winnable. The honest read is that the totals market for
+cards is efficiently priced and our data contains nothing the market lacks.

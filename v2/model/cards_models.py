@@ -39,6 +39,17 @@ from sklearn.isotonic import IsotonicRegression
 
 from v2.model.features import FeatureRow
 
+import os
+
+
+def _TARGET() -> str:
+    """Which card definition to model.
+
+    target_cards_book  - yellows + 2x reds, how Pinnacle settles
+    target_cards       - yellows only, how 1win's "Yellow cards" market settles
+    """
+    return os.environ.get("CARD_TARGET", "target_cards_book")
+
 # Richer than the existing CARD_FEATURES: adds fouls on both sides of the
 # ledger (committed and drawn) plus shots as a proxy for how open the game is.
 CARD_TOTAL_FEATURES = [
@@ -192,7 +203,7 @@ def train_line_gbm(rows: Sequence[FeatureRow], lines: Sequence[float],
     groups = [("ALL", rows)] if pooled else [(lg, [r for r in rows if r.league == lg])
                                              for lg in leagues]
     for league, grp in groups:
-        sub = [r for r in grp if r.usable() and r.target_cards_book is not None]
+        sub = [r for r in grp if r.usable() and getattr(r, _TARGET()) is not None]
         if len(sub) < 300:
             continue
         means = _means(sub, names)
@@ -202,7 +213,7 @@ def train_line_gbm(rows: Sequence[FeatureRow], lines: Sequence[float],
             for i, r in enumerate(sub):
                 onehot[i, leagues.index(r.league)] = 1.0
             X = np.hstack([X, onehot])
-        totals = np.array([r.target_cards_book for r in sub])
+        totals = np.array([getattr(r, _TARGET()) for r in sub])
         # hold out the last 20% within TRAIN for calibration - never test data
         cut = int(len(sub) * 0.8)
         for line in lines:

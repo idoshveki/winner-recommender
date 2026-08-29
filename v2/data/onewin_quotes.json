@@ -1,0 +1,26 @@
+{
+  "_comment": "Every 1win 'Yellow cards. Total' quote captured by hand. This market is YELLOWS ONLY - 1win carries a separate red-card market - so it is a different quantity from Pinnacle's totals_cards, which settles a red as two. Prices are [over, under].",
+  "market": "yellow_cards_total",
+  "matches": [
+    {"date": "2026-08-22", "league": "EPL", "match": "Hull City v Manchester United",
+     "lines": {"3.5": [1.67, 2.07], "4.5": [2.50, 1.45]}},
+    {"date": "2026-08-22", "league": "EPL", "match": "Nottingham Forest v Leeds United",
+     "lines": {"2.5": [1.35, 2.80], "3.5": [1.88, 1.82]}},
+    {"date": "2026-08-22", "league": "EPL", "match": "Everton v Crystal Palace",
+     "lines": {"2.5": [1.40, 2.70], "3.5": [1.95, 1.75]}},
+    {"date": "2026-08-22", "league": "EPL", "match": "Ipswich Town v Sunderland",
+     "lines": {"2.5": [1.40, 2.60], "3.5": [2.00, 1.72]}},
+    {"date": "2026-08-29", "league": "La_Liga", "match": "Real Madrid v Malaga",
+     "lines": {"3.5": [1.63, 2.13], "4.5": [2.47, 1.48]}},
+    {"date": "2026-08-29", "league": "La_Liga", "match": "Sevilla v Atletico Madrid",
+     "lines": {"3.5": [1.43, 2.55], "4.5": [2.02, 1.70]}},
+    {"date": "2026-08-29", "league": "La_Liga", "match": "Real Sociedad v Espanyol",
+     "lines": {"3.5": [1.36, 2.90], "4.5": [1.85, 1.85]}},
+    {"date": "2026-08-29", "league": "La_Liga", "match": "unidentified-1",
+     "lines": {"2.5": [1.33, 3.05], "3.5": [1.80, 1.90]}},
+    {"date": "2026-08-29", "league": "La_Liga", "match": "unidentified-2",
+     "lines": {"3.5": [1.44, 2.60], "4.5": [2.02, 1.70]}},
+    {"date": "2026-08-29", "league": "La_Liga", "match": "unidentified-3",
+     "lines": {"3.5": [1.45, 2.55], "4.5": [2.05, 1.68]}}
+  ]
+}

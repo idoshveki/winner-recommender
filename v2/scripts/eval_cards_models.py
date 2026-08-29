@@ -21,6 +21,8 @@ from v2.lib.jobs import connect
 from v2.model import cards_models, counts, features
 
 TRAIN_END = "2024-06-30"
+import os
+TARGET = os.environ.get("CARD_TARGET", "target_cards_book")
 LINES = (2.5, 3.5, 4.5, 5.5)
 
 
@@ -65,10 +67,10 @@ def main() -> int:
     feats = features.build(rows)
     train = [f for f in feats if str(f.kickoff)[:10] < TRAIN_END]
     test = [f for f in feats if str(f.kickoff)[:10] >= TRAIN_END
-            and f.usable() and f.target_cards_book is not None]
+            and f.usable() and getattr(f, TARGET) is not None]
     print(f"train {len(train)} matches (< {TRAIN_END})   test {len(test)}\n")
 
-    glm = counts.train(train, "target_cards_book", features.CARD_FEATURES, "cards")
+    glm = counts.train(train, TARGET, features.CARD_FEATURES, "cards")
     conv = cards_models.train_team_conv(train)
     gbm = cards_models.train_line_gbm(train, LINES)
     print(f"  glm      leagues {sorted(glm.by_league)}")
@@ -80,7 +82,7 @@ def main() -> int:
     base = {}
     lgmean = {}
     for lg in sorted({f.league for f in train}):
-        sub = [f.target_cards_book for f in train if f.league == lg and f.target_cards_book is not None]
+        sub = [getattr(f, TARGET) for f in train if f.league == lg and getattr(f, TARGET) is not None]
         lgmean[lg] = float(np.mean(sub))
         for L in LINES:
             base[(lg, L)] = sum(1 for x in sub if x > L) / len(sub)
@@ -97,7 +99,7 @@ def main() -> int:
             p_gbm = gbm.p_over(f, L)
             if p_glm is None or p_cnv is None or p_gbm is None:
                 continue
-            ys.append(1 if f.target_cards_book > L else 0)
+            ys.append(1 if getattr(f, TARGET) > L else 0)
             preds["base"].append(base[(f.league, L)])
             mu = lgmean[f.league]
             preds["poisson"].append(1 - pois(mu).cdf(math.floor(L)))
