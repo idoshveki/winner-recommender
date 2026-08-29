@@ -361,3 +361,57 @@ card thesis included. The corrected league mean is **4.48 cards**, not 4.12.
 **Model B is still the best predictor we have (+3.84% over base rate) and it
 still loses to Pinnacle.** Being better than a naive baseline and being better
 than the market are different achievements, and only the second one pays.
+
+## 2026-08-29 — 1win prices YELLOWS; Pinnacle prices CARDS. This explains everything.
+
+Four more 1win screenshots, all La Liga, prompted the check that closes the loop.
+
+1win's market is labelled **"Yellow cards. Total"** and the app carries a
+*separate* "Will a red card be shown?" market. Pinnacle's `totals_cards`
+settles a red as two (established 2026-08-29 above). **These are different
+quantities**, and the difference is large in exactly the leagues we care about:
+
+| league | reds/match | yellows | book-rule | gap |
+|---|---|---|---|---|
+| **La Liga** | 0.249 | 4.71 | 5.21 | **0.50** |
+| Serie A | 0.191 | 4.24 | 4.62 | 0.38 |
+| Bundesliga | 0.143 | 3.85 | 4.13 | 0.28 |
+| EPL | 0.116 | 3.64 | 3.87 | 0.23 |
+
+### It reverses the La Liga "value"
+
+1win pays more than Pinnacle on every line — which looks like an edge until you
+price the right quantity:
+
+| match | line | 1win | EV vs Pinnacle's *cards* | EV vs *yellows* |
+|---|---|---|---|---|
+| Sevilla v Atlético | 3.5 | 1.43 | +0.0% | **−12.0%** |
+| Sevilla v Atlético | 4.5 | 2.02 | +4.3% | **−14.8%** |
+| Real Sociedad v Espanyol | 3.5 | 1.36 | +3.2% | **−6.2%** |
+| Real Sociedad v Espanyol | 4.5 | 1.85 | +10.1% | **−5.6%** |
+
+1win's longer prices are not generosity. They are the correct price for a
+**less likely event**.
+
+### It explains the losing bet
+
+On 2026-08-22 I observed that 1win's implied probabilities sat consistently
+*below* Pinnacle's, by 0.7–5.9%, and wrote that this made Over "systematically
+the better side at 1win". The red-card adjustment alone predicts a gap of
+**+3.4%**; the observed mean gap was **+3.3%**.
+
+The signal was the market definition, not a pricing bias. Acting on it, I
+recommended Hull City Over 4.5 at 2.50 — pricing a *yellows* market off a
+*cards* distribution. It lost, and all four Over 3.5 bets at 1win would also
+have lost. That was not variance; it was a systematic error with a predictable
+sign.
+
+### Consequences
+
+1. **To bet 1win, model yellows only.** Pinnacle's cards market is not a valid
+   benchmark without subtracting ~2x the expected reds — and that adjustment is
+   twice as large in La Liga as in the EPL.
+2. **Every EV figure computed against 1win in this project was biased upward**,
+   most in the leagues with the most red cards, which is where v1 exclusively bet.
+3. The correct read on "La Liga odds aren't bad": compared like with like they
+   are **−5% to −15%**, among the worst we have measured.
