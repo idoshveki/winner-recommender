@@ -472,3 +472,58 @@ Only information Pinnacle does not have at the time it prices. Two candidates:
 
 Neither is obviously winnable. The honest read is that the totals market for
 cards is efficiently priced and our data contains nothing the market lacks.
+
+## 2026-08-29 — Line shopping: soft book vs sharp line. Also dead.
+
+Tested the one thesis never properly examined, with **no model at all**, on
+~8,000 matches from the free archive (vs 149–600 for every previous test).
+Bet365 as the soft book, Pinnacle as the sharp reference.
+
+**Negative control passed:** betting Pinnacle's own price against its own fair
+value returned −4.06% (1X2) and −3.32% (O/U) — almost exactly the margin,
+confirming the de-vig and settlement are sound.
+
+### Held-out seasons (2024/25–2025/26, n=2,892)
+
+| arm | market | ROI at 0% → 5% | gate |
+|---|---|---|---|
+| A close vs close | 1X2 | −10.7% → **−46.2%** | FAIL |
+| A close vs close | O/U 2.5 | −9.8% → −31.2% | FAIL |
+| A close vs close | Asian handicap | −10.6% → −15.1% | FAIL |
+| **B open vs open (actionable)** | 1X2 | −3.9% → **−36.7%** | FAIL |
+| C open vs close *(lookahead)* | 1X2 | −2.4% → +2.1% | flat |
+| C open vs close *(lookahead)* | Asian handicap | +3.8% → +2.8% | FAIL |
+| Max price anywhere | 1X2 | −5.8% → −11.3% | FAIL |
+
+Every arm declines as more edge is demanded — the noise fingerprint, now
+appearing on 2,892 held-out matches rather than 149.
+
+### A lookahead bug I caught in my own design
+
+Arm B was first built as "Bet365 **opening** price vs Pinnacle **closing** fair
+value", and on the exploratory set it looked excellent: Asian handicap +3.4% →
++7.6%, rho=+1.00, and bootstrap CIs that **excluded zero at every threshold**
+on n=3,761.
+
+It was not a strategy. At the moment you place a bet on an opening price, the
+closing line does not exist. Selecting with it is lookahead — the arm was
+measuring closing-line value, a diagnostic, not something executable.
+
+Rebuilt to compare prices from the same moment (Bet365 open vs Pinnacle open),
+the sample collapsed from 3,762 to 636 and the held-out ROI went to −3.9%.
+
+**That collapse is itself the finding.** Out of ~8,000 matches, Bet365's
+opening price beats Pinnacle's simultaneous fair value only ~600 times, and
+those occasions are not profitable. Two books priced at the same moment simply
+do not diverge enough to bet.
+
+### What survives
+
+Only the labelled-lookahead Arm C shows a small persistent positive on the
+Asian handicap (~+3%), which is genuine closing-line value: Bet365's openings
+do sit slightly off where the market ends up. Acting on it would require
+predicting the close — which is exactly what our models cannot do, having
+failed to beat Pinnacle in every market tested.
+
+**Per the pre-registered stopping rule, the line-shopping thesis is finished.**
+No re-running with different books, markets or windows.

@@ -59,6 +59,7 @@ COLUMN_MAP = {
     "B365C>2.5": "b365_close_over25", "B365C<2.5": "b365_close_under25",
     "MaxC>2.5": "max_close_over25", "MaxC<2.5": "max_close_under25",
     "B365>2.5": "b365_open_over25", "B365<2.5": "b365_open_under25",
+    "P>2.5": "pinnacle_open_over25", "P<2.5": "pinnacle_open_under25",
     "Max>2.5": "max_open_over25", "Max<2.5": "max_open_under25",
     # asian handicap - PCAHH/PCAHA is Pinnacle's CLOSING handicap price
     "AHCh": "ah_close_line",
@@ -100,6 +101,7 @@ FLOAT_FIELDS = {
     "b365_close_over25", "b365_close_under25",
     "max_close_over25", "max_close_under25",
     "b365_open_over25", "b365_open_under25",
+    "pinnacle_open_over25", "pinnacle_open_under25",
     "max_open_over25", "max_open_under25",
     "ah_close_line",
     "pinnacle_close_ah_home", "pinnacle_close_ah_away",

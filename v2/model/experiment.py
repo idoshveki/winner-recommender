@@ -123,21 +123,38 @@ def edge_monotonicity(bets_by_threshold: dict) -> Tuple[bool, str]:
     no edge should exist - the incremental-information coefficient came back
     c=+0.507, p=0.044. It looked like a finding. But out of sample the money
     test returned -9.6% ROI at a 0% threshold, -17.5% at 2% and -26.6% at 5%.
+    Demanding more edge made it worse, monotonically: the fingerprint of a
+    model whose disagreements with the market are its own errors.
 
-    Demanding more edge made it worse, monotonically. That is the fingerprint
-    of a model whose disagreements with the market are its own errors: filter
-    for the biggest disagreements and you concentrate the mistakes.
+    The first version of this test only failed when EVERY step declined, which
+    passed sequences like -3.6% -> +4.7% -> +0.9% -> +12.2% -> +29.9% that
+    plainly wobble. It now requires a non-negative Spearman rank correlation
+    between threshold and ROI, and that the top threshold beat the bottom.
 
     `bets_by_threshold` maps a minimum-edge threshold to (n, roi).
     """
     thresholds = sorted(bets_by_threshold)
     rois = [bets_by_threshold[t][1] for t in thresholds]
-    if len(rois) < 2:
-        return False, "need at least two thresholds"
-    declining = all(b <= a + 1e-9 for a, b in zip(rois, rois[1:]))
-    if declining:
-        return False, (f"ROI declines as the edge threshold rises "
-                       f"({' -> '.join(f'{r:+.1%}' for r in rois)}): the "
-                       f"disagreements are model error, not market error")
-    return True, (f"ROI holds or improves with the threshold "
-                  f"({' -> '.join(f'{r:+.1%}' for r in rois)})")
+    if len(rois) < 3:
+        return False, "need at least three populated thresholds"
+
+    def rank(xs):
+        order = sorted(range(len(xs)), key=lambda i: xs[i])
+        r = [0.0] * len(xs)
+        for pos, i in enumerate(order):
+            r[i] = float(pos)
+        return r
+
+    rt, rr = rank(list(map(float, thresholds))), rank(rois)
+    n = len(rt)
+    mt, mr = sum(rt) / n, sum(rr) / n
+    num = sum((a - mt) * (b - mr) for a, b in zip(rt, rr))
+    den = (sum((a - mt) ** 2 for a in rt) * sum((b - mr) ** 2 for b in rr)) ** 0.5
+    rho = num / den if den else 0.0
+
+    seq = " -> ".join(f"{r:+.1%}" for r in rois)
+    if rho < 0:
+        return False, f"ROI trends DOWN as the threshold rises (rho={rho:+.2f}): {seq}"
+    if rois[-1] < rois[0]:
+        return False, f"top threshold worse than bottom: {seq}"
+    return True, f"ROI trends up with the threshold (rho={rho:+.2f}): {seq}"
