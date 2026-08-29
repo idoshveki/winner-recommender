@@ -54,6 +54,12 @@ class FeatureRow:
     target_card_diff: Optional[int] = None
     raw_home: Optional[int] = None      # home cards, for the difference model
     raw_away: Optional[int] = None
+    # How BOOKS settle a cards total: a red counts as two (a second yellow is
+    # yellow + red). Measured against 149 real Pinnacle quotes - with yellows
+    # only the market missed by 2.6 sigma, with yellows + 2x reds it is
+    # calibrated to within 0.9 sigma. Modelling yellows alone made every
+    # Under look cheap and manufactured a fake edge.
+    target_cards_book: Optional[int] = None
     features: Dict[str, float] = None
     n_obs_min: int = 0
 
@@ -136,6 +142,10 @@ def build(rows: List[dict]) -> List[FeatureRow]:
             target_goals=(sum(tot_goals) if None not in tot_goals else None),
             target_card_diff=((r["home_yellow"] - r["away_yellow"])
                               if None not in tot_cards else None),
+            target_cards_book=(
+                (r["home_yellow"] + r["away_yellow"]
+                 + 2 * ((r.get("home_red") or 0) + (r.get("away_red") or 0)))
+                if None not in tot_cards else None),
             raw_home=(r["home_yellow"] if None not in tot_cards else None),
             raw_away=(r["away_yellow"] if None not in tot_cards else None),
             target_corners=(sum(tot_corners) if None not in tot_corners else None),

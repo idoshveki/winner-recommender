@@ -280,3 +280,84 @@ never justifies a bet.
 The control now passes in the sense that matters: **no exploitable edge exists
 on goals over/under 2.5**, which is the correct answer, and the harness proved
 capable of reaching it. Stage 3 may proceed.
+
+## 2026-08-29 — Total cards: two new models, and the settlement bug that faked an edge
+
+Asked for two new models for total yellow cards. Built both, and in the process
+found the error that has quietly distorted every cards result in this project.
+
+### The two models
+
+**A — team convolution (generative).** Fits each team's card count separately
+(own indiscipline; opponent's card-drawing) and composes the total, taking
+dispersion from residuals. Rationale: a dirty side against a clean one carries
+information that collapses when you only model the sum.
+
+**B — per-line gradient boosting (discriminative).** Predicts P(total > L)
+directly per line, no count distribution to be wrong about, and can find
+interactions a log-linear model cannot — referees plausibly have thresholds,
+not slopes.
+
+First attempt at B fitted per league and was badly overconfident (log-loss
+0.72–0.79 against the GLM's 0.56–0.67). ~1,400 rows per league is far too
+little for trees. **Pooling across leagues with league as a feature fixed it**
+and made B the best model we have.
+
+Out-of-sample (train ≤2024-06-30, test n=2,784), mean Brier across four lines:
+
+| model | Brier | vs base rate |
+|---|---|---|
+| league base rate | 0.2190 | — |
+| league Poisson | 0.2222 | −1.5% |
+| glm (existing) | 0.2131 | +2.7% |
+| A team convolution | 0.2161 | +1.3% |
+| **B pooled GBM** | **0.2105** | **+3.84%** |
+
+### The settlement bug
+
+Against 149 real Pinnacle cards quotes, B first appeared to have a genuine
+edge — and, uniquely in this project, ROI **rose** with the edge threshold
+(+2.0% → +3.5% → +3.8%), the pattern Stage 0 identified as the fingerprint of
+a real edge rather than noise.
+
+It was not real. Diagnostics:
+
+- 75% of the model's bets were **Under**, returning +9.5%; the 25% Overs
+  returned −20.8%.
+- The market's mean P(over) was **48.1%** while the actual over-rate was
+  **37.6%** — a 2.6σ miss by the sharpest book in football, which is not
+  credible.
+- Card rates were checked and are **stable** (3.80–4.08 per month across the
+  whole window), so this was not a low-card period.
+- The sample was representative (3.97 vs 3.94 cards in the population).
+
+The cause was our own settlement. Testing three definitions against those 149
+quotes:
+
+| card definition | mean | market says | actual | gap |
+|---|---|---|---|---|
+| yellows only *(what we used)* | 3.97 | 48.1% | 37.6% | **−10.5%** (2.6σ) |
+| yellows + reds | 4.18 | 48.1% | 41.6% | −6.5% (1.6σ) |
+| **yellows + 2×reds** | 4.40 | 48.1% | 44.3% | **−3.8%** (0.9σ) |
+
+**Books settle a red as two cards** — a second yellow is yellow + red, and a
+straight red counts double. We were modelling and grading yellows alone, which
+undercounts every match and made every Under look cheap.
+
+### After the correction
+
+| model | c | Brier vs market | ROI @0% / @2% / @5% | gate |
+|---|---|---|---|---|
+| B pooled GBM | −0.109 (p=0.77) | 0.2585 vs **0.2476** | −5.1% / −5.1% / −9.6% | **FAIL** |
+| glm | −0.347 | 0.2774 vs 0.2482 | −10.8% → −12.3% | FAIL |
+| A team convolution | −0.339 | 0.2924 vs 0.2482 | −14.0% → −10.8% | FAIL |
+
+The market becomes well calibrated (48.1% vs 44.3%) and the edge inverts to
+−5%. **The entire apparent edge was our own accounting error.**
+
+This retroactively invalidates every cards number in this project, v1's yellow-
+card thesis included. The corrected league mean is **4.48 cards**, not 4.12.
+
+**Model B is still the best predictor we have (+3.84% over base rate) and it
+still loses to Pinnacle.** Being better than a naive baseline and being better
+than the market are different achievements, and only the second one pays.
