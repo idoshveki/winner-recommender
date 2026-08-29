@@ -1,0 +1,42 @@
+-- Every bookmaker price the free archive carries, opening and closing.
+-- We had been using Pinnacle alone; the archive holds a whole market,
+-- which is what makes a soft-vs-sharp test possible at n~8,000 for free.
+alter table historical_odds add column ah_close_line numeric(5,2);
+alter table historical_odds add column avg_close_a numeric(8,3);
+alter table historical_odds add column avg_close_ah_away numeric(8,3);
+alter table historical_odds add column avg_close_ah_home numeric(8,3);
+alter table historical_odds add column avg_close_d numeric(8,3);
+alter table historical_odds add column avg_close_h numeric(8,3);
+alter table historical_odds add column b365_close_a numeric(8,3);
+alter table historical_odds add column b365_close_ah_away numeric(8,3);
+alter table historical_odds add column b365_close_ah_home numeric(8,3);
+alter table historical_odds add column b365_close_d numeric(8,3);
+alter table historical_odds add column b365_close_h numeric(8,3);
+alter table historical_odds add column b365_close_over25 numeric(8,3);
+alter table historical_odds add column b365_close_under25 numeric(8,3);
+alter table historical_odds add column b365_open_ah_away numeric(8,3);
+alter table historical_odds add column b365_open_ah_home numeric(8,3);
+alter table historical_odds add column b365_open_over25 numeric(8,3);
+alter table historical_odds add column b365_open_under25 numeric(8,3);
+alter table historical_odds add column bfe_close_a numeric(8,3);
+alter table historical_odds add column bfe_close_d numeric(8,3);
+alter table historical_odds add column bfe_close_h numeric(8,3);
+alter table historical_odds add column bw_close_a numeric(8,3);
+alter table historical_odds add column bw_close_d numeric(8,3);
+alter table historical_odds add column bw_close_h numeric(8,3);
+alter table historical_odds add column max_close_a numeric(8,3);
+alter table historical_odds add column max_close_ah_away numeric(8,3);
+alter table historical_odds add column max_close_ah_home numeric(8,3);
+alter table historical_odds add column max_close_d numeric(8,3);
+alter table historical_odds add column max_close_h numeric(8,3);
+alter table historical_odds add column max_close_over25 numeric(8,3);
+alter table historical_odds add column max_close_under25 numeric(8,3);
+alter table historical_odds add column max_open_a numeric(8,3);
+alter table historical_odds add column max_open_d numeric(8,3);
+alter table historical_odds add column max_open_h numeric(8,3);
+alter table historical_odds add column max_open_over25 numeric(8,3);
+alter table historical_odds add column max_open_under25 numeric(8,3);
+alter table historical_odds add column pinnacle_close_ah_away numeric(8,3);
+alter table historical_odds add column pinnacle_close_ah_home numeric(8,3);
+alter table historical_odds add column pinnacle_open_ah_away numeric(8,3);
+alter table historical_odds add column pinnacle_open_ah_home numeric(8,3);

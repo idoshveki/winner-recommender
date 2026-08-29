@@ -44,6 +44,30 @@ COLUMN_MAP = {
     "PSH": "pinnacle_open_h", "PSD": "pinnacle_open_d", "PSA": "pinnacle_open_a",
     "B365H": "b365_h", "B365D": "b365_d", "B365A": "b365_a",
     "AvgH": "avg_h", "AvgD": "avg_d", "AvgA": "avg_a",
+    # ── every book we can get, opening and closing ────────────────────────
+    # The archive carries a whole market, not just Pinnacle. Closing prices
+    # from a soft book (Bet365) against Pinnacle's closing fair value is a
+    # line-shopping test on ~8,000 matches for free; the opening prices make
+    # the stronger version possible - early soft price vs the eventual close.
+    "B365CH": "b365_close_h", "B365CD": "b365_close_d", "B365CA": "b365_close_a",
+    "MaxCH": "max_close_h", "MaxCD": "max_close_d", "MaxCA": "max_close_a",
+    "AvgCH": "avg_close_h", "AvgCD": "avg_close_d", "AvgCA": "avg_close_a",
+    "BFECH": "bfe_close_h", "BFECD": "bfe_close_d", "BFECA": "bfe_close_a",
+    "BWCH": "bw_close_h", "BWCD": "bw_close_d", "BWCA": "bw_close_a",
+    "MaxH": "max_open_h", "MaxD": "max_open_d", "MaxA": "max_open_a",
+    # over/under 2.5 goals
+    "B365C>2.5": "b365_close_over25", "B365C<2.5": "b365_close_under25",
+    "MaxC>2.5": "max_close_over25", "MaxC<2.5": "max_close_under25",
+    "B365>2.5": "b365_open_over25", "B365<2.5": "b365_open_under25",
+    "Max>2.5": "max_open_over25", "Max<2.5": "max_open_under25",
+    # asian handicap - PCAHH/PCAHA is Pinnacle's CLOSING handicap price
+    "AHCh": "ah_close_line",
+    "PCAHH": "pinnacle_close_ah_home", "PCAHA": "pinnacle_close_ah_away",
+    "B365CAHH": "b365_close_ah_home", "B365CAHA": "b365_close_ah_away",
+    "MaxCAHH": "max_close_ah_home", "MaxCAHA": "max_close_ah_away",
+    "AvgCAHH": "avg_close_ah_home", "AvgCAHA": "avg_close_ah_away",
+    "PAHH": "pinnacle_open_ah_home", "PAHA": "pinnacle_open_ah_away",
+    "B365AHH": "b365_open_ah_home", "B365AHA": "b365_open_ah_away",
     # Closing over/under. "Avg>2.5"/"P>2.5" are the OPENING prices; the C
     # variants are the close. Ingesting the opening one and calling it the
     # market benchmark makes a model look prescient, because closing lines are
@@ -67,6 +91,23 @@ FLOAT_FIELDS = {
     "pinnacle_close_over25", "pinnacle_close_under25",
     "avg_close_over25", "avg_close_under25",
     "avg_open_over25", "avg_open_under25", "avg_ah_home", "avg_ah_away", "ah_line",
+    "b365_close_h", "b365_close_d", "b365_close_a",
+    "max_close_h", "max_close_d", "max_close_a",
+    "avg_close_h", "avg_close_d", "avg_close_a",
+    "bfe_close_h", "bfe_close_d", "bfe_close_a",
+    "bw_close_h", "bw_close_d", "bw_close_a",
+    "max_open_h", "max_open_d", "max_open_a",
+    "b365_close_over25", "b365_close_under25",
+    "max_close_over25", "max_close_under25",
+    "b365_open_over25", "b365_open_under25",
+    "max_open_over25", "max_open_under25",
+    "ah_close_line",
+    "pinnacle_close_ah_home", "pinnacle_close_ah_away",
+    "b365_close_ah_home", "b365_close_ah_away",
+    "max_close_ah_home", "max_close_ah_away",
+    "avg_close_ah_home", "avg_close_ah_away",
+    "pinnacle_open_ah_home", "pinnacle_open_ah_away",
+    "b365_open_ah_home", "b365_open_ah_away",
 }
 
 
