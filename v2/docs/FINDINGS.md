@@ -232,3 +232,51 @@ nothing settles bets, refreshes odds, or checks freshness. The Supabase project
 consequently sat idle for seven days and was paused by the free tier — which is
 the failure mode v1 died of, arriving early, and the reason `healthcheck` was
 meant to be Phase 1 rather than an afterthought.
+
+## 2026-08-29 — Stage 0: the harness gate caught two errors before any credits were spent
+
+**Error 1: I ingested opening odds and called them closing.** `Avg>2.5` and
+`P>2.5` in the football-data CSVs are the OPENING prices; `AvgC>2.5` and
+`PC>2.5` are the close. The first control run measured "can our model beat the
+opening line" — and beating openings is easy and well documented, because lines
+sharpen as money arrives. This is the same class of error I caught in v1 for
+1X2 (`PSH` vs `PSCH`) and then repeated for totals. Fixed; both are now
+ingested and labelled distinctly.
+
+**Error 2: the incremental-information test is too trigger-happy to be a gate.**
+Against the true closing line, over/under 2.5 goals — one of the most
+efficiently priced markets in football — still returned:
+
+```
+c = +0.507  (se 0.252, p = 0.044)      <- looks like a finding
+```
+
+It was not. Diagnostics:
+
+| check | result |
+|---|---|
+| driven by market features in our model? | no — *stronger* without them (c=+0.611) |
+| stable across the test period? | **no** — first half p=0.257, second half p=0.083 |
+| Brier score | model **worse** (0.2430 vs 0.2421) |
+| blend refit on a calibration slice | **c = −0.470**, opposite sign |
+
+And the out-of-sample money test on a held-out slice:
+
+| minimum edge demanded | bets | ROI |
+|---|---|---|
+| 0% | 198 | **−9.6%** |
+| 2% | 127 | **−17.5%** |
+| 5% | 47 | **−26.6%** |
+
+**The gate is now the money test plus edge monotonicity.** A real edge earns
+*more* as you demand more edge; noise earns less, because filtering for your
+biggest disagreements with the market concentrates your own largest errors.
+This declining pattern is a fingerprint, it is cheap to compute, and it would
+have flagged the fake +42% cards result immediately.
+
+`incremental_information` is demoted to a screening statistic. `c > 0` alone
+never justifies a bet.
+
+The control now passes in the sense that matters: **no exploitable edge exists
+on goals over/under 2.5**, which is the correct answer, and the harness proved
+capable of reaching it. Stage 3 may proceed.

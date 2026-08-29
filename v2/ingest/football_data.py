@@ -44,7 +44,13 @@ COLUMN_MAP = {
     "PSH": "pinnacle_open_h", "PSD": "pinnacle_open_d", "PSA": "pinnacle_open_a",
     "B365H": "b365_h", "B365D": "b365_d", "B365A": "b365_a",
     "AvgH": "avg_h", "AvgD": "avg_d", "AvgA": "avg_a",
-    "Avg>2.5": "avg_over25", "Avg<2.5": "avg_under25",
+    # Closing over/under. "Avg>2.5"/"P>2.5" are the OPENING prices; the C
+    # variants are the close. Ingesting the opening one and calling it the
+    # market benchmark makes a model look prescient, because closing lines are
+    # far sharper than openings - it is the same trap as PSH vs PSCH above.
+    "PC>2.5": "pinnacle_close_over25", "PC<2.5": "pinnacle_close_under25",
+    "AvgC>2.5": "avg_close_over25", "AvgC<2.5": "avg_close_under25",
+    "Avg>2.5": "avg_open_over25", "Avg<2.5": "avg_open_under25",
     "AvgAHH": "avg_ah_home", "AvgAHA": "avg_ah_away", "AHh": "ah_line",
 }
 
@@ -58,7 +64,9 @@ FLOAT_FIELDS = {
     "pinnacle_close_h", "pinnacle_close_d", "pinnacle_close_a",
     "pinnacle_open_h", "pinnacle_open_d", "pinnacle_open_a",
     "b365_h", "b365_d", "b365_a", "avg_h", "avg_d", "avg_a",
-    "avg_over25", "avg_under25", "avg_ah_home", "avg_ah_away", "ah_line",
+    "pinnacle_close_over25", "pinnacle_close_under25",
+    "avg_close_over25", "avg_close_under25",
+    "avg_open_over25", "avg_open_under25", "avg_ah_home", "avg_ah_away", "ah_line",
 }
 
 

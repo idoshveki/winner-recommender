@@ -50,8 +50,10 @@ class FeatureRow:
     kickoff: object
     target_cards: Optional[int]
     target_corners: Optional[int]
-    features: Dict[str, float]
-    n_obs_min: int
+    target_goals: Optional[int] = None
+    target_card_diff: Optional[int] = None
+    features: Dict[str, float] = None
+    n_obs_min: int = 0
 
     def usable(self) -> bool:
         return self.n_obs_min >= MIN_TEAM_MATCHES
@@ -94,6 +96,8 @@ def build(rows: List[dict]) -> List[FeatureRow]:
     cards = RollingState()
     corners = RollingState()
     shots = RollingState()
+    goals = RollingState()
+    fouls = RollingState()
     out: List[FeatureRow] = []
 
     for r in rows:
@@ -101,7 +105,8 @@ def build(rows: List[dict]) -> List[FeatureRow]:
         feats: Dict[str, float] = {}
         n_obs = []
 
-        for state, prefix in ((cards, "cards"), (corners, "corners"), (shots, "shots")):
+        for state, prefix in ((cards, "cards"), (corners, "corners"), (shots, "shots"),
+                              (goals, "goals"), (fouls, "fouls")):
             parts, n = state.snapshot(league, home, away, prefix)
             feats.update(parts)
             n_obs.append(n)
@@ -117,6 +122,8 @@ def build(rows: List[dict]) -> List[FeatureRow]:
         else:
             feats["mkt_p_home"] = feats["mkt_p_draw"] = feats["mkt_closeness"] = None
 
+        tot_goals = (r.get("home_goals"), r.get("away_goals"))
+        tot_fouls = (r.get("home_fouls"), r.get("away_fouls"))
         tot_cards = (r.get("home_yellow"), r.get("away_yellow"))
         tot_corners = (r.get("home_corners"), r.get("away_corners"))
         out.append(FeatureRow(
@@ -124,6 +131,9 @@ def build(rows: List[dict]) -> List[FeatureRow]:
             league=league,
             kickoff=r["kickoff_utc"],
             target_cards=(sum(tot_cards) if None not in tot_cards else None),
+            target_goals=(sum(tot_goals) if None not in tot_goals else None),
+            target_card_diff=((r["home_yellow"] - r["away_yellow"])
+                              if None not in tot_cards else None),
             target_corners=(sum(tot_corners) if None not in tot_corners else None),
             features=feats,
             n_obs_min=min(n_obs),
@@ -136,10 +146,26 @@ def build(rows: List[dict]) -> List[FeatureRow]:
             corners.update(league, home, away, r["home_corners"], r["away_corners"])
         if r.get("home_shots") is not None and r.get("away_shots") is not None:
             shots.update(league, home, away, r["home_shots"], r["away_shots"])
+        if None not in tot_goals:
+            goals.update(league, home, away, r["home_goals"], r["away_goals"])
+        if None not in tot_fouls:
+            fouls.update(league, home, away, r["home_fouls"], r["away_fouls"])
 
     return out
 
 
+GOAL_FEATURES = [
+    "goals_home_for", "goals_home_against", "goals_away_for", "goals_away_against",
+    "goals_league_mean", "mkt_closeness", "mkt_p_home",
+]
+# Fouls are the causal mechanism behind cards and were never used by v1.
+# Measured caveat in FINDINGS.md: in a hand-weighted blend they did not help.
+# A fitted model gets to decide.
+CARD_DIFF_FEATURES = [
+    "fouls_home_for", "fouls_home_against", "fouls_away_for", "fouls_away_against",
+    "cards_home_for", "cards_home_against", "cards_away_for", "cards_away_against",
+    "mkt_p_home", "mkt_p_draw", "mkt_closeness",
+]
 CARD_FEATURES = [
     "cards_home_for", "cards_home_against", "cards_away_for", "cards_away_against",
     "cards_league_mean", "mkt_closeness", "mkt_p_draw",
