@@ -193,3 +193,42 @@ On 50 NIS: the cards leg alone returns **+1.87** expected; adding the "easy"
 favourite turns it into **−0.09**. Short favourites are the worst-priced bets
 on the board, and multiplying legs multiplies margin. Every extra leg has to
 carry its own edge or it is a tax on the leg that has one.
+
+## 2026-08-29 — First recommendation settled: LOST
+
+The 2026-08-22 fixtures, resolved from SofaScore.
+
+| match | Pinnacle implied mean | actual cards |
+|---|---|---|
+| Hull City v Man United | 4.23 | **3** |
+| Nott'm Forest v Leeds | 3.81 | **3** |
+| Everton v Crystal Palace | 3.74 | **1** |
+| Ipswich v Sunderland | 3.68 | **3** |
+| **mean** | **3.87** | **2.50** |
+
+**The one bet recommended — Hull City v Man United, cards Over 4.5 @ 2.50 —
+lost.** 3 cards. On a 50 NIS stake, −50.
+
+Had we bet Over 3.5 on all four (the v1 strategy, at real 1win prices rather
+than the assumed 1.50): **0 for 4, −200 NIS, −100% ROI.**
+
+**The directional signal from 2026-08-22 was contradicted immediately.** Last
+week 1win's implied probabilities sat consistently *below* Pinnacle's, and I
+noted that made Over the better side there. On all four fixtures 1win was the
+one closer to right, and every match landed under both books' expectations.
+
+n=4 on a single matchday. This does not show 1win is sharper than Pinnacle, and
+one lost bet is not evidence of anything. But it is exactly the size of sample
+the earlier "81.5% hit rate" was built on, which is the point: at this n,
+nothing is knowable. The honest record so far is **1 recommendation, 1 loss.**
+
+## Standing state as of 2026-08-29
+
+Built and pushed: schema, ingest (football-data + SofaScore + Odds API),
+de-vigger and ladder fit, features, count models, backtest harness, 40 tests.
+
+**Not built: the app, and every scheduled job.** Nothing runs on a timer, so
+nothing settles bets, refreshes odds, or checks freshness. The Supabase project
+consequently sat idle for seven days and was paused by the free tier — which is
+the failure mode v1 died of, arriving early, and the reason `healthcheck` was
+meant to be Phase 1 rather than an afterthought.
