@@ -25,9 +25,10 @@ from v2.lib.names import best_match
 
 BASE = "https://api.the-odds-api.com/v4"
 SNAPSHOT_HOURS = 3
-MARKETS = ["alternate_totals_cards", "alternate_totals_corners"]
+DEFAULT_MARKETS = ["alternate_spreads_cards", "alternate_totals_corners"]
 REGIONS = "eu"                      # pinnacle lives here; 1 region keeps cost down
-CREDITS_PER_EVENT = 10 * len(MARKETS) * len(REGIONS.split(","))
+def credits_per_event(markets):
+    return 10 * len(markets) * len(REGIONS.split(","))
 CACHE = V2 / ".cache" / "historical_events"
 
 
@@ -45,10 +46,10 @@ def historical_events(sport: str, iso_time: str) -> List[dict]:
     return data
 
 
-def historical_event_odds(sport: str, event_id: str, iso_time: str) -> dict:
+def historical_event_odds(sport: str, event_id: str, iso_time: str, markets) -> dict:
     resp = get(f"{BASE}/historical/sports/{sport}/events/{event_id}/odds",
                params={"apiKey": odds_api._key(), "date": iso_time,
-                       "regions": REGIONS, "markets": ",".join(MARKETS),
+                       "regions": REGIONS, "markets": ",".join(markets),
                        "oddsFormat": "decimal"})
     odds_api.USAGE.record(resp.headers)
     return resp.json().get("data", {})
@@ -84,15 +85,19 @@ def main() -> int:
     ap.add_argument("--from", dest="date_from", required=True)
     ap.add_argument("--to", dest="date_to", required=True)
     ap.add_argument("--limit", type=int, default=120)
-    ap.add_argument("--budget", type=int, default=4000)
+    ap.add_argument("--budget", type=int, default=13000)
+    ap.add_argument("--markets", default=",".join(DEFAULT_MARKETS))
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
     with connect() as conn:
         targets = target_matches(conn, args.date_from, args.date_to, args.limit)
-    cost = len(targets) * CREDITS_PER_EVENT
-    print(f"  {len(targets)} matches, up to {cost} credits "
-          f"({CREDITS_PER_EVENT}/event), budget {args.budget}")
+    markets = [m.strip() for m in args.markets.split(",") if m.strip()]
+    per = credits_per_event(markets)
+    cost = len(targets) * per
+    print(f"  {len(targets)} matches x {len(markets)} markets, up to {cost} credits "
+          f"({per}/event), budget {args.budget}")
+    print(f"  markets: {', '.join(markets)}")
     if cost > args.budget:
         raise SystemExit("refusing to run: over budget")
     if args.dry_run:
@@ -116,7 +121,7 @@ def main() -> int:
                 missed += 1
                 continue
             try:
-                data = historical_event_odds(sport, event["id"], snap)
+                data = historical_event_odds(sport, event["id"], snap, markets)
             except Exception as exc:
                 print(f"    !! odds {home} v {away}: {exc}")
                 missed += 1

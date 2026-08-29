@@ -30,12 +30,14 @@ SPORT_TO_LEAGUE = {sport: name for name, (_, sport, _) in LEAGUES.items()}
 MARKET_CARDS = "totals_cards"
 MARKET_CORNERS = "totals_corners"
 MARKET_H2H = "h2h"
+MARKET_SPREADS_CARDS = "spreads_cards"
 
 # Odds API market keys -> our canonical market names
 ODDS_API_MARKETS = {
     "alternate_totals_cards":   MARKET_CARDS,
     "alternate_totals_corners": MARKET_CORNERS,
     "h2h":                      MARKET_H2H,
+    "alternate_spreads_cards":  MARKET_SPREADS_CARDS,
 }
 # eu carries pinnacle (sharp); uk carries the betfair exchange + soft books.
 ODDS_API_REGIONS = "eu,uk"
