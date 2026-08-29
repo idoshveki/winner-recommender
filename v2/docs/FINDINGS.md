@@ -729,3 +729,55 @@ quote.
 threshold, so quotes get captured on the matches that matter rather than at
 random. Roughly 15-20 qualify per La Liga season, which is also the honest
 constraint: this is a thin rule.
+
+## 2026-08-30 — The fouls lead is dead, killed by two real quotes
+
+The `fouls_pred >= 28` lead (82.6% hit, +15.6%, CI [+2%, +29%]) rested entirely
+on a **derived** 1win price. Two captured quotes replaced the derivation with
+observation, one of them a watchlist match — exactly the rule.
+
+### The derivation was wrong where it mattered
+
+| match | line | derived price | observed | error |
+|---|---|---|---|---|
+| Sevilla v Atlético (fouls 27.6) | 3.5 | 1.50 | 1.42 | +5.3% |
+| Sevilla v Atlético | 4.5 | 2.14 | 2.00 | +7.2% |
+| **Deportivo v Valencia (fouls 28.0)** | 3.5 | **1.84** | **1.44** | **+27.5%** |
+| **Deportivo v Valencia** | 4.5 | **2.94** | **2.02** | **+45.8%** |
+
+Mean absolute error **21.5%**. A 21% error in the price cannot support a 15%
+claimed edge — the noise is larger than the signal it was measuring.
+
+### And the direction is backwards
+
+On the watchlist match, 1win prices Over *shorter* than fair, not longer:
+
+| match | line | 1win implied | Pinnacle implied | EV of backing Over |
+|---|---|---|---|---|
+| Sevilla v Atlético | 3.5 | 66.0% | 61.6% | **−12.5%** |
+| **Deportivo v Valencia** | 3.5 | **65.5%** | **49.9%** | **−28.1%** |
+| **Deportivo v Valencia** | 4.5 | 45.3% | 31.3% | **−36.8%** |
+
+Backed-out implied yellows means: 1win **4.49** vs Pinnacle-derived **3.69** on
+Deportivo v Valencia — a 0.80 gap, against 0.21 for Sevilla.
+
+### Why, and the refinement it forces
+
+1win appears to price lower-profile matches near the **league average** (4.49
+against La Liga's 4.71 yellows mean), while Pinnacle prices this specific
+fixture low (3.69 — Deportivo newly promoted, a matchup it reads as tame).
+
+That breaks the earlier finding that *1win = Pinnacle correctly converted*.
+That relationship held on six mostly high-profile matches (agreement to 0.046
+cards); it does **not** hold on a low-profile one.
+
+**The consequence is fatal for the rule.** A "high expected cards" filter
+selects matches where a league-average pricer is already high — i.e. short
+odds — not generous ones. The rule finds matches 1win has *already* priced up.
+
+### Verdict
+
+Seven theses tested, seven dead. This one died for £0 because two screenshots
+replaced an assumption, which is exactly what the assumption was flagged for.
+Had the derived price been trusted, the model would have recommended backing
+Over 3.5 at 1.44 on a bet Pinnacle prices at −28%.
