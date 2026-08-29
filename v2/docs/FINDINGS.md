@@ -527,3 +527,73 @@ failed to beat Pinnacle in every market tested.
 
 **Per the pre-registered stopping rule, the line-shopping thesis is finished.**
 No re-running with different books, markets or windows.
+
+## 2026-08-29 — Systematic strategies: the favourite-longshot bias is real, and still not profitable
+
+Every earlier test asked "is our probability better than the book's". This one
+asks a different question needing **no model**: is some *category* of bet
+mispriced? Tested 86 pre-specified rules over 55,697 available bets at
+Pinnacle's closing price across 8,676 matches.
+
+### The favourite-longshot bias shows up cleanly
+
+| 1X2 price bucket | n | ROI | win rate |
+|---|---|---|---|
+| favourite (p≥55%) | 3,137 | **+0.24%** | 68.6% |
+| mid-favourite | 3,482 | +0.16% | 48.1% |
+| mid | 9,351 | −3.51% | 30.1% |
+| underdog | 6,603 | −7.62% | 18.7% |
+| longshot (p<12%) | 1,352 | **−11.43%** | 7.8% |
+
+A clean monotone gradient, and the same pattern in over/under (fav −1.31%,
+mid-fav −3.62%, mid −6.06%). This is the most documented anomaly in betting
+markets and it is plainly present: **bettors overbet longshots, so books shade
+them, and the loss scales with the price.**
+
+**Backing short favourites escapes the margin entirely — and stops at
+break-even.** +0.24%, 95% CI [−2.35%, +2.64%]. Not profitable.
+
+### Draws are the least-bad 1X2 bet
+
+| rule | n | ROI |
+|---|---|---|
+| back every draw | 7,975 | **−0.69%** |
+| back every away | 7,975 | −5.01% |
+| back every home | 7,975 | −6.50% |
+
+Backing every draw all season loses **0.7%** against a ~3.5% margin. Real, and
+the closest to fair of any blanket 1X2 rule — but the CI is [−4.39%, +3.30%]
+and it does not make money. Serie A draws (+3.20%) and Bundesliga draws
+(+2.64%) look better still; both CIs span zero comfortably.
+
+**Not one of the 86 rules had a confidence interval excluding zero on the
+positive side.**
+
+### The permutation null, which is the real lesson
+
+Team rules looked spectacular. Best on the held-out seasons: *"oppose Real
+Sociedad"* at **+45.4%**, and *"back Aston Villa"* held up across both periods
+(+30.7% → +32.4%).
+
+So the sweep was paired with a null: **if the market is exactly right, what
+does the best of 79 rules look like by luck alone?**
+
+- best rule under the null: **median +49.2%**, 95th percentile +85.1%
+- our best observed rule: **+45.4%**
+- it sits at the **40th percentile of pure noise** — worse than the median of luck
+
+And the correlation between a rule's exploratory ROI and its held-out ROI was
+**+0.108**, essentially zero. "Back Milan" went +20.3% → −4.2%; "oppose
+Everton" +15.6% → −28.9%; "back Wolves" +11.0% → −32.5%.
+
+With ~57 bets per rule, +45% is what the *best of 79 coin-flips* looks like.
+This is precisely how betting systems get born, and the null is the only thing
+that tells them apart from an edge.
+
+### Practical upshot
+
+If you are going to bet anyway, the market's smallest error is on **short-priced
+favourites and draws**, and its largest is on longshots. But favourites at
+Pinnacle's closing price return zero, and at 1win's 8.4% margin instead of
+Pinnacle's ~3.5% the same bets lose roughly 5%. The bias is real; it is not
+large enough to sell.
