@@ -55,7 +55,8 @@ def historical_event_odds(sport: str, event_id: str, iso_time: str, markets) -> 
     return resp.json().get("data", {})
 
 
-def target_matches(conn, date_from: str, date_to: str, limit: int) -> List[tuple]:
+def target_matches(conn, date_from: str, date_to: str, limit: int,
+                   league: str = None, skip_existing_market: str = None) -> List[tuple]:
     """Finished matches with stats, evenly spread over the window.
 
     Ordered by kickoff and then sampled with a fixed stride rather than
@@ -70,9 +71,12 @@ def target_matches(conn, date_from: str, date_to: str, limit: int) -> List[tuple
            join teams th on th.id = m.home_team_id
            join teams ta on ta.id = m.away_team_id
            where m.kickoff_utc::date between %s and %s
-             and s.home_yellow is not null and s.home_corners is not null
+             and s.home_yellow is not null
+             and (%s::text is null or m.league = %s)
+             and (%s::text is null or m.id not in (
+                   select match_id from odds_snapshots where market = %s::text))
            order by m.kickoff_utc, m.id""",
-        (date_from, date_to),
+        (date_from, date_to, league, league, skip_existing_market, skip_existing_market),
     ).fetchall()
     if limit and len(rows) > limit:
         stride = len(rows) / limit
@@ -87,11 +91,14 @@ def main() -> int:
     ap.add_argument("--limit", type=int, default=120)
     ap.add_argument("--budget", type=int, default=13000)
     ap.add_argument("--markets", default=",".join(DEFAULT_MARKETS))
+    ap.add_argument("--league", default=None)
+    ap.add_argument("--skip-market", default=None)
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
     with connect() as conn:
-        targets = target_matches(conn, args.date_from, args.date_to, args.limit)
+        targets = target_matches(conn, args.date_from, args.date_to, args.limit,
+                                 args.league, args.skip_market)
     markets = [m.strip() for m in args.markets.split(",") if m.strip()]
     per = credits_per_event(markets)
     cost = len(targets) * per
