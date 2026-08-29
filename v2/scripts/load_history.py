@@ -25,7 +25,9 @@ ODDS_FIELDS = [
     "pinnacle_close_h", "pinnacle_close_d", "pinnacle_close_a",
     "pinnacle_open_h", "pinnacle_open_d", "pinnacle_open_a",
     "b365_h", "b365_d", "b365_a", "avg_h", "avg_d", "avg_a",
-    "avg_over25", "avg_under25", "ah_line", "avg_ah_home", "avg_ah_away",
+    "pinnacle_close_over25", "pinnacle_close_under25",
+    "avg_close_over25", "avg_close_under25",
+    "avg_open_over25", "avg_open_under25", "ah_line", "avg_ah_home", "avg_ah_away",
 ]
 STAT_FIELDS = [
     "home_goals", "away_goals", "ht_home_goals", "ht_away_goals",
