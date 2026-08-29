@@ -655,3 +655,51 @@ because the odds *are* the hit rate.
 The only visible bright spot is that these short-priced rules return +1.5% to
 +2.7% at fair value against the −0.95% baseline — the favourite-longshot bias
 again. It does not survive contact with any real margin.
+
+## 2026-08-29 — Cards rules priced against real odds: suggestive, not established
+
+Fetched Pinnacle cards quotes for 346 more La Liga matches (3,717 credits,
+100 left), giving **389 La Liga matches with real prices** spanning
+2024-10 → 2026-05. Then priced every card rule against them.
+
+| rule | n | Pinnacle market, own price | 1win yellows, derived price |
+|---|---|---|---|
+| ALL La Liga (baseline) | 355 | 45.9% hit, −9.2% | 63.0% hit, −2.7% |
+| cards_pred ≥ 5.0 | 123 | 48.8%, −3.0% | 70.0%, +1.0% |
+| both poor form | 63 | 54.0%, +6.0% | 69.7%, +6.0% |
+| both bottom 6 | 31 | 51.6%, −1.8% | 71.0%, −3.8% |
+| **fouls_pred ≥ 28** | 65 | 50.8%, **+0.8%** | 82.9%, **+16.8%** |
+
+The last row was the only CI excluding zero — and it does not survive scrutiny.
+
+### Why it is not (yet) real
+
+1. **It rests on an assumption that swings it 20 points.** The 1win price is
+   derived by subtracting 2x a *constant* league red rate. But foul-heavy
+   matches have **fewer** reds, not more: 0.157 against 0.259 for the rest.
+   Using the correct rate the result falls to **+11.7%, CI [−2%, +24%]** — no
+   longer significant. With no adjustment at all, +4.7%.
+2. **It does not appear against observed prices.** On Pinnacle's own market at
+   Pinnacle's own quote, the same rule returns **+0.8%**. The apparent edge
+   lives entirely in a price we computed rather than one we saw. (Caveat in
+   fairness: Pinnacle's market includes reds, which add noise to a rule that
+   predicts yellows, so the two are not strictly comparable.)
+3. **n=70, and it is one of 22 tests.** One result at p<0.05 out of 22 is what
+   chance produces.
+
+### What is genuinely there
+
+Foul-heavy La Liga matches do carry more yellows: **5.09 vs 4.30**, and
+82.9% go over 3.5 against a 58.8% base. Pinnacle under-estimates them slightly
+more than other matches (implied book mean 5.14 vs actual 5.40, a +0.26 gap,
+against +0.14 elsewhere).
+
+That is a real, small, and plausible effect — fouls cause cards, and a
+market pricing off card history alone would miss part of it. It is nowhere near
+established, and it is worth **one specific, cheap test** rather than a stake.
+
+### The one test that would settle it
+
+Real 1win prices for foul-heavy La Liga matches. Everything above rests on a
+derived price; 20-30 observed quotes would replace the assumption that is
+currently doing the work. Screenshots are the only way to get them.
