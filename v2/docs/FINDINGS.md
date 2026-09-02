@@ -781,3 +781,51 @@ Seven theses tested, seven dead. This one died for £0 because two screenshots
 replaced an assumption, which is exactly what the assumption was flagged for.
 Had the derived price been trusted, the model would have recommended backing
 Over 3.5 at 1.44 on a bet Pinnacle prices at −28%.
+
+## 2026-09-02 — v1's live record, settled for the first time. And a correction.
+
+**Correction to 2026-08-21.** I reported v1's real record as "2 settled, both
+lost". That was v1's *settled* count — but ten weeks sat at `hit=NULL` because
+v1's settler has been dead since March, and I reported the settled subset as
+though it were the record. It was not. The right move was to settle them, which
+v2's data now makes possible.
+
+Graded properly (`v1_live_record`, 19 legs):
+
+| | won | lost | rate |
+|---|---|---|---|
+| **slips** | **5** | 2 | 71% |
+| individual legs | 14 | 5 | **74%** |
+| H/A legs | 9 | 5 | 64% |
+| **YC Over 3.5 legs** | **5** | **0** | **100%** |
+| draw singles | 3 | 2 | 60% |
+
+P&L at 1 unit per bet, 12 bets:
+
+| pricing | slips | draws | total | ROI |
+|---|---|---|---|---|
+| as v1 stated it (YC assumed 1.50) | +2.92u | +5.24u | **+8.16u** | **+68.0%** |
+| with the real YC price (1.42 observed) | +2.48u | +5.24u | **+7.72u** | **+64.3%** |
+
+At 50 NIS a unit that is **+386 NIS on 600 staked**.
+
+### Holding both things at once
+
+This is a genuinely good run and it does not overturn anything measured.
+
+- **n = 12 bets.** The statistical work behind every negative result in this
+  file rests on 8,676 matches, 55,697 available bets, and held-out seasons. A
+  12-bet sample cannot distinguish a real edge from a good month; at these odds
+  the 95% interval on a 64% ROI spans roughly −40% to +170%.
+- **The draws carry most of it** (+5.24u of +7.72u): 3 of 5 at an average 3.42,
+  against a ~26% base rate for draws. Hitting 60% on five is variance.
+- **The YC legs went 5 for 5**, priced by v1 at an assumed 1.50 that does not
+  exist. At the observed 1.42 the same five legs still win — but every EV number
+  v1 attached to them was computed against a fictional price.
+
+The measured conclusion stands: across thousands of matches these markets are
+efficiently priced and our data holds nothing they lack. Both statements are
+true, and the honest reading is that a 12-bet run is not evidence either way.
+
+**It is now documented.** `v1_live_record` holds every leg with its outcome, so
+the next good or bad run is recorded rather than lost to a broken settler.
