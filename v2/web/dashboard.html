@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live betting record</title>
+<style>
+:root {
+  color-scheme: light;
+  --page:      #f9f9f7;
+  --surface:   #fcfcfb;
+  --ink:       #0b0b0b;
+  --ink-2:     #52514e;
+  --ink-muted: #898781;
+  --rule:      rgba(11, 11, 11, 0.10);
+  --grid:      #e1e0d9;
+  --baseline:  #c3c2b7;
+  --pos:       #2a78d6;
+  --neg:       #e34948;
+  --good:      #006300;
+  --bad:       #d03b3b;
+  --meter-fill:  #2a78d6;
+  --meter-track: #cde2fb;
+  --flag-bg:   #fdf4e0;
+  --flag-ink:  #7a4f00;
+  --flag-rule: #eda100;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page:      #0d0d0d;
+    --surface:   #1a1a19;
+    --ink:       #ffffff;
+    --ink-2:     #c3c2b7;
+    --ink-muted: #898781;
+    --rule:      rgba(255, 255, 255, 0.10);
+    --grid:      #2c2c2a;
+    --baseline:  #383835;
+    --pos:       #3987e5;
+    --neg:       #e66767;
+    --good:      #0ca30c;
+    --bad:       #e66767;
+    --meter-fill:  #3987e5;
+    --meter-track: #184f95;
+    --flag-bg:   #2a2211;
+    --flag-ink:  #f0c860;
+    --flag-rule: #c98500;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page:      #0d0d0d;
+  --surface:   #1a1a19;
+  --ink:       #ffffff;
+  --ink-2:     #c3c2b7;
+  --ink-muted: #898781;
+  --rule:      rgba(255, 255, 255, 0.10);
+  --grid:      #2c2c2a;
+  --baseline:  #383835;
+  --pos:       #3987e5;
+  --neg:       #e66767;
+  --good:      #0ca30c;
+  --bad:       #e66767;
+  --meter-fill:  #3987e5;
+  --meter-track: #184f95;
+  --flag-bg:   #2a2211;
+  --flag-ink:  #f0c860;
+  --flag-rule: #c98500;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+}
+.wrap { max-width: 64rem; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+
+h1 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 .35rem; }
+h2 {
+  font-size: .8125rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--ink-2);
+  margin: 3rem 0 .9rem; padding-bottom: .5rem; border-bottom: 1px solid var(--rule);
+}
+p { margin: 0 0 .85rem; }
+.sub { color: var(--ink-2); font-size: .875rem; margin: 0; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .9em; font-variant-ligatures: none; }
+.muted { color: var(--ink-muted); font-size: .8125rem; }
+.note { color: var(--ink-2); font-size: .875rem; max-width: 46rem; }
+
+.flag {
+  background: var(--flag-bg); color: var(--flag-ink);
+  border: 1px solid var(--flag-rule); border-left-width: 4px;
+  border-radius: 4px; padding: .75rem 1rem; margin: 1.25rem 0 0;
+  font-size: .875rem;
+}
+.flag strong { letter-spacing: .04em; }
+
+.card {
+  background: var(--surface); border: 1px solid var(--rule);
+  border-radius: 6px; padding: 1.1rem 1.2rem;
+}
+
+.hero { margin: 1.75rem 0 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem 1.25rem; }
+.hero .figure { font-size: 3.25rem; font-weight: 600; line-height: 1; letter-spacing: -0.02em; }
+.hero .figure.pos { color: var(--good); }
+.hero .figure.neg { color: var(--bad); }
+.hero .beside { color: var(--ink-2); font-size: 1rem; }
+.hero .label { width: 100%; font-size: .8125rem; color: var(--ink-muted);
+  text-transform: uppercase; letter-spacing: .07em; margin-bottom: .5rem; }
+
+.tiles { display: grid; gap: .75rem; margin-top: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); }
+.tile .label { font-size: .8125rem; color: var(--ink-2); margin-bottom: .3rem; }
+.tile .value { font-size: 1.65rem; font-weight: 600; line-height: 1.1; letter-spacing: -0.01em; }
+.tile .value.pos { color: var(--good); }
+.tile .value.neg { color: var(--bad); }
+.tile .foot { font-size: .8125rem; color: var(--ink-muted); margin-top: .3rem; }
+
+/* Value in its own column rather than floating at the bar tip: a tip label
+   overflows the track (and the page with it) as soon as a bar runs long. */
+.cmp { margin: .25rem 0 0; }
+.cmp-row, .cmp-axis {
+  display: grid; grid-template-columns: minmax(9rem, 16rem) 1fr 4.25rem;
+  column-gap: .75rem; align-items: center;
+}
+.cmp-label { padding: .5rem 0; font-size: .875rem; }
+.cmp-label .cmp-sub { display: block; color: var(--ink-muted); font-size: .75rem; }
+.cmp-track { position: relative; min-height: 2.75rem; }
+.cmp-zero { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--baseline); }
+.cmp-bar { position: absolute; top: 50%; transform: translateY(-50%); height: 20px; }
+.cmp-bar.pos { background: var(--pos); border-radius: 0 4px 4px 0; }
+.cmp-bar.neg { background: var(--neg); border-radius: 4px 0 0 4px; }
+.cmp-val { font-size: .875rem; font-weight: 600; color: var(--ink);
+  text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cmp-axis { font-size: .75rem; color: var(--ink-muted); }
+.cmp-axis .tick { position: relative; height: 1.25rem; }
+.cmp-axis .tick span { position: absolute; transform: translateX(-50%); }
+@media (max-width: 36rem) {
+  .cmp-row, .cmp-axis { grid-template-columns: 1fr 4.25rem; }
+  .cmp-label { grid-column: 1 / -1; padding-bottom: 0; }
+}
+
+.scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px;
+  background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: .875rem; }
+th, td { text-align: left; padding: .6rem .85rem; vertical-align: top;
+  border-bottom: 1px solid var(--rule); }
+thead th { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--ink-muted); font-weight: 600; white-space: nowrap; }
+tbody tr:last-child td { border-bottom: none; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.pos { color: var(--good); } td.neg { color: var(--bad); }
+td.date { white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+
+.meter { display: inline-block; vertical-align: middle; width: 5.5rem; height: 6px;
+  background: var(--meter-track); border-radius: 3px; overflow: hidden; margin-right: .5rem; }
+.meter > i { display: block; height: 100%; background: var(--meter-fill); border-radius: 3px; }
+
+.leg { padding: .15rem 0; }
+.leg + .leg { border-top: 1px dashed var(--rule); margin-top: .35rem; padding-top: .5rem; }
+.leg-match { display: block; white-space: nowrap; }
+.leg-line { display: flex; align-items: baseline; gap: .5rem; white-space: nowrap; }
+.leg-meta { color: var(--ink-muted); font-size: .8125rem; white-space: nowrap;
+  font-variant-numeric: tabular-nums; }
+.chip { font-size: .6875rem; font-weight: 600; letter-spacing: .06em;
+  border: 1px solid currentColor; border-radius: 3px; padding: 0 .3rem;
+  white-space: nowrap; }
+.chip.hit { color: var(--good); }
+.chip.miss { color: var(--bad); }
+.chip.pending { color: var(--ink-muted); }
+.sys { font-size: .6875rem; font-weight: 600; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--ink-2); border: 1px solid var(--rule);
+  border-radius: 3px; padding: .05rem .35rem; white-space: nowrap; }
+sup.src { font-size: .625rem; color: var(--ink-muted); margin-left: .1rem; }
+
+footer { margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--rule);
+  color: var(--ink-2); font-size: .875rem; }
+footer ul { margin: .5rem 0 0; padding-left: 1.1rem; }
+footer li { margin-bottom: .45rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Live betting record</h1>
+  <p class="sub">Weekly recommendations from
+     v1, graded on v2's match data.
+     2026-03-15 to 2026-09-11 &middot; 1 unit = 50 NIS.</p>
+  <p class="muted">Generated 2026-09-12 21:14 UTC from <code>v1_live_record</code>.
+     Newest match with stats in the database: 2026-09-12.</p>
+  
+</header>
+
+<section class="hero">
+  <div class="label">Overall profit and loss, settled bets only</div>
+  <div class="figure pos">+12.90u</div>
+  <div class="beside">+645 NIS &middot; +67.9% ROI
+     on 19 bets, 1u each</div>
+</section>
+
+<div class="tiles"><div class="card tile"><div class="label">Bets settled</div><div class="value">19</div><div class="foot">11 slips + 8 draw singles, from 32 legs recorded</div></div><div class="card tile"><div class="label">Slips</div><div class="value">5–6</div><div class="foot">−0.68u &middot; −6.2% ROI</div></div><div class="card tile"><div class="label">Draw singles</div><div class="value">6–2</div><div class="foot">+13.58u &middot; +169.8% ROI</div></div><div class="card tile"><div class="label">Legs hit</div><div class="value">22/32</div><div class="foot">69% of settled legs landed</div></div><div class="card tile"><div class="label">Pending</div><div class="value">0</div><div class="foot">every pick has a result</div></div></div>
+
+<h2>Singles versus slips</h2>
+<p class="note">The picks themselves did well. The way they were <em>packaged</em> is what
+   decided the result: an accumulator only pays when every leg lands, so each extra leg
+   multiplies the bookmaker's margin as well as the odds.</p>
+<div class="cmp"><div class="cmp-row"><div class="cmp-label">Every settled pick as a 1-unit single<span class="cmp-sub">32 legs, 1u each</span></div><div class="cmp-track"><div class="cmp-zero" style="left:21.552%"></div><div class="cmp-bar pos" style="left:21.552%;width:67.510%" title="+12.62u on 32 units staked"></div></div><div class="cmp-val">+39.4%</div></div><div class="cmp-row"><div class="cmp-label">Accumulator legs as 1-unit singles<span class="cmp-sub">24 legs, 1u each</span></div><div class="cmp-track"><div class="cmp-zero" style="left:21.552%"></div><div class="cmp-bar neg" style="left:14.705%;width:6.847%" title="−0.96u on 24 units staked"></div></div><div class="cmp-val">−4.0%</div></div><div class="cmp-row"><div class="cmp-label">The same legs bundled into accumulators<span class="cmp-sub">11 slips, 1u each</span></div><div class="cmp-track"><div class="cmp-zero" style="left:21.552%"></div><div class="cmp-bar neg" style="left:10.938%;width:10.615%" title="−0.68u on 11 units staked"></div></div><div class="cmp-val">−6.2%</div></div><div class="cmp-axis"><div></div><div class="tick"><span style="left:21.552%">0%</span></div><div></div></div></div>
+<p class="note">Bet individually at 1 unit each, the
+   32 settled legs returned
+   <strong>+39.4%</strong> (+12.62u).
+   The 24 settled legs that were actually bundled returned
+   <strong>−4.0%</strong> as singles and
+   <strong>−6.2%</strong> as the 11 slips they were
+   bet as &mdash; a swing of
+   2 points from packaging
+   alone. Most of the singles figure comes from the draw picks, which were never in a slip.</p>
+
+<h2>By market</h2>
+<div class="scroll">
+<table>
+  <thead><tr>
+    <th>Market</th><th class="num">Legs</th><th class="num">Pending</th>
+    <th class="num">Hits</th><th class="num">Hit rate</th>
+    <th class="num">P&amp;L at 1u</th><th>Basis</th>
+  </tr></thead>
+  <tbody><tr><td>H/A</td><td class="num">13</td><td class="num">&mdash;</td><td class="num">8/13</td><td class="num"><span class="meter"><i style="width:61.5%"></i></span>62%</td><td class="num neg">−2.53u</td><td class="muted">hypothetical</td></tr><tr><td>YC Over 3.5</td><td class="num">10</td><td class="num">&mdash;</td><td class="num">7/10</td><td class="num"><span class="meter"><i style="width:70.0%"></i></span>70%</td><td class="num neg">−0.06u</td><td class="muted">hypothetical</td></tr><tr><td>Draw singles</td><td class="num">8</td><td class="num">&mdash;</td><td class="num">6/8</td><td class="num"><span class="meter"><i style="width:75.0%"></i></span>75%</td><td class="num pos">+13.58u</td><td class="muted">settled as bet</td></tr><tr><td>O2.5+BTTS</td><td class="num">1</td><td class="num">&mdash;</td><td class="num">1/1</td><td class="num"><span class="meter"><i style="width:100.0%"></i></span>100%</td><td class="num pos">+1.63u</td><td class="muted">hypothetical</td></tr></tbody>
+</table>
+</div>
+<p class="muted">Hit rate is over settled legs only; pending legs are excluded from
+   both the rate and the P&amp;L. Draw singles were bet as singles, so their P&amp;L is
+   real. The accumulator legs were never bet individually &mdash; their 1u P&amp;L is
+   what they would have returned as singles.</p>
+
+<h2>Week by week</h2>
+<div class="scroll">
+<table>
+  <thead><tr>
+    <th>Date</th><th>System</th><th>Accumulator legs</th><th>Slip</th>
+    <th>Draw single</th><th class="num">Week P&amp;L</th>
+  </tr></thead>
+  <tbody><tr><td class="date">2026-03-15</td><td><span class="sys">v1</span></td><td><div class="leg"><span class="leg-match">Liverpool vs Tottenham</span><span class="leg-line"><span class="leg-meta">H/A &middot; H &middot; @1.28<sup class="src" title="price as the system quoted it">q</sup></span><span class="chip miss">MISS</span></span></div><div class="leg"><span class="leg-match">Mallorca vs Espanyol</span><span class="leg-line"><span class="leg-meta">O2.5+BTTS &middot; Over 2.5 And Yes &middot; @2.63<sup class="src" title="price as the system quoted it">q</sup></span><span class="chip hit">HIT</span></span></div></td><td><span class="chip miss">LOST</span> <span class="leg-meta">@3.37</span><br><span class="leg-meta">−1.00u</span></td><td><span class="muted">no draw pick</span></td><td class="num neg">−1.00u</td></tr><tr><td class="date">2026-03-20</td><td><span class="sys">v1</span></td><td><div class="leg"><span class="leg-match">Barcelona vs Vallecano</span><span class="leg-line"><span class="leg-meta">H/A &middot; H &middot; @1.22<sup class="src" title="price as the system quoted it">q</sup></span><span class="chip hit">HIT</span></span></div><div class="leg"><span class="leg-match">Sevilla vs Valencia</span><span class="leg-line"><span class="leg-meta">YC Over 3.5 &middot; Over 3.5 &middot; @1.42<sup class="src" title="observed price">obs</sup></span><span class="chip miss">MISS</span></span></div></td><td><span class="chip miss">LOST</span> <span class="leg-meta">@1.73</span><br><span class="leg-meta">−1.00u</span></td><td><div class="leg"><span class="leg-match">Bournemouth vs Man United</span><span class="leg-line"><span class="leg-meta">D &middot; @3.70<sup class="src" title="price as the system quoted it">q</sup></span><span class="chip hit">HIT</span></span></div><span class="leg-meta">+2.70u</span></td><td class="num pos">+1.70u</td></tr><tr><td class="date">2026-04-10</td><td><span class="sys">v1</span></td><td><div class="leg"><span class="leg-match">Real Madrid vs Girona</span><span class="leg-line"><span class="leg-meta">H/A &middot; H &middot; @1.22<sup class="src" title="price as the system quoted it">q</sup></span><span class="chip miss">MISS</span></span></div><div class="leg"><span class="leg-match">Levante vs Getafe</span><span class="leg-line"><span class="leg-meta">YC Over 3.5 &middot; Over 3.5 &middot; @1.42<sup class="src" title="observed price">obs</sup></span><span class="chip hit">HIT</span></span></div></td><td><span class="chip miss">LOST</span> <span class="leg-meta">@1.73</span><br><span class="leg-meta">−1.00u</span></td><td><div class="leg"><span class="leg-match">Chelsea vs Man City</span><span class="leg-line"><span class="leg-meta">D &middot; @3.89<sup class="src" title="price as the system quoted it">q</sup></span><span class="chip miss">MISS</span></span></div><span class="leg-meta">−1.00u</span></td><td class="num neg">−2.00u</td></tr><tr><td class="date">2026-05-02</td><td><span class="sys">v1</span></td><td><div class="leg"><span class="leg-match">Bayern Munich vs Heidenheim</span><span class="leg-line"><span class="leg-meta">H/A &middot; H &middot; @1.08<sup class="src" title="price as the system quoted it">q</sup></span><span class="chip miss">MISS</span></span></div><div class="leg"><span class="leg-match">Juventus vs Verona</span><span class="leg-line"><span class="leg-meta">H/A &middot; H &middot; @1.27<sup class="src" title="price as the system quoted it">q</sup></span><span class="chip miss">MISS</span></span></div></td><td><span class="chip miss">LOST</span> <span class="leg-meta">@1.37</span><br><span class="leg-meta">−1.00u</span></td><td><span class="muted">no draw pick</span></td><td class="num neg">−1.00u</td></tr><tr><td class="date">2026-05-09</td><td><span class="sys">v1</span></td><td><div class="leg"><span class="leg-match">RB Leipzig vs St Pauli</span><span class="leg-line"><span class="leg-meta">H/A &middot; H &middot; @1.41<sup class="src" title="price as the system quoted it">q</sup></span><span class="chip hit">HIT</span></span></div><div class="leg"><span class="leg-match">Ath Bilbao vs Valencia</span><span class="leg-line"><span class="leg-meta">YC Over 3.5 &middot; Over 3.5 &middot; @1.42<sup class="src" title="observed price">obs</sup></span><span class="chip hit">HIT</span></span></div><div class="leg"><span class="leg-match">Tottenham vs Leeds</span><span class="leg-line"><span class="leg-meta">YC Over 3.5 &middot; Over 3.5 &middot; @1.42<sup class="src" title="observed price">obs</sup></span><span class="chip hit">HIT</span></span></div></td><td><span class="chip hit">WON</span> <span class="leg-meta">@2.84</span><br><span class="leg-meta">+1.84u</span></td><td><div class="leg"><span class="leg-match">Crystal Palace vs Everton</span><span class="leg-line"><span class="leg-meta">D &middot; @3.20<sup class="src" title="price as the system quoted it">q</sup></span><span class="chip hit">HIT</span></span></div><span class="leg-meta">+2.20u</span></td><td class="num pos">+4.04u</td></tr><tr><td class="date">2026-05-17</td><td><span class="sys">v1</span></td><td><div class="leg"><span class="leg-match">Arsenal vs Burnley</span><span class="leg-line"><span class="leg-meta">H/A &middot; H &middot; @1.10<sup class="src" title="price as the system quoted it">q</sup></span><span class="chip hit">HIT</span></span></div><div class="leg"><span class="leg-match">Elche vs Getafe</span><span class="leg-line"><span class="leg-meta">YC Over 3.5 &middot; Over 3.5 &middot; @1.42<sup class="src" title="observed price">obs</sup></span><span class="chip hit">HIT</span></span></div></td><td><span class="chip hit">WON</span> <span class="leg-meta">@1.56</span><br><span class="leg-meta">+0.56u</span></td><td><span class="muted">no draw pick</span></td><td class="num pos">+0.56u</td></tr><tr><td class="date">2026-05-22</td><td><span class="sys">v1</span></td><td><div class="leg"><span class="leg-match">Real Madrid vs Ath Bilbao</span><span class="leg-line"><span class="leg-meta">H/A &middot; H &middot; @1.52<sup class="src" title="price as the system quoted it">q</sup></span><span class="chip hit">HIT</span></span></div><div class="leg"><span class="leg-match">Alaves vs Vallecano</span><span class="leg-line"><span class="leg-meta">YC Over 3.5 &middot; Over 3.5 &middot; @1.42<sup class="src" title="observed price">obs</sup></span><span class="chip hit">HIT</span></span></div></td><td><span class="chip hit">WON</span> <span class="leg-meta">@2.16</span><br><span class="leg-meta">+1.16u</span></td><td><div class="leg"><span class="leg-match">Fiorentina vs Atalanta</span><span class="leg-line"><span class="leg-meta">D &middot; @3.55<sup class="src" title="price as the system quoted it">q</sup></span><span class="chip hit">HIT</span></span></div><span class="leg-meta">+2.55u</span></td><td class="num pos">+3.71u</td></tr><tr><td class="date">2026-08-21</td><td><span class="sys">v1</span></td><td><div class="leg"><span class="leg-match">Real Madrid vs Sociedad</span><span class="leg-line"><span class="leg-meta">H/A &middot; H &middot; @1.40<sup class="src" title="price as the system quoted it">q</sup></span><span class="chip hit">HIT</span></span></div><div class="leg"><span class="leg-match">Arsenal vs Coventry City</span><span class="leg-line"><span class="leg-meta">H/A &middot; H &middot; @1.14<sup class="src" title="price as the system quoted it">q</sup></span><span class="chip hit">HIT</span></span></div></td><td><span class="chip hit">WON</span> <span class="leg-meta">@1.60</span><br><span class="leg-meta">+0.60u</span></td><td><div class="leg"><span class="leg-match">Brentford vs Tottenham</span><span class="leg-line"><span class="leg-meta">D &middot; @3.52<sup class="src" title="price as the system quoted it">q</sup></span><span class="chip miss">MISS</span></span></div><span class="leg-meta">−1.00u</span></td><td class="num neg">−0.40u</td></tr><tr><td class="date">2026-08-29</td><td><span class="sys">v1</span></td><td><div class="leg"><span class="leg-match">RB Leipzig vs M&#x27;gladbach</span><span class="leg-line"><span class="leg-meta">H/A &middot; H &middot; @1.52<sup class="src" title="price as the system quoted it">q</sup></span><span class="chip hit">HIT</span></span></div><div class="leg"><span class="leg-match">Chelsea vs Brighton</span><span class="leg-line"><span class="leg-meta">YC Over 3.5 &middot; Over 3.5 &middot; @1.42<sup class="src" title="observed price">obs</sup></span><span class="chip hit">HIT</span></span></div></td><td><span class="chip hit">WON</span> <span class="leg-meta">@2.16</span><br><span class="leg-meta">+1.16u</span></td><td><div class="leg"><span class="leg-match">Union Berlin vs Ein Frankfurt</span><span class="leg-line"><span class="leg-meta">D &middot; @3.49<sup class="src" title="price as the system quoted it">q</sup></span><span class="chip hit">HIT</span></span></div><span class="leg-meta">+2.49u</span></td><td class="num pos">+3.65u</td></tr><tr><td class="date">2026-09-05</td><td><span class="sys">v1</span></td><td><div class="leg"><span class="leg-match">FC Schalke 04 vs Bayern Munich</span><span class="leg-line"><span class="leg-meta">H/A &middot; A &middot; @1.18<sup class="src" title="price as the system quoted it">q</sup></span><span class="chip miss">MISS</span></span></div><div class="leg"><span class="leg-match">Sevilla vs Valencia</span><span class="leg-line"><span class="leg-meta">YC Over 3.5 &middot; Over 3.5 &middot; @1.42<sup class="src" title="observed price">obs</sup></span><span class="chip miss">MISS</span></span></div></td><td><span class="chip miss">LOST</span> <span class="leg-meta">@1.68</span><br><span class="leg-meta">−1.00u</span></td><td><div class="leg"><span class="leg-match">Everton vs Man United</span><span class="leg-line"><span class="leg-meta">D &middot; @3.34<sup class="src" title="price as the system quoted it">q</sup></span><span class="chip hit">HIT</span></span></div><span class="leg-meta">+2.34u</span></td><td class="num pos">+1.34u</td></tr><tr><td class="date">2026-09-11</td><td><span class="sys">v1</span></td><td><div class="leg"><span class="leg-match">Real Madrid vs Vallecano</span><span class="leg-line"><span class="leg-meta">H/A &middot; H &middot; @1.16<sup class="src" title="price as the system quoted it">q</sup></span><span class="chip hit">HIT</span></span></div><div class="leg"><span class="leg-match">Ath Bilbao vs Elche</span><span class="leg-line"><span class="leg-meta">YC Over 3.5 &middot; Over 3.5 &middot; @1.42<sup class="src" title="observed price">obs</sup></span><span class="chip hit">HIT</span></span></div><div class="leg"><span class="leg-match">Sevilla vs Valencia</span><span class="leg-line"><span class="leg-meta">YC Over 3.5 &middot; Over 3.5 &middot; @1.42<sup class="src" title="observed price">obs</sup></span><span class="chip miss">MISS</span></span></div></td><td><span class="chip miss">LOST</span> <span class="leg-meta">@2.34</span><br><span class="leg-meta">−1.00u</span></td><td><div class="leg"><span class="leg-match">Augsburg vs Leverkusen</span><span class="leg-line"><span class="leg-meta">D &middot; @4.30<sup class="src" title="price as the system quoted it">q</sup></span><span class="chip hit">HIT</span></span></div><span class="leg-meta">+3.30u</span></td><td class="num pos">+2.30u</td></tr></tbody>
+</table>
+</div>
+<p class="muted">Prices: the observed price where one was recorded (10 of 32 priced legs), otherwise the price the system quoted (22 legs, marked <sup class="src">q</sup>). v1 assumed 1.50 on yellow-card legs; where the real price was seen it was lower.</p>
+
+<footer>
+  <p><strong>Read this small.</strong></p>
+  <ul>
+    <li>32 settled legs across 19 bets. That is a
+        sample that cannot separate an edge from a good month. The negative results this
+        project measured elsewhere rest on thousands of matches and held-out seasons; a
+        run this short is not evidence against them, or for them.</li>
+    <li>The draw run is <strong>6 of 8</strong> against a market-implied 28% (the mean of 1/odds across those prices, vig included). At that rate a run this good or better comes up about once in 133 — which sounds decisive and is not, on 8 bets. Backing every draw across thousands of matches loses money; nothing here changes that.</li>
+    
+    <li>Picks are recorded when issued and settled by a scheduled job, so the record
+        cannot be revised upward later and a losing week cannot quietly go missing.</li>
+  </ul>
+</footer>
+
+</div>
+</body>
+</html>
