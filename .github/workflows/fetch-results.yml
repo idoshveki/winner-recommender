@@ -1,4 +1,4 @@
-name: Fetch Match Results (Tue + Fri)
+name: v1 — Fetch Match Results (Tue + Fri)
 
 on:
   schedule:

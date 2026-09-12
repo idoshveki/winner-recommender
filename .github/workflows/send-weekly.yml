@@ -1,4 +1,4 @@
-name: Send Weekly Picks (Friday)
+name: v1 — Send Weekly Picks (Friday)
 
 on:
   schedule:

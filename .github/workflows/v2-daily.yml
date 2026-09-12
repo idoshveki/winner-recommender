@@ -1,0 +1,138 @@
+# v2 daily maintenance.
+#
+# This exists for two reasons at once, and the second is the one that keeps
+# biting us:
+#
+#   1. Results need ingesting. v1's feeder ran green for five months while
+#      writing nothing; this one asserts freshness and fails when it is stale.
+#   2. The Supabase project auto-pauses after ~7 days with no connections. It
+#      has silently paused twice, and both times we found out only when
+#      someone asked for a number. A daily job that actually touches the
+#      database keeps it warm as a side effect of doing real work.
+#
+# NOTE: GitHub disables scheduled workflows after 60 days with no repository
+# activity (no commits/pushes). It emails the repo owner first. If the schedule
+# stops, re-enable it on the Actions tab - and remember the database clock
+# starts ticking again the moment this stops running.
+
+name: v2 daily (ingest + freshness + dashboard)
+
+on:
+  schedule:
+    # 05:15 UTC daily = 07:15 Israel in winter (UTC+2), 08:15 in summer (UTC+3).
+    # Off the hour on purpose: GitHub's scheduler queues heavily at :00.
+    - cron: '15 5 * * *'
+  workflow_dispatch:
+
+# One run at a time. Overlapping runs would fight over the same job_runs rows
+# and the same upserts; a queued run is cancelled rather than doubled up.
+concurrency:
+  group: v2-daily
+  cancel-in-progress: false
+
+jobs:
+  daily:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL:      ${{ secrets.DATABASE_URL }}
+      SOFASCORE_API_KEY: ${{ secrets.SOFASCORE_API_KEY }}
+      ODDS_API_KEY:      ${{ secrets.ODDS_API_KEY }}
+      PYTHONPATH:        .
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: v2/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -q -r v2/requirements.txt
+
+      # Fails if DATABASE_URL is unset or the project is paused, before we
+      # spend any API quota finding out.
+      - name: Check the database is awake
+        run: |
+          python - <<'PY'
+          from v2.lib.jobs import connect
+          with connect() as conn:
+              print("  connected:", conn.execute("select now()").fetchone()[0])
+          PY
+
+      # `job()` treats "wrote nothing" as an error, which is right for a
+      # twice-weekly job and wrong for a daily one: most midweek days have no
+      # finished top-five-league matches at all, and a nuisance email every
+      # Tuesday would train us to ignore the real ones. So an empty day is
+      # tolerated here and *only* here - any other failure still stops the run,
+      # and the freshness assertion below is the gate that actually matters.
+      - name: Ingest finished matches and stats
+        id: ingest
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          python -m v2.ingest.results --pages 2 2>&1 | tee /tmp/ingest.log
+
+      - name: Distinguish a quiet day from a broken ingest
+        if: steps.ingest.outcome == 'failure'
+        run: |
+          if grep -q "completed without writing any rows" /tmp/ingest.log; then
+            echo "No new finished matches today. Normal midweek; not a failure."
+          else
+            echo "::error::ingest-results failed for a reason other than an empty day."
+            exit 1
+          fi
+
+      # The check v1 never had. Eight days covers a full international break
+      # plus slack; anything older means ingestion has stopped working even if
+      # every step above exited 0.
+      - name: Assert results are fresh
+        run: |
+          python - <<'PY'
+          from v2.lib.jobs import assert_fresh, connect, job
+          with job("assert-freshness", expect_rows=False), connect() as conn:
+              assert_fresh(conn,
+                           "matches m join match_stats s on s.match_id = m.id",
+                           "m.kickoff_utc", 8)
+              print("  results are fresh")
+          PY
+
+      - name: Rebuild the betting-record dashboard
+        run: python -m v2.scripts.build_dashboard
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dashboard
+          path: v2/web/dashboard.html
+          retention-days: 30
+
+      # Silence is the failure mode this whole workflow is about, so a failed
+      # run has to arrive somewhere a person looks. The red X on the Actions
+      # tab is not that place.
+      - name: Report failure by email
+        if: failure()
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        run: |
+          if [ -z "$RESEND_API_KEY" ]; then
+            echo "::error::v2-daily failed and RESEND_API_KEY is not set, so no email was sent."
+            exit 1
+          fi
+          RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          STATUS=$(curl -s -o /tmp/resend.out -w '%{http_code}' \
+            -X POST https://api.resend.com/emails \
+            -H "Authorization: Bearer $RESEND_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{\"from\":\"Winner v2 <onboarding@resend.dev>\",
+                 \"to\":[\"idoshveki@gmail.com\"],
+                 \"subject\":\"v2 daily FAILED - $GITHUB_REPOSITORY\",
+                 \"html\":\"<p>The v2 daily job failed. Likely causes: the Supabase project is paused again, DATABASE_URL is wrong, or results have gone stale (>8 days).</p><p><a href=\\\"$RUN_URL\\\">Open the run log</a></p>\"}")
+          echo "resend http $STATUS"; cat /tmp/resend.out; echo
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::v2-daily failed AND the failure email could not be sent (HTTP $STATUS)."
+            exit 1
+          fi
+          echo "::error::v2-daily failed. Failure email sent."
+          exit 1
