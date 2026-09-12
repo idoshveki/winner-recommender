@@ -1,4 +1,4 @@
-name: Fetch Odds (daily)
+name: v1 — Fetch Odds (daily)
 
 on:
   schedule:

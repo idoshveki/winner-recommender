@@ -1,4 +1,4 @@
-name: Auto-fill Pick Results (Tue + Fri)
+name: v1 — Auto-fill Pick Results (Tue + Fri)
 
 on:
   schedule:

@@ -685,4 +685,4 @@ if __name__ == "__main__":
     print("\nEmail HTML generated.")
 
     today = datetime.today().strftime('%Y-%m-%d')
-    send_email(f"Winner Picks {today}", body)
+    send_email(f"[v1] Winner Picks {today}", body)
