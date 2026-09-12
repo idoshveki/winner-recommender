@@ -829,3 +829,43 @@ true, and the honest reading is that a 12-bet run is not evidence either way.
 
 **It is now documented.** `v1_live_record` holds every leg with its outcome, so
 the next good or bad run is recorded rather than lost to a broken settler.
+
+## 2026-09-12 — v1's draw filter: real selection skill, priced to the decimal
+
+The draw single is the only v1 component with a live record that survived
+scrutiny (6 of 8 at an average 3.62, a ~1-in-185 run) and the only scorer v1
+grid-searched rather than assembled from invented multipliers. So it got a
+proper test: its exact gate, across six years of closing Pinnacle prices.
+
+Gate: `pd >= 0.29 and |pts5_diff| <= 1 and home_dr10 > 0.20 and away_dr10 > 0.20`
+
+| sample | n | hit rate | avg price | ROI |
+|---|---|---|---|---|
+| back every draw (baseline) | 6,562 | 25.3% | 4.14 | −1.9% |
+| **v1 filter, full sample** | **158** | **31.6%** | **3.16** | **+0.1%** |
+| v1 filter, exploratory | 106 | 31.1% | 3.19 | −0.1% |
+| v1 filter, **held out** | 52 | 32.7% | 3.09 | **+0.5%** |
+
+**The filter genuinely works as a selector.** It lifts the draw hit rate from
+25.3% to 31.6% — a 6.3 point improvement that is stable across the exploratory
+and held-out periods. That is real skill, and the first time any v1 component
+has demonstrated it.
+
+**And it lands exactly on break-even.** At the filter's average price of 3.16
+break-even is 31.6%. It hits 31.6%. The market prices the improvement to the
+decimal point.
+
+Individual gates are all worse than the combination: `pd>=0.29` alone −2.5%,
+`gap<=1` alone −1.6%, both `dr10>0.20` −3.8%, `pd + gap` −5.2%. Only the full
+three-gate conjunction reaches zero.
+
+### What this says about the live 6-of-8
+
+At the filter's true 31.6% hit rate, **P(6 or more of 8) = 1.6%.** A hot streak
+on a break-even strategy, which is exactly what a 1-in-60 run looks like when
+you are watching one.
+
+The practical consequence: at Pinnacle's closing price this is a coin that
+lands on its edge. At 1win's wider margin it loses. There is no version of this
+that pays — but it is the closest anything in this project has come, and it is
+the one v1 component that was doing something real.
