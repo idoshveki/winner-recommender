@@ -1,0 +1,774 @@
+{
+  "Bundesliga|Augsburg": {
+    "league": "Bundesliga",
+    "football_data": "Augsburg",
+    "sofascore_name": "FC Augsburg",
+    "sofascore_id": 2600,
+    "score": 1.0
+  },
+  "Bundesliga|Bayern Munich": {
+    "league": "Bundesliga",
+    "football_data": "Bayern Munich",
+    "sofascore_name": "FC Bayern München",
+    "sofascore_id": 2672,
+    "score": 0.799
+  },
+  "Bundesliga|Bielefeld": {
+    "league": "Bundesliga",
+    "football_data": "Bielefeld",
+    "sofascore_name": "Arminia Bielefeld",
+    "sofascore_id": 2540,
+    "score": 0.8
+  },
+  "Bundesliga|Bochum": {
+    "league": "Bundesliga",
+    "football_data": "Bochum",
+    "sofascore_name": "VfL Bochum 1848",
+    "sofascore_id": 2542,
+    "score": 0.8
+  },
+  "Bundesliga|Darmstadt": {
+    "league": "Bundesliga",
+    "football_data": "Darmstadt",
+    "sofascore_name": "Darmstadt 98",
+    "sofascore_id": 2576,
+    "score": 0.8
+  },
+  "Bundesliga|Dortmund": {
+    "league": "Bundesliga",
+    "football_data": "Dortmund",
+    "sofascore_name": "Borussia Dortmund",
+    "sofascore_id": 2673,
+    "score": 1.0
+  },
+  "Bundesliga|Ein Frankfurt": {
+    "league": "Bundesliga",
+    "football_data": "Ein Frankfurt",
+    "sofascore_name": "Eintracht Frankfurt",
+    "sofascore_id": 2674,
+    "score": 0.897
+  },
+  "Bundesliga|FC Koln": {
+    "league": "Bundesliga",
+    "football_data": "FC Koln",
+    "sofascore_name": "1. FC Köln",
+    "sofascore_id": 2671,
+    "score": 0.8
+  },
+  "Bundesliga|Freiburg": {
+    "league": "Bundesliga",
+    "football_data": "Freiburg",
+    "sofascore_name": "SC Freiburg",
+    "sofascore_id": 2538,
+    "score": 1.0
+  },
+  "Bundesliga|Greuther Furth": {
+    "league": "Bundesliga",
+    "football_data": "Greuther Furth",
+    "sofascore_name": "SpVgg Greuther Fürth",
+    "sofascore_id": 2551,
+    "score": 1.0
+  },
+  "Bundesliga|Hamburg": {
+    "league": "Bundesliga",
+    "football_data": "Hamburg",
+    "sofascore_name": "Hamburger SV",
+    "sofascore_id": 2676,
+    "score": 0.799
+  },
+  "Bundesliga|Heidenheim": {
+    "league": "Bundesliga",
+    "football_data": "Heidenheim",
+    "sofascore_name": "1. FC Heidenheim",
+    "sofascore_id": 5885,
+    "score": 0.8
+  },
+  "Bundesliga|Hertha": {
+    "league": "Bundesliga",
+    "football_data": "Hertha",
+    "sofascore_name": "Hertha BSC",
+    "sofascore_id": 2528,
+    "score": 1.0
+  },
+  "Bundesliga|Hoffenheim": {
+    "league": "Bundesliga",
+    "football_data": "Hoffenheim",
+    "sofascore_name": "TSG Hoffenheim",
+    "sofascore_id": 2569,
+    "score": 1.0
+  },
+  "Bundesliga|Holstein Kiel": {
+    "league": "Bundesliga",
+    "football_data": "Holstein Kiel",
+    "sofascore_name": "Holstein Kiel",
+    "sofascore_id": 2573,
+    "score": 1.0
+  },
+  "Bundesliga|Leverkusen": {
+    "league": "Bundesliga",
+    "football_data": "Leverkusen",
+    "sofascore_name": "Bayer 04 Leverkusen",
+    "sofascore_id": 2681,
+    "score": 0.8
+  },
+  "Bundesliga|M'gladbach": {
+    "league": "Bundesliga",
+    "football_data": "M'gladbach",
+    "sofascore_name": "Borussia M'gladbach",
+    "sofascore_id": 2527,
+    "score": 1.0
+  },
+  "Bundesliga|Mainz": {
+    "league": "Bundesliga",
+    "football_data": "Mainz",
+    "sofascore_name": "1. FSV Mainz 05",
+    "sofascore_id": 2556,
+    "score": 0.8
+  },
+  "Bundesliga|RB Leipzig": {
+    "league": "Bundesliga",
+    "football_data": "RB Leipzig",
+    "sofascore_name": "RB Leipzig",
+    "sofascore_id": 36360,
+    "score": 1.0
+  },
+  "Bundesliga|Schalke 04": {
+    "league": "Bundesliga",
+    "football_data": "Schalke 04",
+    "sofascore_name": "FC Schalke 04",
+    "sofascore_id": 2530,
+    "score": 1.0
+  },
+  "Bundesliga|St Pauli": {
+    "league": "Bundesliga",
+    "football_data": "St Pauli",
+    "sofascore_name": "FC St. Pauli",
+    "sofascore_id": 2526,
+    "score": 1.0
+  },
+  "Bundesliga|Stuttgart": {
+    "league": "Bundesliga",
+    "football_data": "Stuttgart",
+    "sofascore_name": "VfB Stuttgart",
+    "sofascore_id": 2677,
+    "score": 1.0
+  },
+  "Bundesliga|Union Berlin": {
+    "league": "Bundesliga",
+    "football_data": "Union Berlin",
+    "sofascore_name": "1. FC Union Berlin",
+    "sofascore_id": 2547,
+    "score": 0.867
+  },
+  "Bundesliga|Werder Bremen": {
+    "league": "Bundesliga",
+    "football_data": "Werder Bremen",
+    "sofascore_name": "SV Werder Bremen",
+    "sofascore_id": 2534,
+    "score": 1.0
+  },
+  "Bundesliga|Wolfsburg": {
+    "league": "Bundesliga",
+    "football_data": "Wolfsburg",
+    "sofascore_name": "VfL Wolfsburg",
+    "sofascore_id": 2524,
+    "score": 1.0
+  },
+  "EPL|Arsenal": {
+    "league": "EPL",
+    "football_data": "Arsenal",
+    "sofascore_name": "Arsenal",
+    "sofascore_id": 42,
+    "score": 1.0
+  },
+  "EPL|Aston Villa": {
+    "league": "EPL",
+    "football_data": "Aston Villa",
+    "sofascore_name": "Aston Villa",
+    "sofascore_id": 40,
+    "score": 1.0
+  },
+  "EPL|Bournemouth": {
+    "league": "EPL",
+    "football_data": "Bournemouth",
+    "sofascore_name": "Bournemouth",
+    "sofascore_id": 60,
+    "score": 1.0
+  },
+  "EPL|Brentford": {
+    "league": "EPL",
+    "football_data": "Brentford",
+    "sofascore_name": "Brentford",
+    "sofascore_id": 50,
+    "score": 1.0
+  },
+  "EPL|Brighton": {
+    "league": "EPL",
+    "football_data": "Brighton",
+    "sofascore_name": "Brighton & Hove Albion",
+    "sofascore_id": 30,
+    "score": 0.7
+  },
+  "EPL|Burnley": {
+    "league": "EPL",
+    "football_data": "Burnley",
+    "sofascore_name": "Burnley",
+    "sofascore_id": 6,
+    "score": 1.0
+  },
+  "EPL|Chelsea": {
+    "league": "EPL",
+    "football_data": "Chelsea",
+    "sofascore_name": "Chelsea",
+    "sofascore_id": 38,
+    "score": 1.0
+  },
+  "EPL|Crystal Palace": {
+    "league": "EPL",
+    "football_data": "Crystal Palace",
+    "sofascore_name": "Crystal Palace",
+    "sofascore_id": 7,
+    "score": 1.0
+  },
+  "EPL|Everton": {
+    "league": "EPL",
+    "football_data": "Everton",
+    "sofascore_name": "Everton",
+    "sofascore_id": 48,
+    "score": 1.0
+  },
+  "EPL|Fulham": {
+    "league": "EPL",
+    "football_data": "Fulham",
+    "sofascore_name": "Fulham",
+    "sofascore_id": 43,
+    "score": 1.0
+  },
+  "EPL|Ipswich": {
+    "league": "EPL",
+    "football_data": "Ipswich",
+    "sofascore_name": "Ipswich Town",
+    "sofascore_id": 32,
+    "score": 0.8
+  },
+  "EPL|Leeds": {
+    "league": "EPL",
+    "football_data": "Leeds",
+    "sofascore_name": "Leeds United",
+    "sofascore_id": 34,
+    "score": 0.8
+  },
+  "EPL|Leicester": {
+    "league": "EPL",
+    "football_data": "Leicester",
+    "sofascore_name": "Leicester City",
+    "sofascore_id": 31,
+    "score": 0.8
+  },
+  "EPL|Liverpool": {
+    "league": "EPL",
+    "football_data": "Liverpool",
+    "sofascore_name": "Liverpool FC",
+    "sofascore_id": 44,
+    "score": 1.0
+  },
+  "EPL|Luton": {
+    "league": "EPL",
+    "football_data": "Luton",
+    "sofascore_name": "Luton Town",
+    "sofascore_id": 72,
+    "score": 0.8
+  },
+  "EPL|Man City": {
+    "league": "EPL",
+    "football_data": "Man City",
+    "sofascore_name": "Manchester City",
+    "sofascore_id": 17,
+    "score": 0.897
+  },
+  "EPL|Man United": {
+    "league": "EPL",
+    "football_data": "Man United",
+    "sofascore_name": "Manchester United",
+    "sofascore_id": 35,
+    "score": 0.897
+  },
+  "EPL|Newcastle": {
+    "league": "EPL",
+    "football_data": "Newcastle",
+    "sofascore_name": "Newcastle United",
+    "sofascore_id": 39,
+    "score": 0.8
+  },
+  "EPL|Norwich": {
+    "league": "EPL",
+    "football_data": "Norwich",
+    "sofascore_name": "Norwich City",
+    "sofascore_id": 263,
+    "score": 0.8
+  },
+  "EPL|Nott'm Forest": {
+    "league": "EPL",
+    "football_data": "Nott'm Forest",
+    "sofascore_name": "Nottingham Forest",
+    "sofascore_id": 14,
+    "score": 0.783
+  },
+  "EPL|Sheffield United": {
+    "league": "EPL",
+    "football_data": "Sheffield United",
+    "sofascore_name": "Sheffield United",
+    "sofascore_id": 15,
+    "score": 1.0
+  },
+  "EPL|Southampton": {
+    "league": "EPL",
+    "football_data": "Southampton",
+    "sofascore_name": "Southampton",
+    "sofascore_id": 45,
+    "score": 1.0
+  },
+  "EPL|Sunderland": {
+    "league": "EPL",
+    "football_data": "Sunderland",
+    "sofascore_name": "Sunderland",
+    "sofascore_id": 41,
+    "score": 1.0
+  },
+  "EPL|Tottenham": {
+    "league": "EPL",
+    "football_data": "Tottenham",
+    "sofascore_name": "Tottenham Hotspur",
+    "sofascore_id": 33,
+    "score": 0.8
+  },
+  "EPL|Watford": {
+    "league": "EPL",
+    "football_data": "Watford",
+    "sofascore_name": "Watford",
+    "sofascore_id": 24,
+    "score": 1.0
+  },
+  "EPL|West Brom": {
+    "league": "EPL",
+    "football_data": "West Brom",
+    "sofascore_name": "West Bromwich Albion",
+    "sofascore_id": 8,
+    "score": 0.783
+  },
+  "EPL|West Ham": {
+    "league": "EPL",
+    "football_data": "West Ham",
+    "sofascore_name": "West Ham United",
+    "sofascore_id": 37,
+    "score": 0.867
+  },
+  "EPL|Wolves": {
+    "league": "EPL",
+    "football_data": "Wolves",
+    "sofascore_name": "Wolverhampton",
+    "sofascore_id": 3,
+    "score": 0.736
+  },
+  "La_Liga|Alaves": {
+    "league": "La_Liga",
+    "football_data": "Alaves",
+    "sofascore_name": "Deportivo Alavés",
+    "sofascore_id": 2885,
+    "score": 1.0
+  },
+  "La_Liga|Almeria": {
+    "league": "La_Liga",
+    "football_data": "Almeria",
+    "sofascore_name": "Almería",
+    "sofascore_id": 2858,
+    "score": 1.0
+  },
+  "La_Liga|Ath Madrid": {
+    "league": "La_Liga",
+    "football_data": "Ath Madrid",
+    "sofascore_name": "Atlético Madrid",
+    "sofascore_id": 2836,
+    "score": 0.736
+  },
+  "La_Liga|Barcelona": {
+    "league": "La_Liga",
+    "football_data": "Barcelona",
+    "sofascore_name": "FC Barcelona",
+    "sofascore_id": 2817,
+    "score": 1.0
+  },
+  "La_Liga|Betis": {
+    "league": "La_Liga",
+    "football_data": "Betis",
+    "sofascore_name": "Real Betis",
+    "sofascore_id": 2816,
+    "score": 0.8
+  },
+  "La_Liga|Cadiz": {
+    "league": "La_Liga",
+    "football_data": "Cadiz",
+    "sofascore_name": "Cádiz",
+    "sofascore_id": 4488,
+    "score": 1.0
+  },
+  "La_Liga|Celta": {
+    "league": "La_Liga",
+    "football_data": "Celta",
+    "sofascore_name": "Celta Vigo",
+    "sofascore_id": 2821,
+    "score": 0.8
+  },
+  "La_Liga|Eibar": {
+    "league": "La_Liga",
+    "football_data": "Eibar",
+    "sofascore_name": "Eibar",
+    "sofascore_id": 2839,
+    "score": 1.0
+  },
+  "La_Liga|Elche": {
+    "league": "La_Liga",
+    "football_data": "Elche",
+    "sofascore_name": "Elche",
+    "sofascore_id": 2846,
+    "score": 1.0
+  },
+  "La_Liga|Espanol": {
+    "league": "La_Liga",
+    "football_data": "Espanol",
+    "sofascore_name": "Espanyol",
+    "sofascore_id": 2814,
+    "score": 0.736
+  },
+  "La_Liga|Getafe": {
+    "league": "La_Liga",
+    "football_data": "Getafe",
+    "sofascore_name": "Getafe",
+    "sofascore_id": 2859,
+    "score": 1.0
+  },
+  "La_Liga|Girona": {
+    "league": "La_Liga",
+    "football_data": "Girona",
+    "sofascore_name": "Girona FC",
+    "sofascore_id": 24264,
+    "score": 1.0
+  },
+  "La_Liga|Granada": {
+    "league": "La_Liga",
+    "football_data": "Granada",
+    "sofascore_name": "Granada",
+    "sofascore_id": 33779,
+    "score": 1.0
+  },
+  "La_Liga|Huesca": {
+    "league": "La_Liga",
+    "football_data": "Huesca",
+    "sofascore_name": "Huesca",
+    "sofascore_id": 24265,
+    "score": 1.0
+  },
+  "La_Liga|Las Palmas": {
+    "league": "La_Liga",
+    "football_data": "Las Palmas",
+    "sofascore_name": "UD Las Palmas",
+    "sofascore_id": 6577,
+    "score": 1.0
+  },
+  "La_Liga|Leganes": {
+    "league": "La_Liga",
+    "football_data": "Leganes",
+    "sofascore_name": "Leganés",
+    "sofascore_id": 2845,
+    "score": 1.0
+  },
+  "La_Liga|Levante": {
+    "league": "La_Liga",
+    "football_data": "Levante",
+    "sofascore_name": "Levante UD",
+    "sofascore_id": 2849,
+    "score": 1.0
+  },
+  "La_Liga|Mallorca": {
+    "league": "La_Liga",
+    "football_data": "Mallorca",
+    "sofascore_name": "Mallorca",
+    "sofascore_id": 2826,
+    "score": 1.0
+  },
+  "La_Liga|Osasuna": {
+    "league": "La_Liga",
+    "football_data": "Osasuna",
+    "sofascore_name": "Osasuna",
+    "sofascore_id": 2820,
+    "score": 1.0
+  },
+  "La_Liga|Oviedo": {
+    "league": "La_Liga",
+    "football_data": "Oviedo",
+    "sofascore_name": "Real Oviedo",
+    "sofascore_id": 2851,
+    "score": 1.0
+  },
+  "La_Liga|Real Madrid": {
+    "league": "La_Liga",
+    "football_data": "Real Madrid",
+    "sofascore_name": "Real Madrid",
+    "sofascore_id": 2829,
+    "score": 1.0
+  },
+  "La_Liga|Sevilla": {
+    "league": "La_Liga",
+    "football_data": "Sevilla",
+    "sofascore_name": "Sevilla",
+    "sofascore_id": 2833,
+    "score": 1.0
+  },
+  "La_Liga|Sociedad": {
+    "league": "La_Liga",
+    "football_data": "Sociedad",
+    "sofascore_name": "Real Sociedad",
+    "sofascore_id": 2824,
+    "score": 0.8
+  },
+  "La_Liga|Valencia": {
+    "league": "La_Liga",
+    "football_data": "Valencia",
+    "sofascore_name": "Valencia",
+    "sofascore_id": 2828,
+    "score": 1.0
+  },
+  "La_Liga|Valladolid": {
+    "league": "La_Liga",
+    "football_data": "Valladolid",
+    "sofascore_name": "Real Valladolid",
+    "sofascore_id": 2831,
+    "score": 1.0
+  },
+  "La_Liga|Vallecano": {
+    "league": "La_Liga",
+    "football_data": "Vallecano",
+    "sofascore_name": "Rayo Vallecano",
+    "sofascore_id": 2818,
+    "score": 0.8
+  },
+  "La_Liga|Villarreal": {
+    "league": "La_Liga",
+    "football_data": "Villarreal",
+    "sofascore_name": "Villarreal",
+    "sofascore_id": 2819,
+    "score": 1.0
+  },
+  "Serie_A|Atalanta": {
+    "league": "Serie_A",
+    "football_data": "Atalanta",
+    "sofascore_name": "Atalanta",
+    "sofascore_id": 2686,
+    "score": 1.0
+  },
+  "Serie_A|Benevento": {
+    "league": "Serie_A",
+    "football_data": "Benevento",
+    "sofascore_name": "Benevento",
+    "sofascore_id": 2759,
+    "score": 1.0
+  },
+  "Serie_A|Bologna": {
+    "league": "Serie_A",
+    "football_data": "Bologna",
+    "sofascore_name": "Bologna",
+    "sofascore_id": 2685,
+    "score": 1.0
+  },
+  "Serie_A|Cagliari": {
+    "league": "Serie_A",
+    "football_data": "Cagliari",
+    "sofascore_name": "Cagliari",
+    "sofascore_id": 2719,
+    "score": 1.0
+  },
+  "Serie_A|Como": {
+    "league": "Serie_A",
+    "football_data": "Como",
+    "sofascore_name": "Como",
+    "sofascore_id": 2704,
+    "score": 1.0
+  },
+  "Serie_A|Cremonese": {
+    "league": "Serie_A",
+    "football_data": "Cremonese",
+    "sofascore_name": "Cremonese",
+    "sofascore_id": 2761,
+    "score": 1.0
+  },
+  "Serie_A|Crotone": {
+    "league": "Serie_A",
+    "football_data": "Crotone",
+    "sofascore_name": "FC Crotone",
+    "sofascore_id": 2718,
+    "score": 1.0
+  },
+  "Serie_A|Empoli": {
+    "league": "Serie_A",
+    "football_data": "Empoli",
+    "sofascore_name": "Empoli",
+    "sofascore_id": 2705,
+    "score": 1.0
+  },
+  "Serie_A|Fiorentina": {
+    "league": "Serie_A",
+    "football_data": "Fiorentina",
+    "sofascore_name": "Fiorentina",
+    "sofascore_id": 2693,
+    "score": 1.0
+  },
+  "Serie_A|Frosinone": {
+    "league": "Serie_A",
+    "football_data": "Frosinone",
+    "sofascore_name": "Frosinone",
+    "sofascore_id": 2801,
+    "score": 1.0
+  },
+  "Serie_A|Genoa": {
+    "league": "Serie_A",
+    "football_data": "Genoa",
+    "sofascore_name": "Genoa",
+    "sofascore_id": 2713,
+    "score": 1.0
+  },
+  "Serie_A|Inter": {
+    "league": "Serie_A",
+    "football_data": "Inter",
+    "sofascore_name": "Inter",
+    "sofascore_id": 2697,
+    "score": 1.0
+  },
+  "Serie_A|Juventus": {
+    "league": "Serie_A",
+    "football_data": "Juventus",
+    "sofascore_name": "Juventus",
+    "sofascore_id": 2687,
+    "score": 1.0
+  },
+  "Serie_A|Lazio": {
+    "league": "Serie_A",
+    "football_data": "Lazio",
+    "sofascore_name": "Lazio",
+    "sofascore_id": 2699,
+    "score": 1.0
+  },
+  "Serie_A|Lecce": {
+    "league": "Serie_A",
+    "football_data": "Lecce",
+    "sofascore_name": "Lecce",
+    "sofascore_id": 2689,
+    "score": 1.0
+  },
+  "Serie_A|Milan": {
+    "league": "Serie_A",
+    "football_data": "Milan",
+    "sofascore_name": "AC Milan",
+    "sofascore_id": 2692,
+    "score": 1.0
+  },
+  "Serie_A|Monza": {
+    "league": "Serie_A",
+    "football_data": "Monza",
+    "sofascore_name": "Monza",
+    "sofascore_id": 2729,
+    "score": 1.0
+  },
+  "Serie_A|Napoli": {
+    "league": "Serie_A",
+    "football_data": "Napoli",
+    "sofascore_name": "SSC Napoli",
+    "sofascore_id": 2714,
+    "score": 1.0
+  },
+  "Serie_A|Parma": {
+    "league": "Serie_A",
+    "football_data": "Parma",
+    "sofascore_name": "Parma",
+    "sofascore_id": 2690,
+    "score": 1.0
+  },
+  "Serie_A|Pisa": {
+    "league": "Serie_A",
+    "football_data": "Pisa",
+    "sofascore_name": "Pisa",
+    "sofascore_id": 2737,
+    "score": 1.0
+  },
+  "Serie_A|Roma": {
+    "league": "Serie_A",
+    "football_data": "Roma",
+    "sofascore_name": "AS Roma",
+    "sofascore_id": 2702,
+    "score": 1.0
+  },
+  "Serie_A|Salernitana": {
+    "league": "Serie_A",
+    "football_data": "Salernitana",
+    "sofascore_name": "US Salernitana 1919",
+    "sofascore_id": 2710,
+    "score": 0.733
+  },
+  "Serie_A|Sampdoria": {
+    "league": "Serie_A",
+    "football_data": "Sampdoria",
+    "sofascore_name": "Sampdoria",
+    "sofascore_id": 2711,
+    "score": 1.0
+  },
+  "Serie_A|Sassuolo": {
+    "league": "Serie_A",
+    "football_data": "Sassuolo",
+    "sofascore_name": "Sassuolo",
+    "sofascore_id": 2793,
+    "score": 1.0
+  },
+  "Serie_A|Spezia": {
+    "league": "Serie_A",
+    "football_data": "Spezia",
+    "sofascore_name": "Spezia",
+    "sofascore_id": 2735,
+    "score": 1.0
+  },
+  "Serie_A|Torino": {
+    "league": "Serie_A",
+    "football_data": "Torino",
+    "sofascore_name": "Torino",
+    "sofascore_id": 2696,
+    "score": 1.0
+  },
+  "Serie_A|Udinese": {
+    "league": "Serie_A",
+    "football_data": "Udinese",
+    "sofascore_name": "Udinese",
+    "sofascore_id": 2695,
+    "score": 1.0
+  },
+  "Serie_A|Venezia": {
+    "league": "Serie_A",
+    "football_data": "Venezia",
+    "sofascore_name": "Venezia",
+    "sofascore_id": 2688,
+    "score": 1.0
+  },
+  "Serie_A|Verona": {
+    "league": "Serie_A",
+    "football_data": "Verona",
+    "sofascore_name": "Hellas Verona",
+    "sofascore_id": 2701,
+    "score": 0.8
+  },
+  "La_Liga|Ath Bilbao": {
+    "league": "La_Liga",
+    "football_data": "Ath Bilbao",
+    "sofascore_name": "Athletic Club",
+    "sofascore_id": 2825,
+    "score": 1.0,
+    "reviewed": true,
+    "note": "Athletic Club is Athletic Bilbao; sole 'Athletic' club in La Liga (slug athletic-club). football-data abbreviates Athletic AND Atletico as 'Ath', which is why this scored below the auto threshold."
+  }
+}

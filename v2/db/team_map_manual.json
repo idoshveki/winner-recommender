@@ -1,0 +1,12 @@
+{
+  "_comment": "Human-reviewed alias decisions. Each entry was confirmed against the SofaScore roster for that league, once. Runtime resolution is an exact lookup against these plus the auto-mapped file - never a fuzzy match.",
+  "La_Liga|Ath Bilbao": {
+    "league": "La_Liga",
+    "football_data": "Ath Bilbao",
+    "sofascore_name": "Athletic Club",
+    "sofascore_id": 2825,
+    "score": 1.0,
+    "reviewed": true,
+    "note": "Athletic Club is Athletic Bilbao; sole 'Athletic' club in La Liga (slug athletic-club). football-data abbreviates Athletic AND Atletico as 'Ath', which is why this scored below the auto threshold."
+  }
+}
