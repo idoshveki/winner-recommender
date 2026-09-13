@@ -1,8 +1,6 @@
 name: v1 — Auto-fill Pick Results (Tue + Fri)
 
 on:
-  schedule:
-    - cron: '30 4 * * 2,5'   # 6:30am Israel (UTC+2), 30min after fetch-results
   workflow_dispatch:
 
 jobs:
@@ -30,3 +28,14 @@ jobs:
           git pull --rebase
           git add data/db/winner.db
           git diff --staged --quiet || (git commit -m "data: auto-fill pick results [skip ci]" && git push)
+
+# DISABLED 2026-09-13 — manual dispatch only.
+#
+# 37 of its 40 runs failed. The script writes to winner.db and only THEN runs
+# `git pull --rebase`, which git refuses: "cannot pull with rebase: You have
+# unstaged changes". It also depends on matches_history, which the job above
+# never updated, so even its successful runs had nothing to match against.
+#
+# Superseded by v2: `python -m v2.ingest.v1_picks` records every v1 pick and
+# settles it against current results, writing to Postgres instead of racing
+# three other bots over a 74MB binary in git.

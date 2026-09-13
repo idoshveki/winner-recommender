@@ -1,8 +1,6 @@
 name: v1 — Fetch Match Results (Tue + Fri)
 
 on:
-  schedule:
-    - cron: '0 4 * * 2,5'   # 6am Israel (UTC+2), Tuesday + Friday
   workflow_dispatch:
 
 jobs:
@@ -29,3 +27,14 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/db/winner.db
           git diff --staged --quiet || (git commit -m "data: refresh match results [skip ci]" && git push)
+
+# DISABLED 2026-09-13 — manual dispatch only.
+#
+# This job never worked. Its entry point calls reprocess_all_local(), which
+# reads CSVs under data/raw/ — gitignored, so absent in CI. It has produced
+# ZERO commits in its entire history while reporting green, which is why v1's
+# matches_history froze at 2026-03-09 and its yellow-card averages have been
+# six months stale ever since.
+#
+# Superseded by v2: `python -m v2.ingest.results` pulls finished matches and
+# statistics from SofaScore into Postgres daily, keyed by event id.
