@@ -703,6 +703,35 @@ def tip(key, shown=None):
             f'<span class="tt" role="tooltip">{e(txt)}</span></button>')
 
 
+MARKET_LABEL = {
+    "H/A": "Match result",
+    "YC Over 3.5": "Yellow cards Over 3.5",
+    "Draw singles": "Draw singles",
+    "O2.5+BTTS": "Over 2.5 goals + both score",
+}
+
+
+def pick_label(market, pick):
+    """Human-readable selection. The database stores terse codes - "H", "A",
+    "Over 3.5" - which are unreadable without knowing the market they belong
+    to. Spell them out."""
+    m = (market or "").upper()
+    pk = (pick or "").strip()
+    if pk in ("H", "Home"):
+        return "Home win"
+    if pk in ("A", "Away"):
+        return "Away win"
+    if pk in ("D", "Draw"):
+        return "Draw"
+    if "YC" in m or "CARD" in m:
+        return f"{pk} yellow cards"
+    if "BTTS" in m:
+        return "Over 2.5 goals and both teams to score"
+    if "CORNER" in m:
+        return f"{pk} corners"
+    return pk
+
+
 def render(a, meta, *, sample=False):
     W = a["weeks"]
     ov, sl, dr = a["overall"], a["slips"], a["draws"]
@@ -718,7 +747,7 @@ def render(a, meta, *, sample=False):
             st = "pending" if l["hit"] is None else ("hit" if l["hit"] else "miss")
             legs.append(
                 f'<div class="lg {st}"><span class="m">{e(l["match_text"])}</span>'
-                f'<span class="p">{e(l["pick"])} @ {l["odds"]:.2f}</span></div>')
+                f'<span class="p">{e(pick_label(l["market"], l["pick"]))} @ {l["odds"]:.2f}</span></div>')
         pnl = w["pnl"]
         if w["draw_pnl"] is not None:
             pnl = (pnl or 0) + w["draw_pnl"]
@@ -731,7 +760,7 @@ def render(a, meta, *, sample=False):
             f'{"".join(legs)}</article>')
 
     mkt = "".join(
-        f'<tr><td>{e(m["market"])}</td>'
+        f'<tr><td>{e(MARKET_LABEL.get(m["market"], m["market"]))}</td>'
         f'<td class="n">{m["hits"]}/{m["graded"]}</td>'
         f'<td class="n">{(m["hits"]/m["graded"]*100 if m["graded"] else 0):.0f}%</td>'
         f'<td class="n {cls(m["pnl"])}">{m["pnl"]:+.2f}</td></tr>'
