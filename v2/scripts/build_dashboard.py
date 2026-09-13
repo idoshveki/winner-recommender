@@ -680,244 +680,188 @@ def leg_html(r: dict, *, show_market: bool = True) -> str:
             f'<span class="leg-line"><span class="leg-meta">{meta}</span>{chip}</span></div>')
 
 
-def render(a: dict, meta: dict, *, sample: bool) -> str:
-    gen = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    n_priced = a["n_legs"] - a["n_unpriced"]
-    n_q = n_priced - a["n_real_priced"]
+GLOSSARY = {
+    "u": "One unit \u2014 the stake on a single bet. +1u means you won one stake in profit.",
+    "slip": "Accumulator. Several picks on one ticket \u2014 every leg must win or the whole ticket loses.",
+    "leg": "One selection inside a slip.",
+    "single": "A pick bet on its own, settled independently of anything else.",
+    "ROI": "Profit divided by everything staked.",
+    "pending": "Not played or not settled yet. Not a loss.",
+    "v1": "The original system. Still emails picks every Friday.",
+    "v2": "The rebuild. Records what it would pick, sends nothing.",
+}
 
-    banner = ""
-    if sample:
-        banner = (
-            '<div class="flag"><strong>SAMPLE DATA — NOT THE REAL RECORD.</strong> '
-            'Every number, match and price on this page is invented, generated with '
-            '<code>--sample</code> because the database was unreachable. It exists to '
-            'show the layout. Re-run <code>python -m v2.scripts.build_dashboard</code> '
-            'against a live database for the real record.</div>')
 
-    pend_foot = (f"{a['slips_pending']} slip"
-                 f"{'' if a['slips_pending'] == 1 else 's'} and "
-                 f"{a['draws_pending']} draw"
-                 f"{'' if a['draws_pending'] == 1 else 's'} not yet resolved"
-                 if a["legs_pending"] else "every pick has a result")
+def tip(key, shown=None):
+    """Tap-or-hover tooltip. <abbr title> needs a hover, which phones do not
+    have, so this is a button with a popover instead."""
+    txt = GLOSSARY.get(key)
+    label = e(shown if shown is not None else key)
+    if not txt:
+        return label
+    return (f'<button class="t" type="button" aria-label="{e(txt)}">{label}'
+            f'<span class="tt" role="tooltip">{e(txt)}</span></button>')
 
-    tiles = [
-        ("Bets settled", str(a["bets"]), "value",
-         f"{a['slips']['staked']} slips + {a['draws']['staked']} draw singles, "
-         f"from {a['n_legs']} legs recorded"),
-        (term("slip", "Slips"), f"{a['slips_won']}–{a['slips_lost']}", "value",
-         f"{u(a['slips']['pnl'])} &middot; {pct(a['slips']['roi'])} ROI"),
-        (term("single", "Draw singles"), f"{a['draws_won']}–{a['draws_lost']}", "value",
-         f"{u(a['draws']['pnl'])} &middot; {pct(a['draws']['roi'])} ROI"),
-        ("Legs hit", f"{a['legs_hit']}/{a['legs_graded']}", "value",
-         f"{a['legs_hit'] / a['legs_graded'] * 100:.0f}% of settled legs landed"
-         if a["legs_graded"] else "nothing settled yet"),
-        ("Pending", str(a["legs_pending"]), "value", pend_foot),
-    ]
-    tiles_html = "".join(
-        f'<div class="card tile"><div class="label">{label}</div>'
-        f'<div class="{cls}">{value}</div><div class="foot">{foot}</div></div>'
-        for label, value, cls, foot in tiles)
 
-    chart = comparison_chart([
-        ("Every settled pick as a 1-unit single",
-         f"{a['all_as_singles']['staked']} legs, 1u each", a["all_as_singles"]["roi"],
-         f"{u(a['all_as_singles']['pnl'])} on {a['all_as_singles']['staked']} units staked"),
-        ("Accumulator legs as 1-unit singles",
-         f"{a['acc_as_singles']['staked']} legs, 1u each", a["acc_as_singles"]["roi"],
-         f"{u(a['acc_as_singles']['pnl'])} on {a['acc_as_singles']['staked']} units staked"),
-        ("The same legs bundled into accumulators",
-         f"{a['slips']['staked']} slips, 1u each", a["slips"]["roi"],
-         f"{u(a['slips']['pnl'])} on {a['slips']['staked']} units staked"),
-    ])
+def render(a, meta, *, sample=False):
+    W = a["weeks"]
+    ov, sl, dr = a["overall"], a["slips"], a["draws"]
 
-    market_rows = "".join(
+    def cls(x):
+        return "pos" if x > 0 else ("neg" if x < 0 else "")
+
+    # ---- week rows, newest first (already sorted that way) ----------------
+    rows_html = []
+    for w in W:
+        legs = []
+        for l in w["acc"] + ([w["draw"]] if w["draw"] else []):
+            st = "pending" if l["hit"] is None else ("hit" if l["hit"] else "miss")
+            legs.append(
+                f'<div class="lg {st}"><span class="m">{e(l["match_text"])}</span>'
+                f'<span class="p">{e(l["pick"])} @ {l["odds"]:.2f}</span></div>')
+        pnl = w["pnl"]
+        if w["draw_pnl"] is not None:
+            pnl = (pnl or 0) + w["draw_pnl"]
+        badge = ("" if pnl is None
+                 else f'<span class="amt {cls(pnl)}">{pnl:+.2f}u</span>')
+        rows_html.append(
+            f'<article class="wk">'
+            f'<header><time>{e(w["date"])}</time>'
+            f'<span class="sys">{e(w["system"])}</span>{badge}</header>'
+            f'{"".join(legs)}</article>')
+
+    mkt = "".join(
         f'<tr><td>{e(m["market"])}</td>'
-        f'<td class="num">{m["n"]}</td>'
-        f'<td class="num">{m["pending"] or "&mdash;"}</td>'
-        f'<td class="num">{m["hits"]}/{m["graded"]}</td>'
-        + (f'<td class="num"><span class="meter">'
-           f'<i style="width:{m["hits"] / m["graded"] * 100:.1f}%"></i></span>'
-           f'{m["hits"] / m["graded"] * 100:.0f}%</td>'
-           if m["graded"] else '<td class="num muted">&mdash;</td>')
-        + f'<td class="num {sign_class(m["pnl"])}">{u(m["pnl"])}</td>'
-          f'<td class="muted">{"settled as bet" if m["real"] else "hypothetical"}</td></tr>'
+        f'<td class="n">{m["hits"]}/{m["graded"]}</td>'
+        f'<td class="n">{(m["hits"]/m["graded"]*100 if m["graded"] else 0):.0f}%</td>'
+        f'<td class="n {cls(m["pnl"])}">{m["pnl"]:+.2f}</td></tr>'
         for m in a["markets"])
 
-    multi_system = len(a["systems"]) > 1
-    system_block = ""
-    if multi_system:
-        srows = "".join(
-            f'<tr><td><span class="sys">{e(s["system"])}</span></td>'
-            f'<td class="num">{s["legs"]}</td><td class="num">{s["pending"] or "&mdash;"}</td>'
-            f'<td class="num">{s["staked"]}</td>'
-            f'<td class="num {sign_class(s["pnl"])}">{u(s["pnl"])}</td>'
-            f'<td class="num">{pct(s["roi"])}</td></tr>'
-            for s in a["by_system"])
-        system_block = f"""
-<h2>By system</h2>
-<div class="scroll">
-<table>
-  <thead><tr><th>System</th><th class="num">{term("leg","Legs")}</th><th class="num">{term("pending","Pending")}</th>
-    <th class="num">Bets settled</th><th class="num">P&amp;L</th><th class="num">{term("ROI")}</th></tr></thead>
-  <tbody>{srows}</tbody>
-</table>
-</div>
-<p class="muted">v1 and v2 picks are recorded in the same table and never pooled
-   into one figure. Everything above this section combines them; this is the split.</p>
-"""
-
-    week_rows = []
-    for wk in a["weeks"]:
-        legs = "".join(leg_html(r) for r in wk["acc"]) or '<span class="muted">—</span>'
-        s = wk["slip"]
-        if not s:
-            slip = '<span class="muted">no slip</span>'
-        elif not s["resolved"]:
-            slip = (f'<span class="chip pending">PENDING</span> '
-                    f'<span class="leg-meta">{s["pending"]} of {s["legs"]} legs '
-                    f'unsettled</span>')
-        elif s["pnl"] is None:
-            slip = (f'<span class="chip pending">UNPRICED</span> '
-                    f'<span class="leg-meta">{s["unpriced"]} leg(s) have no price</span>')
-        else:
-            outcome = "WON" if s["won"] else "LOST"
-            slip = (f'<span class="chip {"hit" if s["won"] else "miss"}">{outcome}</span> '
-                    f'<span class="leg-meta">@{s["combined"]:.2f}</span><br>'
-                    f'<span class="leg-meta">{u(s["pnl"])}</span>')
-        if wk["draw"] is not None:
-            draw = leg_html(wk["draw"], show_market=False)
-            if wk["draw_pnl"] is not None:
-                draw += f'<span class="leg-meta">{u(wk["draw_pnl"])}</span>'
-        else:
-            draw = '<span class="muted">no draw pick</span>'
-        wpnl = (f'<td class="num {sign_class(wk["pnl"])}">{u(wk["pnl"])}</td>'
-                if wk["pnl"] is not None else '<td class="num muted">&mdash;</td>')
-        week_rows.append(
-            f'<tr><td class="date">{e(wk["date"])}</td>'
-            f'<td><span class="sys">{e(wk["system"])}</span></td>'
-            f'<td>{legs}</td><td>{slip}</td><td>{draw}</td>{wpnl}</tr>')
-
-    one_in = (1 / a["draw_p"]) if a["draw_p"] > 0 else float("inf")
-    draw_line = "" if not (a["draws_won"] + a["draws_lost"]) else (
-        f'The draw run is <strong>{a["draws_won"]} of {a["draws_won"] + a["draws_lost"]}</strong> '
-        f'against a market-implied {a["draw_implied"] * 100:.0f}% (the mean of 1/odds across '
-        f'those prices, vig included). At that rate a run this good or better comes up about '
-        f'once in {one_in:.0f} — which sounds decisive and is not, on '
-        f'{a["draws_won"] + a["draws_lost"]} bets. Backing every draw across thousands of '
-        f'matches loses money; nothing here changes that.'
-    )
-    draw_bullet = f"<li>{draw_line}</li>" if draw_line else ""
-
-    pending_bullet = ""
-    if a["legs_pending"]:
-        pending_bullet = (
-            f'<li><strong>{a["legs_pending"]} legs are pending</strong> — recorded when '
-            f'the pick was issued, not yet played. They count as neither wins nor losses '
-            f'and contribute nothing to any P&amp;L figure here. A slip is only scored '
-            f'once every one of its legs has a result.</li>')
-
-    price_note = (
-        f'Prices: the observed price where one was recorded '
-        f'({a["n_real_priced"]} of {n_priced} priced legs), otherwise the price the '
-        f'system quoted ({n_q} legs, marked <sup class="src">q</sup>). v1 assumed 1.50 '
-        f'on yellow-card legs; where the real price was seen it was lower.'
-        + (f' {a["n_unpriced"]} leg(s) carry no price at all and are excluded from '
-           f'every P&amp;L figure.' if a["n_unpriced"] else ''))
-
+    single, slips = a["all_as_singles"], a["slips"]
     return f"""<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
+<html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Live betting record{' (sample)' if sample else ''}</title>
-<style>{CSS}</style>
-</head>
-<body>
-<div class="wrap">
+<title>Betting record</title>
+<style>
+:root{{color-scheme:light;--bg:#faf9f7;--card:#fff;--ink:#111;--dim:#6b6a66;
+--line:rgba(0,0,0,.11);--good:#0f7a2e;--bad:#c62f2f;
+--hit:#e6f5e8;--hitl:#a8d8b2;--miss:#fdeaea;--missl:#eaadad;--tipbg:#1c1c1a}}
+@media(prefers-color-scheme:dark){{:root:not([data-theme=light]){{color-scheme:dark;
+--bg:#0e0e0d;--card:#1a1a18;--ink:#f5f4f1;--dim:#9b9a95;--line:rgba(255,255,255,.13);
+--good:#4ec36b;--bad:#f07070;--hit:#14301a;--hitl:#2f6b3c;--miss:#331515;--missl:#7a3030;
+--tipbg:#3a3a37}}}}
+:root[data-theme=dark]{{color-scheme:dark;--bg:#0e0e0d;--card:#1a1a18;--ink:#f5f4f1;
+--dim:#9b9a95;--line:rgba(255,255,255,.13);--good:#4ec36b;--bad:#f07070;
+--hit:#14301a;--hitl:#2f6b3c;--miss:#331515;--missl:#7a3030;--tipbg:#3a3a37}}
+*{{box-sizing:border-box}}
+body{{margin:0;background:var(--bg);color:var(--ink);
+font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;
+-webkit-text-size-adjust:100%}}
+.wrap{{max-width:46rem;margin:0 auto;padding:1.5rem 1rem 3rem}}
+h1{{font-size:1.05rem;font-weight:600;margin:0}}
+.dim{{color:var(--dim);font-size:.82rem}}
+h2{{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);
+margin:2.2rem 0 .6rem;font-weight:600}}
+.big{{font-size:2.9rem;font-weight:650;letter-spacing:-.02em;line-height:1.05;margin:.6rem 0 .1rem}}
+.big.pos{{color:var(--good)}}.big.neg{{color:var(--bad)}}
+.tiles{{display:grid;grid-template-columns:repeat(auto-fit,minmax(8.5rem,1fr));gap:.6rem;margin-top:1.2rem}}
+.tile{{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:.7rem .8rem}}
+.tile b{{display:block;font-size:1.35rem;font-weight:650;line-height:1.2}}
+.tile span{{font-size:.75rem;color:var(--dim)}}
+table{{width:100%;border-collapse:collapse;font-size:.87rem;background:var(--card);
+border:1px solid var(--line);border-radius:8px;overflow:hidden}}
+th,td{{padding:.5rem .7rem;text-align:left;border-bottom:1px solid var(--line)}}
+th{{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);font-weight:600}}
+tr:last-child td{{border-bottom:none}}
+.n{{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}}
+.pos{{color:var(--good)}}.neg{{color:var(--bad)}}
+.wk{{background:var(--card);border:1px solid var(--line);border-radius:8px;
+padding:.6rem .75rem;margin-bottom:.5rem}}
+.wk header{{display:flex;align-items:center;gap:.5rem;margin-bottom:.45rem}}
+.wk time{{font-variant-numeric:tabular-nums;font-size:.82rem;color:var(--dim)}}
+.sys{{font-size:.65rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+border:1px solid var(--line);border-radius:4px;padding:.05rem .3rem;color:var(--dim)}}
+.amt{{margin-left:auto;font-weight:650;font-variant-numeric:tabular-nums;font-size:.9rem}}
+.lg{{display:flex;flex-wrap:wrap;gap:.15rem .6rem;padding:.35rem .5rem;border-radius:5px;
+margin-top:.25rem;border:1px solid transparent}}
+.lg.hit{{background:var(--hit);border-color:var(--hitl)}}
+.lg.miss{{background:var(--miss);border-color:var(--missl)}}
+.lg.pending{{background:transparent;border-style:dashed;border-color:var(--line)}}
+.lg .m{{font-size:.87rem}}
+.lg .p{{margin-left:auto;font-size:.8rem;color:var(--dim);
+font-variant-numeric:tabular-nums;white-space:nowrap}}
+.t{{all:unset;cursor:pointer;position:relative;border-bottom:1px dotted currentColor}}
+.t .tt{{position:absolute;left:0;top:calc(100% + .4rem);z-index:9;width:min(15rem,72vw);
+background:var(--tipbg);color:#fff;font-size:.78rem;line-height:1.4;font-weight:400;
+text-transform:none;letter-spacing:0;padding:.5rem .6rem;border-radius:6px;
+opacity:0;visibility:hidden;transition:opacity .12s;pointer-events:none;
+box-shadow:0 4px 14px rgba(0,0,0,.28)}}
+.t:hover .tt,.t:focus .tt,.t.on .tt{{opacity:1;visibility:visible}}
+footer{{margin-top:2.4rem;padding-top:1rem;border-top:1px solid var(--line);
+color:var(--dim);font-size:.8rem}}
+@media(max-width:30rem){{.big{{font-size:2.3rem}}.lg .p{{margin-left:0;width:100%}}}}
+</style></head><body><div class="wrap">
 
-<header>
-  <h1>Live betting record{' &mdash; SAMPLE' if sample else ''}</h1>
-  <p class="sub">Weekly recommendations from
-     {' and '.join(a['systems'])}, graded on v2's match data.
-     {e(a['first_date'])} to {e(a['last_date'])} &middot; 1 unit = {UNIT_NIS} NIS.</p>
-  <p class="muted">Generated {gen} from <code>v1_live_record</code>.
-     Newest match with stats in the database: {e(meta.get('newest_match'))}.</p>
-  {banner}
-</header>
+<h1>Betting record</h1>
+<p class="dim">{e(a["first_date"])} to {e(a["last_date"])} &middot;
+{a["bets"]} bets &middot; {tip("v1")} live, {tip("v2")} recording only</p>
 
-<section class="hero">
-  <div class="label">Overall profit and loss, settled bets only</div>
-  <div class="figure {sign_class(a['overall']['pnl'])}">{u(a['overall']['pnl'])}</div>
-  <div class="beside">{nis(a['overall']['pnl'])} &middot; {pct(a['overall']['roi'])} ROI
-     on {a['overall']['staked']} bets, 1u each</div>
-</section>
+<div class="big {cls(ov['pnl'])}">{ov['pnl']:+.2f}u</div>
+<p class="dim">{nis(ov['pnl'])} at {UNIT_NIS} per {tip("u","unit")} &middot;
+{pct(ov['roi'])} {tip("ROI")}</p>
 
-<div class="tiles">{tiles_html}</div>
+<div class="tiles">
+  <div class="tile"><b>{a['slips_won']}&ndash;{a['slips_lost']}</b>
+    <span>{tip("slip","slips")} &middot; <span class="{cls(sl['pnl'])}">{sl['pnl']:+.2f}u</span></span></div>
+  <div class="tile"><b>{a['draws_won']}&ndash;{a['draws_lost']}</b>
+    <span>draw {tip("single","singles")} &middot; <span class="{cls(dr['pnl'])}">{dr['pnl']:+.2f}u</span></span></div>
+  <div class="tile"><b>{a['legs_hit']}/{a['legs_graded']}</b>
+    <span>{tip("leg","legs")} won{f" &middot; {a['legs_pending']} {tip('pending')}" if a['legs_pending'] else ""}</span></div>
+</div>
 
-<h2>Singles versus slips</h2>
-<p class="note">The picks themselves did well. The way they were <em>packaged</em> is what
-   decided the result: an accumulator only pays when every leg lands, so each extra leg
-   multiplies the bookmaker's margin as well as the odds.</p>
-{chart}
-<p class="note">Bet individually at 1 unit each, the
-   {a['all_as_singles']['staked']} settled legs returned
-   <strong>{pct(a['all_as_singles']['roi'])}</strong> ({u(a['all_as_singles']['pnl'])}).
-   The {a['acc_as_singles']['staked']} settled legs that were actually bundled returned
-   <strong>{pct(a['acc_as_singles']['roi'])}</strong> as singles and
-   <strong>{pct(a['slips']['roi'])}</strong> as the {a['slips']['staked']} slips they were
-   bet as &mdash; a swing of
-   {abs(a['acc_as_singles']['roi'] - a['slips']['roi']) * 100:.0f} points from packaging
-   alone. Most of the singles figure comes from the draw picks, which were never in a slip.</p>
+<h2>Singles beat slips</h2>
+<table><tbody>
+<tr><td>Every pick as its own bet</td>
+  <td class="n {cls(single['pnl'])}">{single['pnl']:+.2f}u</td>
+  <td class="n {cls(single['roi'])}">{pct(single['roi'],0)}</td></tr>
+<tr><td>The same picks bundled into {tip("slip","slips")}</td>
+  <td class="n {cls(slips['pnl'])}">{slips['pnl']:+.2f}u</td>
+  <td class="n {cls(slips['roi'])}">{pct(slips['roi'],0)}</td></tr>
+</tbody></table>
+<p class="dim" style="margin-top:.5rem">Every extra leg multiplies the bookmaker's
+margin against you and needs everything to land.</p>
 
 <h2>By market</h2>
-<div class="scroll">
-<table>
-  <thead><tr>
-    <th>Market</th><th class="num">{term("leg","Legs")}</th><th class="num">{term("pending","Pending")}</th>
-    <th class="num">Hits</th><th class="num">Hit rate</th>
-    <th class="num">P&amp;L at {term("u","1u")}</th><th>Basis</th>
-  </tr></thead>
-  <tbody>{market_rows}</tbody>
-</table>
-</div>
-<p class="muted">Hit rate is over settled legs only; pending legs are excluded from
-   both the rate and the P&amp;L. Draw singles were bet as singles, so their P&amp;L is
-   real. The accumulator legs were never bet individually &mdash; their 1u P&amp;L is
-   what they would have returned as singles.</p>
-{system_block}
-<h2>Week by week</h2>
-<div class="scroll">
-<table>
-  <thead><tr>
-    <th>Date</th><th>System</th><th>{term("leg","Accumulator legs")}</th><th>{term("slip","Slip")}</th>
-    <th>{term("single","Draw single")}</th><th class="num">Week P&amp;L</th>
-  </tr></thead>
-  <tbody>{"".join(week_rows)}</tbody>
-</table>
-</div>
-<p class="muted">{price_note}</p>
+<table><thead><tr><th>Market</th><th class="n">Won</th><th class="n">Rate</th>
+<th class="n">P&amp;L</th></tr></thead><tbody>{mkt}</tbody></table>
+
+<h2>Week by week &middot; newest first</h2>
+{"".join(rows_html)}
 
 <footer>
-  <p><strong>Read this small.</strong></p>
-  <ul>
-    <li>{a['legs_graded']} settled legs across {a['overall']['staked']} bets. That is a
-        sample that cannot separate an edge from a good month. The negative results this
-        project measured elsewhere rest on thousands of matches and held-out seasons; a
-        run this short is not evidence against them, or for them.</li>
-    {draw_bullet}
-    {pending_bullet}
-    <li>Picks are recorded when issued and settled by a scheduled job, so the record
-        cannot be revised upward later and a losing week cannot quietly go missing.</li>
-  </ul>
+{a['draws_won']} of {a['draws_won']+a['draws_lost']} draw singles landed at a
+market-implied {pct(a['draw_implied'],0)} each &mdash; about a 1-in-{int(1/max(a['draw_p'],1e-9))}
+run. On {a['draws_won']+a['draws_lost']} bets that is a hot streak, not proof.
+Card legs are priced at what 1win actually pays, not the 1.50 v1 assumed.
+{'<br><strong>Sample data &mdash; not real results.</strong>' if sample else ''}
 </footer>
-
 </div>
-</body>
-</html>
-"""
+<script>
+// tap to toggle on touch devices, where :hover never fires
+document.querySelectorAll('.t').forEach(function(b){{
+  b.addEventListener('click', function(ev){{
+    ev.stopPropagation();
+    var open = b.classList.contains('on');
+    document.querySelectorAll('.t.on').forEach(function(o){{o.classList.remove('on');}});
+    if (!open) b.classList.add('on');
+  }});
+}});
+document.addEventListener('click', function(){{
+  document.querySelectorAll('.t.on').forEach(function(o){{o.classList.remove('on');}});
+}});
+</script>
+</body></html>"""
 
-
-# ───────────────────────────────────────────────────────────────── main ──
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
