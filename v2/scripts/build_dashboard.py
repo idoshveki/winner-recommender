@@ -226,7 +226,8 @@ def analyse(rows: list[dict], weeks_view: dict = None) -> dict:
             wk["acc"].append(r)
         wk["date"] = min(wk["date"], r["date"]) if wk["date"] else r["date"]
 
-    ordered = sorted(weeks.values(), key=lambda w: (w["date"], w["week"], w["system"]))
+    ordered = sorted(weeks.values(), key=lambda w: (w["date"], w["week"], w["system"]),
+                     reverse=True)   # newest at the top: the recent run is what matters
 
     slips, draws = [], []
     for wk in ordered:
@@ -371,6 +372,39 @@ def nis(x: float) -> str:
     return f"{'+' if x >= 0 else MINUS}{abs(x) * UNIT_NIS:,.0f} NIS"
 
 
+# Terms a reader should not have to already know. Rendered as dotted-underline
+# tooltips rather than a glossary nobody scrolls to.
+GLOSSARY = {
+    "u": "unit — one bet's stake. +1u means you won one stake back as profit.",
+    "slip": "accumulator: several picks on one ticket. Every leg must win or "
+            "the whole ticket loses.",
+    "leg": "one selection inside a slip.",
+    "single": "one pick bet on its own, settled independently of any other.",
+    "ROI": "return on investment: profit divided by everything staked.",
+    "edge": "how much better the price is than what the model thinks it is "
+            "worth. +5% means a 1.00 stake is worth 1.05.",
+    "model": "the probability our model gives this outcome.",
+    "book": "the probability the bookmaker's own price implies, with its "
+            "margin removed.",
+    "qualifies": "whether the pick cleared v2's minimum edge, i.e. whether v2 "
+                 "would actually have bet it.",
+    "pending": "the match has not been played or settled yet. Not a loss.",
+    "v1": "the original system. Still emails picks every Friday.",
+    "v2": "the rebuild. Records what it would pick but sends nothing.",
+    "backtest": "computed after the fact on past matches. Never money that was "
+                "actually at risk.",
+}
+
+
+def term(word: str, shown: str = None) -> str:
+    """Wrap a jargon term in its explanation."""
+    tip = GLOSSARY.get(word)
+    label = shown if shown is not None else word
+    if not tip:
+        return e(label)
+    return f'<abbr title="{e(tip)}">{e(label)}</abbr>'
+
+
 def sign_class(x: float) -> str:
     return "pos" if x >= 0 else "neg"
 
@@ -399,6 +433,12 @@ CSS = """
   --flag-bg:   #fdf4e0;
   --flag-ink:  #7a4f00;
   --flag-rule: #eda100;
+  --hit-bg:    #e4f5e4;
+  --hit-ink:   #14591b;
+  --hit-rule:  #9ed3a4;
+  --miss-bg:   #fce8e8;
+  --miss-ink:  #8f1f1f;
+  --miss-rule: #eaa9a9;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -420,6 +460,12 @@ CSS = """
     --flag-bg:   #2a2211;
     --flag-ink:  #f0c860;
     --flag-rule: #c98500;
+    --hit-bg:    #122c16;
+    --hit-ink:   #7ede8b;
+    --hit-rule:  #2f6b39;
+    --miss-bg:   #331414;
+    --miss-ink:  #f79a9a;
+    --miss-rule: #7a2f2f;
   }
 }
 :root[data-theme="dark"] {
@@ -441,6 +487,12 @@ CSS = """
   --flag-bg:   #2a2211;
   --flag-ink:  #f0c860;
   --flag-rule: #c98500;
+  --hit-bg:    #122c16;
+  --hit-ink:   #7ede8b;
+  --hit-rule:  #2f6b39;
+  --miss-bg:   #331414;
+  --miss-ink:  #f79a9a;
+  --miss-rule: #7a2f2f;
 }
 
 * { box-sizing: border-box; }
@@ -543,12 +595,22 @@ td.date { white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--
 .leg-line { display: flex; align-items: baseline; gap: .5rem; white-space: nowrap; }
 .leg-meta { color: var(--ink-muted); font-size: .8125rem; white-space: nowrap;
   font-variant-numeric: tabular-nums; }
-.chip { font-size: .6875rem; font-weight: 600; letter-spacing: .06em;
-  border: 1px solid currentColor; border-radius: 3px; padding: 0 .3rem;
-  white-space: nowrap; }
-.chip.hit { color: var(--good); }
-.chip.miss { color: var(--bad); }
-.chip.pending { color: var(--ink-muted); }
+.chip { font-size: .6875rem; font-weight: 700; letter-spacing: .06em;
+  border-radius: 3px; padding: .1rem .4rem; white-space: nowrap;
+  border: 1px solid transparent; }
+.chip.hit     { color: var(--hit-ink);  background: var(--hit-bg);  border-color: var(--hit-rule); }
+.chip.miss    { color: var(--miss-ink); background: var(--miss-bg); border-color: var(--miss-rule); }
+.chip.pending { color: var(--ink-muted); background: var(--rule); }
+/* whole-row tint so a good or bad week reads at a glance rather than needing
+   the eye to find a small coloured word */
+tr.row-hit  > td { background: var(--hit-bg); }
+tr.row-miss > td { background: var(--miss-bg); }
+tr.row-pending > td { background: transparent; }
+
+/* plain-language tooltips: several terms here are jargon (u, slip, edge) and
+   the page should not require the reader to already know them */
+abbr[title] { text-decoration: underline dotted; text-underline-offset: 2px;
+  cursor: help; border: none; }
 .sys { font-size: .6875rem; font-weight: 600; letter-spacing: .06em;
   text-transform: uppercase; color: var(--ink-2); border: 1px solid var(--rule);
   border-radius: 3px; padding: .05rem .35rem; white-space: nowrap; }
@@ -642,9 +704,9 @@ def render(a: dict, meta: dict, *, sample: bool) -> str:
         ("Bets settled", str(a["bets"]), "value",
          f"{a['slips']['staked']} slips + {a['draws']['staked']} draw singles, "
          f"from {a['n_legs']} legs recorded"),
-        ("Slips", f"{a['slips_won']}–{a['slips_lost']}", "value",
+        (term("slip", "Slips"), f"{a['slips_won']}–{a['slips_lost']}", "value",
          f"{u(a['slips']['pnl'])} &middot; {pct(a['slips']['roi'])} ROI"),
-        ("Draw singles", f"{a['draws_won']}–{a['draws_lost']}", "value",
+        (term("single", "Draw singles"), f"{a['draws_won']}–{a['draws_lost']}", "value",
          f"{u(a['draws']['pnl'])} &middot; {pct(a['draws']['roi'])} ROI"),
         ("Legs hit", f"{a['legs_hit']}/{a['legs_graded']}", "value",
          f"{a['legs_hit'] / a['legs_graded'] * 100:.0f}% of settled legs landed"
@@ -695,8 +757,8 @@ def render(a: dict, meta: dict, *, sample: bool) -> str:
 <h2>By system</h2>
 <div class="scroll">
 <table>
-  <thead><tr><th>System</th><th class="num">Legs</th><th class="num">Pending</th>
-    <th class="num">Bets settled</th><th class="num">P&amp;L</th><th class="num">ROI</th></tr></thead>
+  <thead><tr><th>System</th><th class="num">{term("leg","Legs")}</th><th class="num">{term("pending","Pending")}</th>
+    <th class="num">Bets settled</th><th class="num">P&amp;L</th><th class="num">{term("ROI")}</th></tr></thead>
   <tbody>{srows}</tbody>
 </table>
 </div>
@@ -811,9 +873,9 @@ def render(a: dict, meta: dict, *, sample: bool) -> str:
 <div class="scroll">
 <table>
   <thead><tr>
-    <th>Market</th><th class="num">Legs</th><th class="num">Pending</th>
+    <th>Market</th><th class="num">{term("leg","Legs")}</th><th class="num">{term("pending","Pending")}</th>
     <th class="num">Hits</th><th class="num">Hit rate</th>
-    <th class="num">P&amp;L at 1u</th><th>Basis</th>
+    <th class="num">P&amp;L at {term("u","1u")}</th><th>Basis</th>
   </tr></thead>
   <tbody>{market_rows}</tbody>
 </table>
@@ -827,8 +889,8 @@ def render(a: dict, meta: dict, *, sample: bool) -> str:
 <div class="scroll">
 <table>
   <thead><tr>
-    <th>Date</th><th>System</th><th>Accumulator legs</th><th>Slip</th>
-    <th>Draw single</th><th class="num">Week P&amp;L</th>
+    <th>Date</th><th>System</th><th>{term("leg","Accumulator legs")}</th><th>{term("slip","Slip")}</th>
+    <th>{term("single","Draw single")}</th><th class="num">Week P&amp;L</th>
   </tr></thead>
   <tbody>{"".join(week_rows)}</tbody>
 </table>
