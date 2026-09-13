@@ -1,178 +1,130 @@
-# Winner Recommender — Project Plan & Status
+# Winner Recommender — status and findings
 
-## What This Is
-A Python-based sports betting recommendation engine for the Israeli **Winner** platform.
-Finds value bets across EPL, Bundesliga, Serie A, and La Liga.
-Outputs two weekly recommendations:
-1. **Accumulator** — 2-3 high-confidence H/A picks combined on one slip
-2. **Draw single** — 1 standalone draw pick on a separate slip
+Two systems live in this repo.
 
-Target: profitable long-term (EV > 1.0) by only betting when confidence thresholds are met.
+- **v1** — everything outside `v2/`. The original recommender. **Still running**:
+  it emails picks every Friday (`[v1] Winner Picks …`) via four GitHub Actions.
+- **v2** — everything under `v2/`. A rebuild that became an investigation.
+  Postgres on Supabase, 8,700+ matches, models, a validated test harness.
 
----
-
-## Key Decisions Made
-
-### Data Sources
-| Source | What we use it for | Notes |
-|--------|-------------------|-------|
-| football-data.co.uk | Historical match results + Pinnacle/B365 closing odds | Free CSV download, 5+ seasons |
-| The Odds API | Current upcoming match odds (pre-match) | Free 500 req/month, refresh weekly |
-| SofaScore (RapidAPI) | Match schedule, team form, H2H | Used in old daily_report.py |
-
-**Decision:** Use football-data.co.uk as primary historical source (free, includes Pinnacle closing odds).
-The Odds API historical endpoint requires paid plan — we don't use it.
-
-### Leagues Covered
-EPL, Bundesliga, Serie A, La Liga — all downloaded from football-data.co.uk (2020–2026).
-**Decision:** Build features per-league separately so form stats don't bleed across leagues.
-
-### Model Architecture (V5 — current)
-
-#### Accumulator scorer (H/A only — no draws in accumulator)
-Gates:
-- Home: `pinnacle_prob_h >= 0.63` + `venue_gap >= 5` + `pts5_diff >= 5` + `home_trend >= 0`
-- Away: `pinnacle_prob_a >= 0.58` + `venue_gap <= -5` + `pts5_diff <= -5` + `away_trend >= 0`
-- Skip unreliable home teams (Tottenham, Man United, Chelsea, Brighton, West Ham, Bournemouth) unless ph >= 0.72
-
-Score bonuses: win streak (×1.25 for 3+), opponent losing streak (×1.15 for 2+), attacking mismatch (×1.20), form dominance (×1.50 for 12pts vs 3pts)
-
-**Decision:** No draws in accumulator. Draws kill accumulator win rate even when individually profitable.
-
-#### Draw scorer (separate single bet)
-Gates: `pinnacle_prob_d >= 0.29` + `|pts5_diff| <= 1` + `home_dr10 > 0.20` + `away_dr10 > 0.20`
-Rank by: Pinnacle draw probability (sharpest signal — complex scoring formulas don't help)
-Pick: Best 1 draw per week only
-
-**Why these gates:**
-- Tested all combinations of pd_min (0.28–0.32) × gap_max (1–4)
-- pd≥0.29 + gap≤1 → 112 weeks, 33.9% accuracy, EV 1.067 ← chosen
-- pd≥0.32 + gap≤1 → 22 weeks, 45.5% accuracy, EV 1.335 (too rare to be practical)
-- Raising pd beyond 0.29 with gap>1 always hurts — odds drop faster than accuracy rises
-- Gap is the most important lever: gap≤1 always beats gap≤2,3,4
-
-### Confidence Thresholds
-**Decision:** Apply minimum confidence threshold of 13 on the *weakest leg* of the accumulator.
-- Tested thresholds 0–15
-- Threshold 13: 34 qualifying weeks out of 138, 56% win rate, EV 1.057
-- Threshold 10: 102 weeks, 48% win rate, EV 0.983 (worse than no filter)
-- Filtering by *strongest* leg doesn't help — it's the weakest leg that kills weeks
-- **No confidence threshold on draw** — draw confidence score doesn't predict accuracy (higher conf = worse results). The gates themselves are the filter.
-
-### Features Used
-| Feature | How computed | Why |
-|---------|-------------|-----|
-| `home_pts5` / `away_pts5` | Points in last 5 overall games | Overall form |
-| `home_venue_pts5` | Home team's pts in last 5 HOME games | More predictive than overall |
-| `away_venue_pts5` | Away team's pts in last 5 AWAY games | More predictive than overall |
-| `venue_gap` | home_venue_pts5 − away_venue_pts5 | Primary form signal in V3+ |
-| `pts5_diff` | home_pts5 − away_pts5 | Secondary form signal |
-| `home_trend` / `away_trend` | pts last 3 minus pts prior 3 | Filters declining teams |
-| `home_winstreak` / `away_losestreak` | Consecutive W/L | Bonus multipliers |
-| `home_dr10` / `away_dr10` | Draw rate last 10 games | Draw gate + scoring |
-| `home_gf5` / `home_ga5` | Goals scored/conceded avg last 5 | Attacking mismatch bonus |
-| Pinnacle implied probs | 1/odds, vig-removed | Primary probability signal |
-
-### Model Version History
-| Version | Win Rate | Avg Odds | EV | Key change |
-|---------|----------|----------|----|------------|
-| V1 | 52% | 1.93x | 1.005 | H/A only, basic gates |
-| V2 | 46% | 3.55x | 1.630 | Added draws to accumulator |
-| V3 | 54.5% | 1.81x | 0.990 | Venue form + trend + streaks, no draws in accum |
-| V4 | 54.5% | 1.81x | 0.990 | Draws as separate singles (V3 + draw scorer) |
-| V5 | 49.3% | 2.11x | 1.040 | Multi-league (EPL+BL+SA+LL), draw singles improved |
-
-**Why V2 has highest EV:** Draws at 3.35 odds boost the average even with lower win rate. But draws in accumulators make most weeks fail — chosen not to mix them.
-
-### Team Name Mapping
-The Odds API uses different names than football-data.co.uk. Full mapping in `src/recommend/recommend_today.py` → `NAME_MAP` dict.
-Key mappings: "Brighton and Hove Albion"→"Brighton", "Wolverhampton Wanderers"→"Wolves", "Atlético Madrid"→"Ath Madrid", "Borussia Monchengladbach"→"M'gladbach", "AC Milan"→"Milan", "Inter Milan"→"Inter", "AS Roma"→"Roma", "Atalanta BC"→"Atalanta"
+**Read `v2/docs/FINDINGS.md` before proposing any strategy.** Every measurement
+is recorded there with the number that killed it. This file summarises.
 
 ---
 
-## Project Structure
+## Headline: no demonstrated edge
+
+Seven theses tested against real closing prices. All dead.
+
+| thesis | result |
+|---|---|
+| v1's track record | **fabricated** — 27 of 29 "settled" weeks were backtest rows loaded into the live table |
+| model beats market on cards | loses (−5% vs Pinnacle's own price) |
+| model beats market on corners | matches Brier, never beats |
+| cards handicap from fouls | loses |
+| line shopping, soft book vs sharp | −3.9% to −46% held out, monotonically worse with more edge demanded |
+| 86 systematic category rules | best is the **40th percentile of pure noise** |
+| v1's draw filter | real skill (25.3% → 31.6%) but **exactly break-even** |
+
+Live record since March 2026 (`v1_live_record`, auto-settled): slips **5 won /
+6 lost, −6.2%**; draw singles **6 of 8, +170%**; overall +12.9u on 19 bets. The
+draws are a 1-in-185 run on a strategy measured as break-even — a hot streak,
+not evidence.
+
+**The market prices these sports efficiently and our data holds nothing it
+lacks.** Anything claiming otherwise needs to clear the gates below.
+
+---
+
+## Traps that have already cost real money or nearly did
+
+1. **Prices must be observed, not assumed.** v1 hardcoded **1.50** for cards
+   Over 3.5 across 32 picks. 1win actually pays 1.36–2.00 and it varies by
+   match. Every v1 EV number rests on a price that does not exist.
+2. **Books settle a red card as TWO cards.** We modelled yellows only, which
+   undercounts every match, made every Under look cheap, and manufactured a
+   "+16.8% edge" that vanished on correction.
+3. **1win prices YELLOWS; Pinnacle prices CARDS.** Different quantities. Reading
+   the gap as a pricing bias produced a losing recommendation with a
+   predictable sign.
+4. **Opening odds are not closing odds.** `PSH`/`Avg>2.5` are the OPEN;
+   `PSCH`/`AvgC>2.5` are the CLOSE. Beating an opening line is easy and
+   meaningless. This error was made twice.
+5. **Statistical significance is not money.** A perfectly efficient market threw
+   off `c=+0.507, p=0.044`. Only the money test caught it.
+6. **Silent success is the house bug.** v1's ingest printed "0 rows updated" and
+   exited 0 for five months. Since then: a pipeline masking an exit code through
+   `grep`, and an `ON CONFLICT` discarding every row while reporting success.
+   **A job that writes nothing when it should write something must fail.**
+
+---
+
+## Gates any new strategy must clear
+
+Non-negotiable, and each exists because something failed without it.
+
+- **Out-of-sample money test with edge monotonicity.** ROI must not decline as
+  the minimum edge rises. Noise gets worse when you demand more edge, because
+  filtering for your largest disagreements concentrates your own errors.
+- **Held-out period, read once.** Thresholds fit on train only.
+- **Permutation null over the whole search.** With 79 rules and ~57 bets each,
+  a pure-noise null produces a best-rule ROI of **+49% median**. Report where
+  the observed best sits in that distribution.
+- **Sanity ceiling.** A probability more than ~10 points from a sharp book is a
+  bug, not an edge. Discard it and find the bug.
+- **Pre-register** markets, sample, split and thresholds before fetching odds.
+- **Report n and a bootstrap CI on everything.** Most samples here are 8–150.
+
+---
+
+## What runs
+
+| workflow | when | does |
+|---|---|---|
+| `v1 — Send Weekly Picks` | Fri 08:00 IL | emails picks (model has no measured edge) |
+| `v1 — Fetch Odds` | daily | works |
+| `v1 — Fetch Match Results` | Tue/Fri | **broken since March** — reads gitignored CSVs, has never written a row |
+| `v1 — Auto-fill Pick Results` | Tue/Fri | broken, depends on the above |
+| `v2 — daily` | 07:15 IL | ingest results → track/settle v1 picks → v2 picks → freshness → dashboard |
+| `v2 — publish dashboard` | after v2-daily | GitHub Pages |
+
+v2 emails nothing. Its picker records what it *would* bet plus a `qualifies`
+flag, so v1 (picks every week) and v2 (picks only on a passing gate) can be
+compared over a season.
+
+Supabase free tier **pauses after ~7 idle days** — it has done so twice, both
+times silently. The daily job exists partly to keep it warm and fails loudly if
+it cannot connect.
+
+---
+
+## Key paths
 
 ```
-winner-recommender/
-├── CLAUDE.md                          # This file
-├── .claude/commands/                  # Slash commands (skills)
-│   ├── recommend.md                   # /project:recommend
-│   ├── backtest.md                    # /project:backtest
-│   ├── weekly-summary.md              # /project:weekly-summary
-│   └── fetch-data.md                  # /project:fetch-data
-├── data/
-│   ├── db/winner.db                   # SQLite: matches_history + odds_raw
-│   ├── raw/football_data/             # Downloaded CSVs from football-data.co.uk
-│   └── reports/
-│       ├── VERSIONS.md                # Auto-logged backtest results per version
-│       ├── accumulator_backtest_v*.csv
-│       ├── draw_singles_v*.csv
-│       ├── weekly_threshold*.csv
-│       └── YYYY-MM-DD_recommendation.md
-└── src/
-    ├── data/
-    │   ├── fetch_football_data.py     # Downloads historical CSVs → DB
-    │   └── fetch_odds.py              # Downloads current odds → DB
-    ├── recommend/
-    │   ├── accumulator.py             # Versioned backtest engine
-    │   └── recommend_today.py         # Daily recommendation generator
-    └── features/                      # Legacy feature modules (SofaScore-based)
+v2/docs/FINDINGS.md          every measurement, including the negative ones
+v2/docs/PREREGISTRATION*.md  commitments made before results were seen
+v2/model/experiment.py       edge_monotonicity, BH-FDR, the gates
+v2/model/markets.py          settlement (pushes, handicap +0.5/-0.5 asymmetry)
+v2/model/onewin.py           1win pricing: yellows = Pinnacle cards − 2×reds
+v2/scripts/build_feature_mart.py   team_match_form + match_features
+v2/ingest/v1_picks.py        records and settles v1's picks automatically
+v2/recommend/picks.py        v2's picker
 ```
 
----
-
-## Current Thresholds (apply in recommend_today.py)
-
-```python
-ACCUM_MIN_CONF   = 13      # min confidence on weakest accumulator leg
-ACCUM_MIN_LEGS   = 2       # need at least 2 qualifying legs to bet
-DRAW_PD_MIN      = 0.29    # Pinnacle draw prob minimum
-DRAW_GAP_MAX     = 1       # max |pts5_diff| for draw pick
-DRAW_DR_MIN      = 0.20    # min draw rate for both teams (last 10)
-```
+Run anything with `PYTHONPATH=. v2/.venv/bin/python -m <module>`.
 
 ---
 
-## Backtest Results (V5, all leagues)
+## What NOT to do
 
-**Accumulator with threshold 13:**
-- 34 qualifying weeks out of 138 total (~1 in 4)
-- 56% win rate | ~1.89x avg odds | EV 1.057
-
-**Draw singles with pd≥0.29, gap≤1:**
-- 112 qualifying weeks | 33.9% accuracy | 3.14x avg odds | EV 1.067
-
-**Both EV > 1.0 — profitable long-term.**
-
----
-
-## Weekly Workflow
-
-1. **Once a week** (Monday morning recommended):
-   ```bash
-   cd /Users/idoshveki/projects/winner-recommender
-   source .venv/bin/activate
-   python src/data/fetch_odds.py          # refresh upcoming odds
-   python src/recommend/recommend_today.py # generate picks
-   ```
-2. Report saved to `data/reports/YYYY-MM-DD_recommendation.md`
-3. If accumulator threshold not met → skip that week
-4. If draw gate not met → skip draw bet that week
-
----
-
-## Research Findings
-Full market-by-market findings with accuracy stats, thresholds, and verdicts:
-→ **`data/reports/FINDINGS.md`**
-
----
-
-## What NOT to do (lessons learned)
-
-- **Don't mix draws into the accumulator** — they increase EV on paper but cause most weeks to fail
-- **Don't use confidence threshold on draws** — the draw confidence score doesn't rank quality, only the gates matter
-- **Don't use threshold 10 on accumulator** — worse than no filter
-- **Don't filter by strongest leg** — filter by weakest leg
-- **Don't use The Odds API historical endpoint** — requires paid plan; use football-data.co.uk instead
-- **Don't build features across leagues** — process each league separately to avoid form bleed
-- **Don't raise pd_min beyond 0.29 if gap_max > 1** — odds fall faster than accuracy rises
+- **Do not bet on v1's output.** It has no measured edge and its stated odds for
+  cards legs are fictional.
+- **Do not add legs to a slip.** Same picks bet as singles returned +88%; bundled
+  into accumulators, −5%. Every extra leg multiplies the margin against you.
+- **Do not report a hit rate without its price.** 90% rules exist in abundance
+  and pay 1.13. Hit rate and price are the same number.
+- **Do not slice by league/team hunting for a winner.** With four leagues, a
+  pure-noise null gives a best-league ROI of +17% half the time.
+- **Do not trust a derived price.** The 1win price model has ~21% error on
+  low-profile fixtures. Capture real quotes before claiming edge.
+- **Do not delete a negative result.** They are the most valuable thing here.
