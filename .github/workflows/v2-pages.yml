@@ -1,0 +1,62 @@
+# Publish the betting-record dashboard to GitHub Pages.
+#
+# The daily job already rebuilds v2/web/dashboard.html and uploads it as a
+# workflow artifact, which requires digging through Actions to read. This gives
+# it a permanent URL instead.
+name: v2 — publish dashboard to Pages
+
+on:
+  workflow_run:
+    workflows: ["v2 — daily (ingest + freshness + dashboard)"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    # Only publish when the daily job actually succeeded. Publishing a stale or
+    # half-built page after a failed run would quietly show wrong numbers - the
+    # exact failure mode this project keeps tripping over.
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -q -r v2/requirements.txt
+
+      - name: Rebuild the dashboard from current data
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -o pipefail
+          PYTHONPATH=. python -m v2.scripts.build_dashboard
+
+      - name: Assemble the site
+        run: |
+          set -o pipefail
+          mkdir -p _site
+          cp v2/web/dashboard.html _site/index.html
+          test -s _site/index.html || { echo "::error::dashboard is empty"; exit 1; }
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4

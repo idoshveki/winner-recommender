@@ -15,7 +15,7 @@
 # stops, re-enable it on the Actions tab - and remember the database clock
 # starts ticking again the moment this stops running.
 
-name: v2 daily (ingest + freshness + dashboard)
+name: v2 — daily (ingest + freshness + dashboard)
 
 on:
   schedule:
@@ -25,7 +25,8 @@ on:
   workflow_dispatch:
 
 # One run at a time. Overlapping runs would fight over the same job_runs rows
-# and the same upserts; a queued run is cancelled rather than doubled up.
+# and the same upserts, so a second run waits for the first instead of doubling
+# up (cancel-in-progress: false - never kill a run that is mid-write).
 concurrency:
   group: v2-daily
   cancel-in-progress: false
@@ -35,9 +36,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
+      # ODDS_API_KEY is deliberately absent: nothing in this job calls the odds
+      # API, and an unused secret in the job environment is only exposure. Add
+      # it here if a pricing step is ever added.
       DATABASE_URL:      ${{ secrets.DATABASE_URL }}
       SOFASCORE_API_KEY: ${{ secrets.SOFASCORE_API_KEY }}
-      ODDS_API_KEY:      ${{ secrets.ODDS_API_KEY }}
       PYTHONPATH:        .
 
     steps:
@@ -88,6 +91,41 @@ jobs:
       # The check v1 never had. Eight days covers a full international break
       # plus slack; anything older means ingestion has stopped working even if
       # every step above exited 0.
+      # After the results ingest (it settles pending picks against fresh
+      # results) and before the dashboard (which renders what it wrote).
+      # Same zero-row caveat as above: on most days no picks are issued and
+      # none newly settle, which is success, not failure.
+      - name: Record and settle v1's live picks
+        id: picks
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          python -m v2.ingest.v1_picks 2>&1 | tee /tmp/picks.log
+
+      - name: Distinguish a quiet day from a broken pick tracker
+        if: steps.picks.outcome == 'failure'
+        run: |
+          if grep -q "completed without writing any rows" /tmp/picks.log; then
+            echo "No picks issued or newly settled today. Normal; not a failure."
+          else
+            echo "::error::track-v1-picks failed for a reason other than an empty day."
+            exit 1
+          fi
+
+      # v2's own picks: recorded, never emailed. Most weeks nothing clears the
+      # edge gate, which is the finding rather than a failure - and recording
+      # the top-ranked pick anyway makes v1 and v2 comparable over a season.
+      - name: Generate and record v2 picks
+        id: v2picks
+        continue-on-error: true
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          SOFASCORE_API_KEY: ${{ secrets.SOFASCORE_API_KEY }}
+        run: |
+          set -o pipefail
+          PYTHONPATH=. python -m v2.recommend.picks --days 8 2>&1 | tee /tmp/v2picks.log
+
       - name: Assert results are fresh
         run: |
           python - <<'PY'

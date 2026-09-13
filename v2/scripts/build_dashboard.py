@@ -39,7 +39,7 @@ SQL_LEGS = """
 select system, week, leg, market, match_text, pick, odds_quoted, odds_real,
        hit, home_goals, away_goals, note, kickoff_utc
 from v1_live_record
-order by week, leg
+order by week desc, leg
 """
 
 # Pre-0011 shape, so the page still builds against a database that has not had
@@ -49,7 +49,7 @@ select 'v1' as system, week, leg, market, match_text, pick, odds_quoted,
        odds_real, hit, home_goals, away_goals, note,
        null::timestamptz as kickoff_utc
 from v1_live_record
-order by week, leg
+order by week desc, leg
 """
 
 # 0011's view owns the rule that decides whether a slip counts at all.
