@@ -236,8 +236,11 @@ def main() -> int:
 
     # record the single best candidate per market, flagged for whether it qualifies
     week = week_label(datetime.now(timezone.utc))
-    with job("v2-picks") as jr, connect() as conn:
+    with job("v2-picks", expect_rows=False) as jr, connect() as conn:
         conn.autocommit = False
+        already = conn.execute(
+            "select count(*) from v1_live_record where system='v2' and week=%s",
+            (week,)).fetchone()[0]
         n = 0
         for market in ("cards", "draw"):
             best = next((c for c in candidates if c["market"] == market), None)
@@ -263,10 +266,16 @@ def main() -> int:
         conn.commit()
         jr.add(n)
         print(f"\n  recorded {n} v2 picks for week {week}")
-        if n == 0:
+        # "already recorded for this week" and "silently discarded" look
+        # identical from a rowcount of zero, and only the second is a bug.
+        # Re-running mid-week is normal and must be a clean no-op.
+        if n == 0 and already:
+            print(f"  (week {week} already has {already} v2 pick(s) — nothing to add)")
+        elif n == 0:
             raise RuntimeError(
-                "v2 produced candidates but wrote no rows — every insert was "
-                "discarded by ON CONFLICT. Do not treat this as a quiet week.")
+                "v2 produced candidates but wrote no rows, and none were already "
+                "recorded for this week — every insert was discarded by ON "
+                "CONFLICT. Do not treat this as a quiet week.")
     return 0
 
 
