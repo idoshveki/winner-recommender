@@ -6,6 +6,15 @@
 name: v2 — publish dashboard to Pages
 
 on:
+  # Its own schedule, 45 minutes after the daily job. The workflow_run trigger
+  # below is kept as a bonus but is NOT relied on: the daily job ran green on
+  # 14, 15, 16, 17 and 18 September and workflow_run fired on none of them, so
+  # the published page sat five days stale while the database was current.
+  # This job rebuilds the dashboard from the database itself, so it does not
+  # actually depend on the daily run having finished - only on the data being
+  # there, which the daily job's own freshness assertion guards.
+  schedule:
+    - cron: '0 6 * * *'      # 08:00 Israel, 45 min after v2-daily
   workflow_run:
     workflows: ["v2 — daily (ingest + freshness + dashboard)"]
     types: [completed]
@@ -25,7 +34,9 @@ jobs:
     # Only publish when the daily job actually succeeded. Publishing a stale or
     # half-built page after a failed run would quietly show wrong numbers - the
     # exact failure mode this project keeps tripping over.
-    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
+    # Skip only when a workflow_run trigger reports failure; scheduled and
+    # manual runs always proceed.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
