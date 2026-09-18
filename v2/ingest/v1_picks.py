@@ -106,7 +106,8 @@ def main() -> int:
                 odds_real = 1.42 if (market and "YC" in market) else None
 
                 existing = conn.execute(
-                    "select hit from v1_live_record where week=%s and leg=%s",
+                    """select hit from v1_live_record
+                       where system='v1' and week=%s and leg=%s""",
                     (week, leg)).fetchone()
                 if existing is None:
                     conn.execute(
@@ -127,7 +128,7 @@ def main() -> int:
                         """update v1_live_record
                            set hit=%s, match_id=coalesce(match_id,%s),
                                kickoff_utc=coalesce(kickoff_utc,%s), settled_at=now()
-                           where week=%s and leg=%s""",
+                           where system='v1' and week=%s and leg=%s""",
                         (hit, mid, ko, week, leg))
                     settled += 1
         conn.commit()
