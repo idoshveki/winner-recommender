@@ -126,6 +126,16 @@ jobs:
           set -o pipefail
           PYTHONPATH=. python -m v2.recommend.picks --days 8 2>&1 | tee /tmp/v2picks.log
 
+      # Settles pending picks from EITHER system by match_id. v1's picks were
+      # settled as a side effect of re-reading v1's SQLite; v2's had no settler
+      # at all, so two sat pending with results already in the database.
+      - name: Settle any pending picks
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -o pipefail
+          PYTHONPATH=. python -m v2.ingest.settle 2>&1 | tee /tmp/settle.log
+
       - name: Assert results are fresh
         run: |
           python - <<'PY'
