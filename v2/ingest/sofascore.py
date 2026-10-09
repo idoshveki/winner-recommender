@@ -71,6 +71,19 @@ def upcoming_fixtures(tournament_id: int, season_id: int) -> List[dict]:
     return data.get("events", [])
 
 
+def event_status(event_id: int) -> Optional[str]:
+    """Current status of one event: finished, postponed, cancelled, scheduled.
+
+    Needed because a fixture can leave the schedule without ever being played.
+    """
+    try:
+        data = _get(f"/event/{event_id}")
+    except Exception:
+        return None
+    event = data.get("event", data)
+    return ((event.get("status") or {}).get("type")) or None
+
+
 def match_statistics(event_id: int) -> Dict[str, int]:
     """Corners and cards for a finished match, keyed by event id.
 

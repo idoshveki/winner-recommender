@@ -97,3 +97,41 @@ def assert_no_unresolved_aliases(conn) -> None:
     ).fetchall()
     if rows:
         raise RuntimeError(f"{len(rows)} unresolved team aliases: {rows[:10]}")
+
+
+def assert_no_missing_results(conn, grace_hours: int = 12) -> None:
+    """Fail when a match that has already been played has no stats.
+
+    This replaces a naive "newest result is within N days" check, which
+    conflated two very different things: the ingest being broken, and nobody
+    playing football. An international break from 2026-09-21 to 2026-10-09
+    produced eleven consecutive red runs and eleven failure emails while the
+    pipeline was working perfectly - there was simply nothing to ingest.
+
+    The right question is not "how old is the newest result" but "is any match
+    that finished missing its result". A quiet fortnight passes; a broken
+    ingest does not.
+    """
+    missing = conn.execute(
+        """select count(*), min(m.kickoff_utc)::date, max(m.kickoff_utc)::date
+           from matches m
+           left join match_stats s on s.match_id = m.id
+           where m.kickoff_utc < now() - (%s || ' hours')::interval
+             and m.kickoff_utc > now() - interval '120 days'
+             and m.status not in ('postponed', 'cancelled')
+             and (s.match_id is null or s.home_goals is null)""",
+        (grace_hours,)).fetchone()
+    n, first, last = missing
+    if n:
+        raise RuntimeError(
+            f"{n} match(es) kicked off more than {grace_hours}h ago but have no "
+            f"result ({first} to {last}). The ingest is not keeping up.")
+
+    newest = conn.execute(
+        """select max(m.kickoff_utc)::date from matches m
+           join match_stats s on s.match_id = m.id""").fetchone()[0]
+    nxt = conn.execute(
+        """select min(kickoff_utc)::date from matches
+           where kickoff_utc > now()""").fetchone()[0]
+    print(f"  all played matches have results (newest {newest}; "
+          f"next fixture {nxt or 'none scheduled'})")

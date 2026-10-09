@@ -28,12 +28,43 @@ def season_start_year(label: str) -> int:
     return n if len(head) == 4 else (2000 + n if n <= 30 else 1900 + n)
 
 
+def reconcile_scheduled(conn) -> int:
+    """Re-check matches still marked scheduled whose kickoff has passed.
+
+    A fixture can vanish from the schedule without being played - Levante v
+    Athletic Club on 2026-09-16 was postponed, so it has no statistics and
+    never will at that date. The forward-looking fixtures ingest never revisits
+    a past kickoff, so the row sat as 'scheduled' forever and looked to any
+    freshness check exactly like a result we had failed to fetch.
+
+    Returns the number of rows corrected.
+    """
+    stale = conn.execute(
+        """select m.id, m.sofascore_event_id, m.kickoff_utc::date
+           from matches m
+           where m.status = 'scheduled'
+             and m.kickoff_utc < now() - interval '12 hours'
+             and m.sofascore_event_id is not null
+           order by m.kickoff_utc""").fetchall()
+    fixed = 0
+    for mid, event_id, day in stale:
+        status = sofascore.event_status(event_id)
+        if not status or status == "scheduled":
+            print(f"  {day} event {event_id}: source still says "
+                  f"{status or 'nothing'} - leaving as is")
+            continue
+        conn.execute("update matches set status=%s where id=%s", (status, mid))
+        print(f"  {day} event {event_id}: scheduled -> {status}")
+        fixed += 1
+    return fixed
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--pages", type=int, default=2, help="pages of finished events per league")
     args = ap.parse_args()
 
-    with job("ingest-results") as jr, connect() as conn:
+    with job("ingest-results", expect_rows=False) as jr, connect() as conn:
         conn.autocommit = False
         written = 0
         for league, (tid, _, _) in LEAGUES.items():
@@ -96,6 +127,11 @@ def main() -> int:
             written += new
             print(f"  {league:11s} {len(done):3d} finished events, {new:3d} new with stats")
         jr.add(written)
+
+        moved = reconcile_scheduled(conn)
+        conn.commit()
+        if moved:
+            jr.meta["reconciled"] = moved
 
         # freshness: the thing v1 never checked
         newest = conn.execute("""select max(m.kickoff_utc)::date from matches m

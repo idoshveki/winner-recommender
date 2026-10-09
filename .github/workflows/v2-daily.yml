@@ -95,6 +95,39 @@ jobs:
       # results) and before the dashboard (which renders what it wrote).
       # Same zero-row caveat as above: on most days no picks are issued and
       # none newly settle, which is success, not failure.
+      # Without this the fixture table empties as matches are played and v2
+      # has nothing to pick from - the database held zero upcoming fixtures.
+      - name: Ingest upcoming fixtures
+        id: fixtures
+        continue-on-error: true
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SOFASCORE_API_KEY: ${{ secrets.SOFASCORE_API_KEY }}
+        run: |
+          set -o pipefail
+          PYTHONPATH=. python -m v2.ingest.fixtures --days 10 2>&1 | tee /tmp/fixtures.log
+
+      # Both the price fetch and the picker require odds_api_event_id, and
+      # nothing in this job ever wrote one - so the fixture table could fill up
+      # and the picker would still see "0 upcoming fixtures". Costs 0 credits.
+      - name: Link fixtures to Odds API events
+        continue-on-error: true
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: |
+          set -o pipefail
+          PYTHONPATH=. python -m v2.scripts.map_odds_events 2>&1 | tee /tmp/mapped.log
+
+      - name: Fetch cards and corners prices
+        continue-on-error: true
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: |
+          set -o pipefail
+          PYTHONPATH=. python -m v2.ingest.prices --days 8 2>&1 | tee /tmp/prices.log
+
       - name: Record and settle v1's live picks
         id: picks
         continue-on-error: true
@@ -136,15 +169,19 @@ jobs:
           set -o pipefail
           PYTHONPATH=. python -m v2.ingest.settle 2>&1 | tee /tmp/settle.log
 
-      - name: Assert results are fresh
+      # Not "is the newest result recent" - that cannot tell a broken ingest
+      # from an international break, and an 18-day gap in fixtures produced 11
+      # straight red runs while everything worked. Ask instead whether any
+      # match that has been PLAYED is missing its result.
+      - name: Assert nothing played is missing a result
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          python - <<'PY'
-          from v2.lib.jobs import assert_fresh, connect, job
-          with job("assert-freshness", expect_rows=False), connect() as conn:
-              assert_fresh(conn,
-                           "matches m join match_stats s on s.match_id = m.id",
-                           "m.kickoff_utc", 8)
-              print("  results are fresh")
+          set -o pipefail
+          PYTHONPATH=. python - <<'PY'
+          from v2.lib.jobs import assert_no_missing_results, connect, job
+          with job("assert-results", expect_rows=False), connect() as conn:
+              assert_no_missing_results(conn, grace_hours=12)
           PY
 
       - name: Rebuild the betting-record dashboard
@@ -176,7 +213,7 @@ jobs:
             -d "{\"from\":\"Winner v2 <onboarding@resend.dev>\",
                  \"to\":[\"idoshveki@gmail.com\"],
                  \"subject\":\"v2 daily FAILED - $GITHUB_REPOSITORY\",
-                 \"html\":\"<p>The v2 daily job failed. Likely causes: the Supabase project is paused again, DATABASE_URL is wrong, or results have gone stale (>8 days).</p><p><a href=\\\"$RUN_URL\\\">Open the run log</a></p>\"}")
+                 \"html\":\"<p>The v2 daily job failed. Likely causes: the Supabase project is paused again, DATABASE_URL is wrong, or a played match is missing its result.</p><p><a href=\\\"$RUN_URL\\\">Open the run log</a></p>\"}")
           echo "resend http $STATUS"; cat /tmp/resend.out; echo
           if [ "$STATUS" != "200" ]; then
             echo "::error::v2-daily failed AND the failure email could not be sent (HTTP $STATUS)."
