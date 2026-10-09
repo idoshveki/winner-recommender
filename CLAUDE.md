@@ -36,7 +36,7 @@ lacks.** Anything claiming otherwise needs to clear the gates below.
 
 ---
 
-## Traps that have already cost real money or nearly did
+## Traps that have already cost real money, or cost trust
 
 1. **Prices must be observed, not assumed.** v1 hardcoded **1.50** for cards
    Over 3.5 across 32 picks. 1win actually pays 1.36–2.00 and it varies by
@@ -52,10 +52,34 @@ lacks.** Anything claiming otherwise needs to clear the gates below.
    meaningless. This error was made twice.
 5. **Statistical significance is not money.** A perfectly efficient market threw
    off `c=+0.507, p=0.044`. Only the money test caught it.
-6. **Silent success is the house bug.** v1's ingest printed "0 rows updated" and
+6. **A freshness check must ask a question the data can answer.** "Is the
+   newest result less than 8 days old" cannot distinguish a broken ingest from
+   nobody playing football. Fixtures stopped on 20 Sep 2026 and resumed on
+   9 Oct; the daily job failed and emailed an alert every morning for eleven
+   days with nothing wrong. Ask instead whether any match that has been
+   **played** is missing its result — a quiet fortnight passes that, a broken
+   ingest does not. A false alarm every day is worse than no alarm, because it
+   trains you to ignore the real one.
+7. **A fixture can leave the schedule without being played.** Levante v
+   Athletic Club, 16 Sep 2026, postponed. The forward-looking fixtures ingest
+   never revisits a past kickoff, so the row sat as `scheduled` with no stats,
+   indistinguishable from a fetch we had missed. `reconcile_scheduled()` in
+   `v2/ingest/results.py` re-checks past-kickoff scheduled rows at source.
+8. **The pipeline is only as long as its shortest link.** The daily job
+   ingested results and nothing else — no fixtures, no Odds API event mapping,
+   no prices. The picker reported "0 upcoming fixtures" for weeks. Both it and
+   the price fetch require `odds_api_event_id`, and **nothing in the job ever
+   wrote one**; the linking step (`v2/scripts/map_odds_events.py`, 0 credits)
+   existed but was never scheduled.
+9. **Schedules only fire from the default branch, which here is `master`.**
+   Work committed to `v2-init` changes nothing that runs. Check
+   `git rev-parse --abbrev-ref HEAD` before assuming a fix is live.
+10. **Silent success is the house bug.** v1's ingest printed "0 rows updated" and
    exited 0 for five months. Since then: a pipeline masking an exit code through
    `grep`, and an `ON CONFLICT` discarding every row while reporting success.
-   **A job that writes nothing when it should write something must fail.**
+   **A job that writes nothing when it should write something must fail** - but
+   "should" has to be computed, not assumed. `ingest-results` now passes
+   `expect_rows=False`, because the stronger guarantee lives in the assertion.
 
 ---
 
@@ -85,7 +109,7 @@ Non-negotiable, and each exists because something failed without it.
 | `v1 — Fetch Odds` | daily | works |
 | `v1 — Fetch Match Results` | Tue/Fri | **broken since March** — reads gitignored CSVs, has never written a row |
 | `v1 — Auto-fill Pick Results` | Tue/Fri | broken, depends on the above |
-| `v2 — daily` | 07:15 IL | ingest results → track/settle v1 picks → v2 picks → freshness → dashboard |
+| `v2 — daily` | 07:15 IL | results → reconcile → fixtures → link odds events → prices → track/settle v1 → v2 picks → settle → assert → dashboard |
 | `v2 — publish dashboard` | after v2-daily | GitHub Pages |
 
 v2 emails nothing. Its picker records what it *would* bet plus a `qualifies`
