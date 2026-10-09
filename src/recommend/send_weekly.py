@@ -624,13 +624,41 @@ def save_picks_to_db(best_ha, best_leg2, best_leg3, best_draw):
             pass
 
     conn.execute("""
-        INSERT OR IGNORE INTO weekly_picks
+        INSERT INTO weekly_picks
             (week, generated_at, n_legs, combined_odds, slip_won,
              leg1_market, leg1_match, leg1_pick, leg1_odds, leg1_why, leg1_hit,
              leg2_market, leg2_match, leg2_pick, leg2_odds, leg2_why, leg2_hit,
              leg3_market, leg3_match, leg3_pick, leg3_odds, leg3_why, leg3_hit,
              draw_match, draw_pick, draw_odds, draw_hit)
         VALUES (?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, NULL, ?, ?, ?, NULL)
+        -- OR IGNORE discarded the whole row whenever the week already existed,
+        -- and said nothing. Re-running after a fix therefore emailed the new
+        -- picks while the database kept the old ones: on 2026-10-09 the email
+        -- carried a yellow-card leg and the record still showed two H/A legs.
+        -- A record that disagrees with what was actually sent is worse than no
+        -- record.
+        --
+        -- Only overwrite while the week is still unsettled. Once any leg has a
+        -- result, the pick is history and must not be rewritten - retroactively
+        -- improving a pick after the fact is how v1's track record came to be
+        -- fabricated in the first place.
+        ON CONFLICT(week) DO UPDATE SET
+            generated_at = excluded.generated_at,
+            n_legs = excluded.n_legs, combined_odds = excluded.combined_odds,
+            leg1_market = excluded.leg1_market, leg1_match = excluded.leg1_match,
+            leg1_pick = excluded.leg1_pick, leg1_odds = excluded.leg1_odds,
+            leg1_why = excluded.leg1_why,
+            leg2_market = excluded.leg2_market, leg2_match = excluded.leg2_match,
+            leg2_pick = excluded.leg2_pick, leg2_odds = excluded.leg2_odds,
+            leg2_why = excluded.leg2_why,
+            leg3_market = excluded.leg3_market, leg3_match = excluded.leg3_match,
+            leg3_pick = excluded.leg3_pick, leg3_odds = excluded.leg3_odds,
+            leg3_why = excluded.leg3_why,
+            draw_match = excluded.draw_match, draw_pick = excluded.draw_pick,
+            draw_odds = excluded.draw_odds
+        WHERE weekly_picks.slip_won IS NULL
+          AND weekly_picks.leg1_hit IS NULL AND weekly_picks.leg2_hit IS NULL
+          AND weekly_picks.leg3_hit IS NULL AND weekly_picks.draw_hit IS NULL
     """, (
         week_label, datetime.now().isoformat(), n_legs, combined_odds,
         'H/A',
