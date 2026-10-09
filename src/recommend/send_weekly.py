@@ -44,6 +44,17 @@ SPORT_LEAGUE = {
     'soccer_italy_serie_a': 'Serie_A',
 }
 NAME_MAP = {
+    # These six surfaced when v2's fresh results were synced into
+    # matches_history: SofaScore spells them differently from football-data, so
+    # without them the fixture lookup misses the history that is now there.
+    # Kept to cases that matched exactly one history name with high confidence
+    # - "Malaga CF" scored 0.62 against "Mallorca" and "Hull City" 0.40 against
+    # "Man City", and both are deliberately absent. See
+    # v2/scripts/sync_v1_history.py.
+    'FC Barcelona': 'Barcelona', 'FC Schalke 04': 'Schalke 04',
+    'Liverpool FC': 'Liverpool', 'SSC Napoli': 'Napoli',
+    'Ipswich Town': 'Ipswich', 'Wolverhampton': 'Wolves',
+
     'Brighton and Hove Albion': 'Brighton', 'Wolverhampton Wanderers': 'Wolves',
     'Atletico Madrid': 'Ath Madrid', 'Atlético Madrid': 'Ath Madrid',
     'Borussia Monchengladbach': "M'gladbach", 'AC Milan': 'Milan',

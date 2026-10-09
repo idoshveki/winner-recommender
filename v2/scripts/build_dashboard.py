@@ -180,7 +180,11 @@ def market_of(row: dict) -> str:
     if row["leg"] == "draw":
         return "Draw singles"
     if "YC" in m.upper():
-        return "YC Over 3.5"
+        # A family, not a line. Over 3.5, Over 4.5 and Under 3.5 all belong in
+        # one row of the summary, and naming that row after a single line
+        # misreports every pick that was not on it - the per-pick rows carry
+        # the real line via pick_label().
+        return "Yellow cards"
     return m or "H/A"
 
 
@@ -705,7 +709,7 @@ def tip(key, shown=None):
 
 MARKET_LABEL = {
     "H/A": "Match result",
-    "YC Over 3.5": "Yellow cards Over 3.5",
+    "Yellow cards": "Yellow cards",
     "Draw singles": "Draw singles",
     "O2.5+BTTS": "Over 2.5 goals + both score",
 }

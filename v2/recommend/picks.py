@@ -254,7 +254,10 @@ def main() -> int:
                    model_prob, book_prob, note)
                 values ('v2',%s,%s,%s,%s,%s,%s,null,%s,%s,now(),%s,%s,%s,%s,%s)
                 on conflict (system, week, leg) do nothing""",
-                (week, leg, "YC Over 3.5" if market == "cards" else "H/A",
+                # Record the line actually taken. This read "YC Over 3.5"
+                # for every cards pick, so a bet on Over 4.5 was filed as
+                # Over 3.5 - a different market with a different settlement.
+                (week, leg, f"YC {best['pick']}" if market == "cards" else "H/A",
                  best["match"], best["pick"], best["price"], best["match_id"],
                  best["kickoff"], best["edge"], best["edge"] >= args.min_edge,
                  best["model_prob"], best["book_prob"],

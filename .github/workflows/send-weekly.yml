@@ -18,7 +18,17 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install -q pandas requests python-dotenv resend
+        run: pip install -q pandas requests python-dotenv resend 'psycopg[binary]'
+
+      # v1's own results feeder has written nothing since 2026-03-09, so every
+      # history-derived feature was seven months stale - and the yellow-card
+      # averages are the ones that matter, because yc_pred could never reach
+      # its 6.0 gate without current-season rows. v2 ingests the same matches
+      # into Postgres daily; copy them across before picking.
+      - name: Refresh history from v2's database
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: PYTHONPATH=. python -m v2.scripts.sync_v1_history
 
       - name: Fetch latest odds
         env:

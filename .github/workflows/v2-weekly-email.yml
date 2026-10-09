@@ -1,0 +1,35 @@
+name: v2 — email weekly picks (Friday)
+
+# Runs an hour after v2-daily (05:15 UTC), so the week's picks and any
+# settlements are already in the database. It reads them rather than
+# recomputing, so this email can never disagree with the tracked record.
+#
+# Deliberately a separate workflow from v2-daily rather than a Friday
+# condition inside it: a failure to email must not mark the ingest red, and an
+# ingest failure must not silently skip the email.
+
+on:
+  schedule:
+    - cron: '15 6 * * 5'   # 08:15 Israel (UTC+2), Friday
+  workflow_dispatch:
+
+jobs:
+  email:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -q 'psycopg[binary]' python-dotenv resend
+
+      - name: Email v2's recorded picks
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        run: |
+          set -o pipefail
+          PYTHONPATH=. python -m v2.recommend.send_email
