@@ -830,6 +830,8 @@ text-transform:none;letter-spacing:0;padding:.5rem .6rem;border-radius:6px;
 opacity:0;visibility:hidden;transition:opacity .12s;pointer-events:none;
 box-shadow:0 4px 14px rgba(0,0,0,.28)}}
 .t:hover .tt,.t:focus .tt,.t.on .tt{{opacity:1;visibility:visible}}
+.stamp{{margin-bottom:.9rem;font-variant-numeric:tabular-nums}}
+.hint{{opacity:.75}}
 footer{{margin-top:2.4rem;padding-top:1rem;border-top:1px solid var(--line);
 color:var(--dim);font-size:.8rem}}
 @media(max-width:30rem){{.big{{font-size:2.3rem}}.lg .p{{margin-left:0;width:100%}}}}
@@ -872,6 +874,10 @@ margin against you and needs everything to land.</p>
 {"".join(rows_html)}
 
 <footer>
+<div class="stamp">Built {meta['built']} &middot; results through {meta['newest']}
+&middot; {meta['pending']} pick(s) awaiting a result<br>
+<span class="hint">If this looks out of date, the page is cached for 10 minutes
+&mdash; reload to get the current build.</span></div>
 {a['draws_won']} of {a['draws_won']+a['draws_lost']} draw singles landed at a
 market-implied {pct(a['draw_implied'],0)} each &mdash; about a 1-in-{int(1/max(a['draw_p'],1e-9))}
 run. On {a['draws_won']+a['draws_lost']} bets that is a hot streak, not proof.
@@ -904,6 +910,13 @@ def main() -> int:
     args = ap.parse_args()
 
     rows, meta = sample_rows() if args.sample else load_from_db()
+
+    # The page gave no sign of its own age, so "I don't see the new games"
+    # could not be told apart from a stale cache without reading the HTML by
+    # hand. GitHub Pages serves it with max-age=600.
+    meta["built"] = datetime.now(timezone.utc).strftime("%d %b %Y, %H:%M UTC")
+    meta["newest"] = meta.get("newest_match") or "n/a"
+    meta["pending"] = sum(1 for r in rows if r.get("hit") is None)
     page = render(analyse(rows, meta.get("weeks_view")), meta, sample=args.sample)
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
