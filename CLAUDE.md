@@ -107,14 +107,23 @@ Non-negotiable, and each exists because something failed without it.
 |---|---|---|
 | `v1 — Send Weekly Picks` | Fri 08:00 IL | emails picks (model has no measured edge) |
 | `v1 — Fetch Odds` | daily | works |
-| `v1 — Fetch Match Results` | Tue/Fri | **broken since March** — reads gitignored CSVs, has never written a row |
-| `v1 — Auto-fill Pick Results` | Tue/Fri | broken, depends on the above |
+| `v1 — Fetch Match Results` | disabled | **broken since March** — reads gitignored CSVs, has never written a row. Superseded: v1's Friday job now syncs history from v2's Postgres instead |
+| `v1 — Auto-fill Pick Results` | disabled | broken, depended on the above |
 | `v2 — daily` | 07:15 IL | results → reconcile → fixtures → link odds events → prices → track/settle v1 → v2 picks → settle → assert → dashboard |
-| `v2 — publish dashboard` | after v2-daily | GitHub Pages |
+| `v2 — publish dashboard` | 08:00 IL | GitHub Pages |
+| `v2 — email weekly picks` | Fri 08:15 IL | emails what the picker recorded (reads the DB, never recomputes) |
 
-v2 emails nothing. Its picker records what it *would* bet plus a `qualifies`
-flag, so v1 (picks every week) and v2 (picks only on a passing gate) can be
-compared over a season.
+v2's picker records what it *would* bet plus a `qualifies` flag, so v1 (picks
+every week) and v2 (picks only on a passing gate) can be compared over a
+season. Since 9 Oct 2026 it also emails those recorded picks on Fridays — it
+**reads the database rather than recomputing**, because an email that could
+disagree with the tracked record would make the record worthless.
+
+v1's Friday job now calls `v2/scripts/sync_v1_history.py` first, so both
+systems run on the same current results. Before that, v1's yellow-card
+averages came from a table frozen at 2026-03-09 and its `yc_pred >= 6.0` gate
+had been unreachable for seven months — v1 could not emit a card pick at all,
+which is the market it was kept for.
 
 Supabase free tier **pauses after ~7 idle days** — it has done so twice, both
 times silently. The daily job exists partly to keep it warm and fails loudly if
@@ -149,6 +158,13 @@ Run anything with `PYTHONPATH=. v2/.venv/bin/python -m <module>`.
   and pay 1.13. Hit rate and price are the same number.
 - **Do not slice by league/team hunting for a winner.** With four leagues, a
   pure-noise null gives a best-league ROI of +17% half the time.
+- **Do not name a market after one of its lines.** v2 filed every cards pick
+  as `YC Over 3.5` whatever line it took, so an Over 4.5 bet was recorded as
+  Over 3.5 and an Under 3.5 bet as an Over. Store the line taken; group the
+  family for display only.
+- **Do not map team names by similarity score.** `Malaga CF` scores 0.62
+  against `Mallorca`; `Hull City` and `Coventry City` both score 0.40 against
+  `Man City`. A missing team is visible, a wrong team is not.
 - **Do not trust a derived price.** The 1win price model has ~21% error on
   low-profile fixtures. Capture real quotes before claiming edge.
 - **Do not delete a negative result.** They are the most valuable thing here.
