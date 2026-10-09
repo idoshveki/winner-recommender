@@ -64,7 +64,12 @@ def main() -> int:
     from src.recommend.send_weekly import NAME_MAP
     mapping = {**NAME_MAP, **EXTRA_NAMES}
 
-    with job("sync-v1-history") as r, connect() as pg:
+    # Not expect_rows: copying nothing is the normal outcome. Most days have
+    # no new finished matches, and re-running mid-week is a pure no-op. The
+    # guarantee worth asserting is not "we wrote something" but "v1's history
+    # is not behind Postgres" - checked below. Asserting on row count here
+    # failed the Friday job on a sync that had done exactly the right thing.
+    with job("sync-v1-history", expect_rows=False) as r, connect() as pg:
         rows = pg.execute(f"""
             select m.league, m.season, m.kickoff_utc::date,
                    th.canonical_name, ta.canonical_name,
@@ -120,6 +125,18 @@ def main() -> int:
         r.add(written)
         r.meta["newest"] = str(newest)
         r.meta["unresolved"] = sorted(unresolved)
+
+        pg_newest = pg.execute(
+            """select max(m.kickoff_utc)::date from matches m
+                 join match_stats s on s.match_id = m.id
+                where s.home_goals is not null""").fetchone()[0]
+        if newest is None or str(newest) < str(pg_newest):
+            raise RuntimeError(
+                f"v1's matches_history ends {newest} but Postgres has results "
+                f"through {pg_newest}. The sync did not take - do not let v1 "
+                f"pick from stale history, that is the bug this step exists "
+                f"to prevent.")
+        print(f"  v1 history is level with Postgres ({pg_newest})")
     return 0
 
 
