@@ -87,6 +87,45 @@ def save_odds(conn, sport, event, bookmaker_key, market_key, outcome):
     ))
 
 
+KEEP_DAYS = 21
+
+
+def prune_old_odds(conn, keep_days=KEEP_DAYS):
+    """Drop odds for matches long finished, and compact the file.
+
+    This job re-inserts every price on every run rather than writing
+    change-only snapshots, so odds_raw grew to 412,090 rows and 96% of a
+    101.41 MB database. GitHub refuses any file over 100 MB, so the Friday
+    picks job began failing on its final `git push` and that week's picks were
+    thrown away with the rejected commit - the email went out but nothing was
+    recorded.
+
+    Nothing reads odds older than about a week: the picker asks for
+    commence_time within the next seven days. The full history now lives in
+    Postgres (research.v1_odds_archive) where size is not a problem.
+    """
+    before = conn.execute("SELECT COUNT(*) FROM odds_raw").fetchone()[0]
+    conn.execute(
+        "DELETE FROM odds_raw WHERE commence_time < datetime('now', ?)",
+        (f"-{keep_days} days",))
+    conn.commit()
+    after = conn.execute("SELECT COUNT(*) FROM odds_raw").fetchone()[0]
+    if before != after:
+        # VACUUM cannot run inside a transaction, and only it returns the
+        # freed pages to the filesystem - DELETE alone leaves the file 100 MB.
+        conn.isolation_level = None
+        conn.execute("VACUUM")
+        print(f"  pruned {before - after:,} odds rows older than {keep_days} days")
+
+    size_mb = DB_PATH.stat().st_size / 1024 / 1024
+    print(f"  db is {size_mb:.0f} MB ({after:,} odds rows)")
+    if size_mb > 90:
+        raise SystemExit(
+            f"refusing to continue: {DB_PATH.name} is {size_mb:.0f} MB and "
+            f"GitHub rejects anything over 100 MB. Prune further before pushing."
+        )
+
+
 # ── API calls ───────────────────────────────────────────────────────────────
 
 def get_sports():
@@ -158,6 +197,7 @@ def fetch_all(sports=None, save_raw=True, save_db=True):
 
     if conn:
         conn.commit()
+        prune_old_odds(conn)
         conn.close()
         print(f"\nSaved to {DB_PATH}")
 
