@@ -1,6 +1,6 @@
 name: v2 — email weekly picks (Friday)
 
-# Runs an hour after v2-daily (05:15 UTC), so the week's picks and any
+# Scheduled to land after v2-daily has finished, so the week's picks and any
 # settlements are already in the database. It reads them rather than
 # recomputing, so this email can never disagree with the tracked record.
 #
@@ -10,7 +10,16 @@ name: v2 — email weekly picks (Friday)
 
 on:
   schedule:
-    - cron: '15 6 * * 5'   # 08:15 Israel (UTC+2), Friday
+    # GitHub runs scheduled workflows on a best-effort queue, and this repo
+    # sees them start 4.5 to 7.8 hours after the stated time (a 05:15 cron has
+    # started anywhere from 09:49 to 13:05). The times below are therefore set
+    # roughly six hours EARLIER than the hour we actually want, and are
+    # staggered so each job still lands after the one it depends on even at the
+    # extremes of that spread. Do not read them as the delivery time.
+    # 01:00 Friday UTC -> lands ~05:30-08:50 UTC, which is 08:30-11:50 in
+    # Israel. v2-daily's Thursday-evening run has landed by then, so the
+    # picks and settlements this reads are current.
+    - cron: '0 1 * * 5'
   workflow_dispatch:
 
 jobs:

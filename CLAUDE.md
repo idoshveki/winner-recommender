@@ -103,15 +103,27 @@ Non-negotiable, and each exists because something failed without it.
 
 ## What runs
 
-| workflow | when | does |
-|---|---|---|
-| `v1 — Send Weekly Picks` | Fri 08:00 IL | emails picks (model has no measured edge) |
-| `v1 — Fetch Odds` | daily | works |
-| `v1 — Fetch Match Results` | disabled | **broken since March** — reads gitignored CSVs, has never written a row. Superseded: v1's Friday job now syncs history from v2's Postgres instead |
-| `v1 — Auto-fill Pick Results` | disabled | broken, depended on the above |
-| `v2 — daily` | 07:15 IL | results → reconcile → fixtures → link odds events → prices → track/settle v1 → v2 picks → settle → assert → dashboard |
-| `v2 — publish dashboard` | 08:00 IL | GitHub Pages |
-| `v2 — email weekly picks` | Fri 08:15 IL | emails what the picker recorded (reads the DB, never recomputes) |
+**Cron times are not delivery times.** GitHub's scheduled-workflow queue starts
+these 4.5–7.8 hours late in this repo (a 05:15 cron has begun anywhere from
+09:49 to 13:05). Every cron below is therefore set ~6 hours earlier than the
+hour wanted, and staggered so each job still lands after the one it depends on
+at both ends of that spread. The "lands" column is what to expect.
+
+| workflow | cron (UTC) | lands (UTC) | does |
+|---|---|---|---|
+| `v1 — Fetch Odds` | `0 20 * * *` | 00:30–03:50 | works; prunes `odds_raw` and refuses to pass 90 MB |
+| `v2 — daily` | `0 21 * * *` | 01:30–04:50 | results → reconcile → fixtures → link odds events → prices → track/settle v1 → v2 picks → settle → assert → dashboard |
+| `v2 — publish dashboard` | `0 1 * * *` | 05:30–08:50 | rebuilds the page itself and deploys to Pages |
+| `v1 — Send Weekly Picks` | `0 1 * * 5` | 05:30–08:50 | syncs history from Postgres, then emails picks (no measured edge) |
+| `v2 — email weekly picks` | `0 1 * * 5` | 05:30–08:50 | emails what the picker recorded (reads the DB, never recomputes) |
+| `v1 — Fetch Match Results` | disabled | — | **broken since March** — reads gitignored CSVs, never wrote a row. Superseded by the Postgres sync |
+| `v1 — Auto-fill Pick Results` | disabled | — | broken, depended on the above |
+
+Every step of `v2 — daily` is `continue-on-error` with an `id`; a single gate at
+the end prints each outcome and fails the run if any failed. This replaced two
+mid-pipeline guards that exited 1 immediately, so one broken step starved
+everything behind it — five days with no fixtures, prices, picks or dashboard
+because a status spelling was unmapped.
 
 v2's picker records what it *would* bet plus a `qualifies` flag, so v1 (picks
 every week) and v2 (picks only on a passing gate) can be compared over a
@@ -162,6 +174,11 @@ Run anything with `PYTHONPATH=. v2/.venv/bin/python -m <module>`.
   as `YC Over 3.5` whatever line it took, so an Over 4.5 bet was recorded as
   Over 3.5 and an Under 3.5 bet as an Over. Store the line taken; group the
   family for display only.
+- **Do not pass an upstream enum through to the database.** SofaScore says
+  `canceled`, the schema says `cancelled`. One letter failed `v2-daily` five
+  mornings running *and* let cancelled fixtures back into the schedule every
+  day, where they looked like results we had failed to fetch. Map it, return
+  `None` for anything unrecognised, and never guess.
 - **Do not map team names by similarity score.** `Malaga CF` scores 0.62
   against `Mallorca`; `Hull City` and `Coventry City` both score 0.40 against
   `Man City`. A missing team is visible, a wrong team is not.

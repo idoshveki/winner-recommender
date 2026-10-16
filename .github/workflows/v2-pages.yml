@@ -14,7 +14,16 @@ on:
   # actually depend on the daily run having finished - only on the data being
   # there, which the daily job's own freshness assertion guards.
   schedule:
-    - cron: '0 6 * * *'      # 08:00 Israel, 45 min after v2-daily
+    # GitHub runs scheduled workflows on a best-effort queue, and this repo
+    # sees them start 4.5 to 7.8 hours after the stated time (a 05:15 cron has
+    # started anywhere from 09:49 to 13:05). The times below are therefore set
+    # roughly six hours EARLIER than the hour we actually want, and are
+    # staggered so each job still lands after the one it depends on even at the
+    # extremes of that spread. Do not read them as the delivery time.
+    # 01:00 UTC -> lands ~05:30-08:50 UTC, after v2-daily's latest finish.
+    # This job rebuilds the dashboard itself, so it needs the database
+    # current rather than any artifact from the daily run.
+    - cron: '0 1 * * *'
   workflow_run:
     workflows: ["v2 — daily (ingest + freshness + dashboard)"]
     types: [completed]

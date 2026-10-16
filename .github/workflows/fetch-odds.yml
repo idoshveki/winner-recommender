@@ -2,7 +2,15 @@ name: v1 — Fetch Odds (daily)
 
 on:
   schedule:
-    - cron: '0 5 * * *'   # 7am Israel (UTC+2)
+    # GitHub runs scheduled workflows on a best-effort queue, and this repo
+    # sees them start 4.5 to 7.8 hours after the stated time (a 05:15 cron has
+    # started anywhere from 09:49 to 13:05). The times below are therefore set
+    # roughly six hours EARLIER than the hour we actually want, and are
+    # staggered so each job still lands after the one it depends on even at the
+    # extremes of that spread. Do not read them as the delivery time.
+    # 20:00 UTC -> lands ~00:30-03:50 UTC, ahead of everything else so its
+    # commit of the SQLite file does not collide with the Friday job's.
+    - cron: '0 20 * * *'
   workflow_dispatch:
 
 jobs:

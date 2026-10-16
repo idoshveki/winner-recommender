@@ -2,7 +2,16 @@ name: v1 — Send Weekly Picks (Friday)
 
 on:
   schedule:
-    - cron: '0 6 * * 5'   # 8am Israel (UTC+2), Friday
+    # GitHub runs scheduled workflows on a best-effort queue, and this repo
+    # sees them start 4.5 to 7.8 hours after the stated time (a 05:15 cron has
+    # started anywhere from 09:49 to 13:05). The times below are therefore set
+    # roughly six hours EARLIER than the hour we actually want, and are
+    # staggered so each job still lands after the one it depends on even at the
+    # extremes of that spread. Do not read them as the delivery time.
+    # 01:00 Friday UTC -> lands ~05:30-08:50 UTC (08:30-11:50 Israel).
+    # Self-contained: it syncs history from Postgres and fetches its own
+    # odds, so it only needs v2-daily's results to be in, which they are.
+    - cron: '0 1 * * 5'
   workflow_dispatch:
 
 jobs:

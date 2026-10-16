@@ -21,7 +21,15 @@ on:
   schedule:
     # 05:15 UTC daily = 07:15 Israel in winter (UTC+2), 08:15 in summer (UTC+3).
     # Off the hour on purpose: GitHub's scheduler queues heavily at :00.
-    - cron: '15 5 * * *'
+    # GitHub runs scheduled workflows on a best-effort queue, and this repo
+    # sees them start 4.5 to 7.8 hours after the stated time (a 05:15 cron has
+    # started anywhere from 09:49 to 13:05). The times below are therefore set
+    # roughly six hours EARLIER than the hour we actually want, and are
+    # staggered so each job still lands after the one it depends on even at the
+    # extremes of that spread. Do not read them as the delivery time.
+    # 21:00 UTC -> lands ~01:30-04:50 UTC. Late enough to catch European
+    # evening kick-offs, early enough to be done before the Friday emails.
+    - cron: '0 21 * * *'
   workflow_dispatch:
 
 # One run at a time. Overlapping runs would fight over the same job_runs rows
