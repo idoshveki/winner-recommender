@@ -71,17 +71,48 @@ def upcoming_fixtures(tournament_id: int, season_id: int) -> List[dict]:
     return data.get("events", [])
 
 
-def event_status(event_id: int) -> Optional[str]:
-    """Current status of one event: finished, postponed, cancelled, scheduled.
+# SofaScore's status vocabulary mapped onto the five values the matches table
+# allows. This exists because SofaScore says "canceled" and our constraint says
+# "cancelled" - one letter, and it broke the daily job for five days running
+# while also letting cancelled fixtures back into the schedule as though they
+# were still to be played. Never pass a status through to the database unmapped.
+STATUS_MAP = {
+    "notstarted":   "scheduled",
+    "inprogress":   "live",
+    "finished":     "finished",
+    "postponed":    "postponed",
+    "canceled":     "cancelled",   # SofaScore's spelling
+    "cancelled":    "cancelled",   # ours, accepted either way
+    "interrupted":  "live",        # stopped but expected to resume
+    "suspended":    "live",
+    "willcontinue": "live",
+    "deleted":      "cancelled",
+    "removed":      "cancelled",
+}
 
-    Needed because a fixture can leave the schedule without ever being played.
+
+def canonical_status(raw: Optional[str]) -> Optional[str]:
+    """Map a SofaScore status type to one our schema accepts, or None.
+
+    Returns None for anything unrecognised rather than guessing - a wrong
+    status silently changes whether a match is treated as played.
+    """
+    return STATUS_MAP.get((raw or "").strip().lower())
+
+
+def event_status(event_id: int) -> tuple[Optional[str], Optional[str]]:
+    """(canonical, raw) status of one event.
+
+    Both are returned so a caller can report exactly what SofaScore said when
+    the value is one we do not know how to map.
     """
     try:
         data = _get(f"/event/{event_id}")
     except Exception:
-        return None
+        return None, None
     event = data.get("event", data)
-    return ((event.get("status") or {}).get("type")) or None
+    raw = ((event.get("status") or {}).get("type")) or None
+    return canonical_status(raw), raw
 
 
 def match_statistics(event_id: int) -> Dict[str, int]:

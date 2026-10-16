@@ -48,13 +48,21 @@ def reconcile_scheduled(conn) -> int:
            order by m.kickoff_utc""").fetchall()
     fixed = 0
     for mid, event_id, day in stale:
-        status = sofascore.event_status(event_id)
+        status, raw = sofascore.event_status(event_id)
+        if status is None and raw is not None:
+            # Do not write it and do not guess. An unmapped status reaching the
+            # database is what broke this job: SofaScore returned "canceled"
+            # and the constraint wanted "cancelled".
+            print(f"  {day} event {event_id}: SofaScore says {raw!r}, which is "
+                  f"not in sofascore.STATUS_MAP - add it there. Leaving the row "
+                  f"as scheduled.")
+            continue
         if not status or status == "scheduled":
             print(f"  {day} event {event_id}: source still says "
-                  f"{status or 'nothing'} - leaving as is")
+                  f"{raw or 'nothing'} - leaving as is")
             continue
         conn.execute("update matches set status=%s where id=%s", (status, mid))
-        print(f"  {day} event {event_id}: scheduled -> {status}")
+        print(f"  {day} event {event_id}: scheduled -> {status} (source {raw!r})")
         fixed += 1
     return fixed
 

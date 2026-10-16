@@ -40,7 +40,12 @@ def collect(days: int) -> List[dict]:
             etid = (e.get("tournament", {}).get("uniqueTournament") or {}).get("id")
             if TOURNAMENT_TO_LEAGUE.get(etid) != league:
                 continue
-            if (e.get("status", {}).get("type") or "") in ("finished", "cancelled"):
+            # Compared canonically: this read `in ("finished", "cancelled")`
+            # against SofaScore's raw type, which is "canceled", so cancelled
+            # fixtures were re-inserted as 'scheduled' every morning and then
+            # sat in the past looking like results we had failed to fetch.
+            if sofascore.canonical_status(
+                    (e.get("status") or {}).get("type")) in ("finished", "cancelled"):
                 continue
             ts = e.get("startTimestamp")
             if ts is None:
