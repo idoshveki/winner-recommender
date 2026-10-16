@@ -124,7 +124,8 @@ def main() -> int:
         rows = conn.execute("""
             select m.id, m.league, m.season, m.kickoff_utc, m.home_team_id, m.away_team_id,
                    s.home_goals, s.away_goals, s.home_yellow, s.away_yellow,
-                   s.home_red, s.away_red, s.home_corners, s.away_corners,
+                   s.home_red, s.away_red, s.second_yellow_reds,
+                   s.home_corners, s.away_corners,
                    s.home_fouls, s.away_fouls, s.home_shots, s.away_shots
             from matches m join match_stats s on s.match_id = m.id
             where m.status='finished' and s.home_goals is not null

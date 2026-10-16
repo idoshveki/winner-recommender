@@ -19,7 +19,7 @@ from v2.lib.jobs import connect, job
 STAT_FIELDS = ("home_goals", "away_goals", "home_corners", "away_corners",
                "home_yellow", "away_yellow", "home_red", "away_red",
                "home_fouls", "away_fouls", "home_shots", "away_shots",
-               "home_shots_ot", "away_shots_ot")
+               "home_shots_ot", "away_shots_ot", "second_yellow_reds")
 
 
 def season_start_year(label: str) -> int:
@@ -119,6 +119,21 @@ def main() -> int:
                     continue
                 if not st:
                     continue
+                # Ask once, now, while we are already fetching this match.
+                # The statistics endpoint cannot distinguish a second yellow
+                # from a straight red, and 1,343 historical matches can no
+                # longer be resolved because they predate our SofaScore ids.
+                if (st.get("home_red") or 0) + (st.get("away_red") or 0):
+                    try:
+                        inc = sofascore.incidents(e["id"])
+                        st["second_yellow_reds"] = sum(
+                            1 for i in inc
+                            if i.get("incidentClass") == "yellowRed")
+                    except Exception:
+                        pass        # leave null: not established, not zero
+                else:
+                    st["second_yellow_reds"] = 0
+
                 st["home_goals"] = (e.get("homeScore") or {}).get("current")
                 st["away_goals"] = (e.get("awayScore") or {}).get("current")
                 if st["home_goals"] is None:

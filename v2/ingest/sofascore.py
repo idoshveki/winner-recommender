@@ -115,6 +115,14 @@ def event_status(event_id: int) -> tuple[Optional[str], Optional[str]]:
     return canonical_status(raw), raw
 
 
+def incidents(event_id: int) -> List[dict]:
+    """Timeline for one event. The only place a second yellow ("yellowRed")
+    can be told apart from a straight red ("red") - the statistics endpoint
+    reports both simply as a red, while also counting the second yellow as a
+    booking."""
+    return _get(f"/event/{event_id}/incidents").get("incidents", [])
+
+
 def match_statistics(event_id: int) -> Dict[str, int]:
     """Corners and cards for a finished match, keyed by event id.
 

@@ -99,6 +99,29 @@ class RollingState:
         self.league[league].append(h_val + a_val)
 
 
+
+def cards_book(yellows: int, reds: int, second_yellow_reds=None) -> int:
+    """Total cards as a bookmaker settles them.
+
+    A yellow counts 1 and a red counts 2, but a player dismissed for a second
+    yellow is settled as one yellow plus one red - three cards, not four. Books
+    do not count the second booking separately.
+
+    SofaScore's statistics endpoint does count it twice: the second yellow
+    appears in the yellow total and the dismissal appears in the red total. So
+    the second yellows have to be subtracted back out.
+
+    second_yellow_reds of None means "not established" and is treated as zero,
+    which reproduces the old inflated figure. That is deliberate: it keeps a
+    partially backfilled table usable, and the error it leaves is the one that
+    was already there rather than a new one. Prefer filtering on
+    `second_yellow_reds is not null` when the number has to be exact.
+
+    SC Freiburg v FC Schalke, 2026-10-11: four yellows (two of them Suzuki's,
+    the second sending him off) and one red. Five cards, not six.
+    """
+    return yellows - (second_yellow_reds or 0) + 2 * reds
+
 def build(rows: List[dict]) -> List[FeatureRow]:
     """rows must be ordered by kickoff. Returns one FeatureRow per match."""
     cards = RollingState()
@@ -143,8 +166,9 @@ def build(rows: List[dict]) -> List[FeatureRow]:
             target_card_diff=((r["home_yellow"] - r["away_yellow"])
                               if None not in tot_cards else None),
             target_cards_book=(
-                (r["home_yellow"] + r["away_yellow"]
-                 + 2 * ((r.get("home_red") or 0) + (r.get("away_red") or 0)))
+                cards_book(r["home_yellow"] + r["away_yellow"],
+                           (r.get("home_red") or 0) + (r.get("away_red") or 0),
+                           r.get("second_yellow_reds"))
                 if None not in tot_cards else None),
             raw_home=(r["home_yellow"] if None not in tot_cards else None),
             raw_away=(r["away_yellow"] if None not in tot_cards else None),

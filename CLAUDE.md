@@ -41,18 +41,28 @@ lacks.** Anything claiming otherwise needs to clear the gates below.
 1. **Prices must be observed, not assumed.** v1 hardcoded **1.50** for cards
    Over 3.5 across 32 picks. 1win actually pays 1.36–2.00 and it varies by
    match. Every v1 EV number rests on a price that does not exist.
-2. **Books settle a red card as TWO cards.** We modelled yellows only, which
+2. **A second yellow is one booking, not two.** SofaScore counts it twice -
+   in the yellow total as a booking, and in the red total as the dismissal -
+   so `yellows + 2*reds` counts that player four times where a book counts
+   three. Freiburg v Schalke (2026-10-11) was 5 cards, not 6. Use
+   `v2.model.features.cards_book`, which subtracts `second_yellow_reds`.
+   **Open limitation:** 32% of reds are second yellows, but only the 243
+   SofaScore-sourced matches can be resolved - the 1,343 football-data matches
+   holding a red have no SofaScore id, and the two sources share no fixtures,
+   so football-data's own convention is untested. Those rows keep the old
+   figure; roughly 430 of them may be one card high, biased toward Over.
+3. **Books settle a red card as TWO cards.** We modelled yellows only, which
    undercounts every match, made every Under look cheap, and manufactured a
    "+16.8% edge" that vanished on correction.
-3. **1win prices YELLOWS; Pinnacle prices CARDS.** Different quantities. Reading
+4. **1win prices YELLOWS; Pinnacle prices CARDS.** Different quantities. Reading
    the gap as a pricing bias produced a losing recommendation with a
    predictable sign.
-4. **Opening odds are not closing odds.** `PSH`/`Avg>2.5` are the OPEN;
+5. **Opening odds are not closing odds.** `PSH`/`Avg>2.5` are the OPEN;
    `PSCH`/`AvgC>2.5` are the CLOSE. Beating an opening line is easy and
    meaningless. This error was made twice.
-5. **Statistical significance is not money.** A perfectly efficient market threw
+6. **Statistical significance is not money.** A perfectly efficient market threw
    off `c=+0.507, p=0.044`. Only the money test caught it.
-6. **A freshness check must ask a question the data can answer.** "Is the
+7. **A freshness check must ask a question the data can answer.** "Is the
    newest result less than 8 days old" cannot distinguish a broken ingest from
    nobody playing football. Fixtures stopped on 20 Sep 2026 and resumed on
    9 Oct; the daily job failed and emailed an alert every morning for eleven
@@ -60,21 +70,21 @@ lacks.** Anything claiming otherwise needs to clear the gates below.
    **played** is missing its result — a quiet fortnight passes that, a broken
    ingest does not. A false alarm every day is worse than no alarm, because it
    trains you to ignore the real one.
-7. **A fixture can leave the schedule without being played.** Levante v
+8. **A fixture can leave the schedule without being played.** Levante v
    Athletic Club, 16 Sep 2026, postponed. The forward-looking fixtures ingest
    never revisits a past kickoff, so the row sat as `scheduled` with no stats,
    indistinguishable from a fetch we had missed. `reconcile_scheduled()` in
    `v2/ingest/results.py` re-checks past-kickoff scheduled rows at source.
-8. **The pipeline is only as long as its shortest link.** The daily job
+9. **The pipeline is only as long as its shortest link.** The daily job
    ingested results and nothing else — no fixtures, no Odds API event mapping,
    no prices. The picker reported "0 upcoming fixtures" for weeks. Both it and
    the price fetch require `odds_api_event_id`, and **nothing in the job ever
    wrote one**; the linking step (`v2/scripts/map_odds_events.py`, 0 credits)
    existed but was never scheduled.
-9. **Schedules only fire from the default branch, which here is `master`.**
+10. **Schedules only fire from the default branch, which here is `master`.**
    Work committed to `v2-init` changes nothing that runs. Check
    `git rev-parse --abbrev-ref HEAD` before assuming a fix is live.
-10. **Silent success is the house bug.** v1's ingest printed "0 rows updated" and
+11. **Silent success is the house bug.** v1's ingest printed "0 rows updated" and
    exited 0 for five months. Since then: a pipeline masking an exit code through
    `grep`, and an `ON CONFLICT` discarding every row while reporting success.
    **A job that writes nothing when it should write something must fail** - but

@@ -62,7 +62,13 @@ def main() -> int:
                    -- coalesce: reds come back NULL when the feed omits them,
                    -- and 2*NULL made the entire cards total NULL, which reads
                    -- as "not gradeable yet" and would park the pick forever.
+                   --
+                   -- second_yellow_reds is subtracted because SofaScore counts
+                   -- a second yellow twice - once as a booking and again as the
+                   -- dismissal - while a book settles it as one yellow plus one
+                   -- red. See v2.model.features.cards_book.
                    s.home_yellow + s.away_yellow
+                     - coalesce(s.second_yellow_reds, 0)
                      + 2*(coalesce(s.home_red,0) + coalesce(s.away_red,0))
             from v1_live_record lr
             join matches m on m.id = lr.match_id
