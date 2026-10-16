@@ -5,28 +5,12 @@
 # it a permanent URL instead.
 name: v2 — publish dashboard to Pages
 
+# MANUAL ONLY. The daily job builds and publishes the page in the same run, so
+# the published page can never trail the data it was built from. This workflow
+# stays as an escape hatch for republishing without waiting for the next daily
+# run; it must not keep a schedule, or the two would race on the Pages
+# concurrency group and could publish out of order.
 on:
-  # Its own schedule, 45 minutes after the daily job. The workflow_run trigger
-  # below is kept as a bonus but is NOT relied on: the daily job ran green on
-  # 14, 15, 16, 17 and 18 September and workflow_run fired on none of them, so
-  # the published page sat five days stale while the database was current.
-  # This job rebuilds the dashboard from the database itself, so it does not
-  # actually depend on the daily run having finished - only on the data being
-  # there, which the daily job's own freshness assertion guards.
-  schedule:
-    # GitHub runs scheduled workflows on a best-effort queue, and this repo
-    # sees them start 4.5 to 7.8 hours after the stated time (a 05:15 cron has
-    # started anywhere from 09:49 to 13:05). The times below are therefore set
-    # roughly six hours EARLIER than the hour we actually want, and are
-    # staggered so each job still lands after the one it depends on even at the
-    # extremes of that spread. Do not read them as the delivery time.
-    # 01:00 UTC -> lands ~05:30-08:50 UTC, after v2-daily's latest finish.
-    # This job rebuilds the dashboard itself, so it needs the database
-    # current rather than any artifact from the daily run.
-    - cron: '0 1 * * *'
-  workflow_run:
-    workflows: ["v2 — daily (ingest + freshness + dashboard)"]
-    types: [completed]
   workflow_dispatch:
 
 permissions:

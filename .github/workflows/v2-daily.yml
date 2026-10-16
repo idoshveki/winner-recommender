@@ -35,6 +35,13 @@ on:
 # One run at a time. Overlapping runs would fight over the same job_runs rows
 # and the same upserts, so a second run waits for the first instead of doubling
 # up (cancel-in-progress: false - never kill a run that is mid-write).
+# Publishing happens in this workflow now (see the deploy steps below), so the
+# Pages concurrency group belongs here too.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 concurrency:
   group: v2-daily
   cancel-in-progress: false
@@ -43,6 +50,9 @@ jobs:
   daily:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
     env:
       # ODDS_API_KEY is deliberately absent: nothing in this job calls the odds
       # API, and an unused secret in the job environment is only exposure. Add
@@ -170,6 +180,7 @@ jobs:
           PY
 
       - name: Rebuild the betting-record dashboard
+        id: dashboard
         if: always()
         run: python -m v2.scripts.build_dashboard
 
@@ -179,6 +190,31 @@ jobs:
           name: dashboard
           path: v2/web/dashboard.html
           retention-days: 30
+
+      # Publish here rather than from a separate workflow. The page used to be
+      # deployed by v2-pages on its own schedule, so it always trailed the data
+      # by however long sat between the two - and when that schedule did not
+      # fire, the page silently showed yesterday's results while the database
+      # was current. The same gap once left it five days stale because the
+      # workflow_run trigger never fired at all. Building and publishing in one
+      # run removes the gap entirely: whatever this run computed is what gets
+      # served.
+      - name: Assemble the site
+        if: always() && steps.dashboard.outcome == 'success'
+        run: |
+          set -o pipefail
+          mkdir -p _site
+          cp v2/web/dashboard.html _site/index.html
+          test -s _site/index.html || { echo "::error::dashboard is empty"; exit 1; }
+
+      - uses: actions/upload-pages-artifact@v3
+        if: always() && steps.dashboard.outcome == 'success'
+        with:
+          path: _site
+
+      - id: deploy
+        if: always() && steps.dashboard.outcome == 'success'
+        uses: actions/deploy-pages@v4
 
       # One gate, at the end, rather than an abort after each tolerant step.
       # The old arrangement exited 1 immediately after the results ingest, so a
