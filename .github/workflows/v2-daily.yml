@@ -206,10 +206,14 @@ jobs:
             step="${pair%%:*}"
             outcome="${pair#*:}"
             printf '  %-18s %s\n' "$step" "${outcome:-did-not-run}"
-            if [ "$outcome" = "failure" ]; then BAD=1; fi
+            # Anything that is not "success" is a problem, not just "failure".
+            # A 20-minute job timeout marks steps "cancelled" and the rest
+            # "skipped", and a gate that looked only for "failure" printed
+            # "all pipeline steps ok" over a job that had been killed mid-run.
+            if [ "$outcome" != "success" ]; then BAD=1; fi
           done
           if [ "$BAD" = 1 ]; then
-            echo "::error::one or more pipeline steps failed - see the outcomes above"
+            echo "::error::one or more pipeline steps did not succeed - see the outcomes above"
             exit 1
           fi
           echo "all pipeline steps ok"

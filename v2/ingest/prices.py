@@ -51,31 +51,52 @@ def month_to_date_spend(conn) -> int:
     return row[0] or 0
 
 
-def store_snapshots(conn, match_id: int, book: str, market: str, outcomes) -> int:
-    """Insert only prices that differ from the most recent stored value."""
-    written = 0
+def latest_prices(conn, match_id: int) -> Dict[tuple, float]:
+    """Most recent stored price for every (book, market, side, line) of a match.
+
+    One query for the whole match. The previous version asked the database once
+    per outcome, which with ~41 bookmakers across three markets came to roughly
+    33,000 round trips per run; at the 66 ms latency to the pooler that is 36
+    minutes of waiting, and the job has a 20-minute timeout. It was cancelled,
+    not failed, so it did not even report as a failure.
+
+    This is the same mistake as the original Tokyo-region load that took four
+    hours before being rewritten with COPY. Latency times round trips is the
+    cost model for this database; the number of round trips is the thing to cut.
+    """
+    rows = conn.execute(
+        """select bookmaker, market, side, line, price from (
+               select bookmaker, market, side, line, price,
+                      row_number() over (
+                          partition by bookmaker, market, side, line
+                          order by fetched_at desc) as rn
+                 from odds_snapshots
+                where match_id = %s) t
+            where rn = 1""", (match_id,)).fetchall()
+    return {(b, m, sd, float(ln) if ln is not None else None): float(pr)
+            for b, m, sd, ln, pr in rows}
+
+
+def changed_snapshots(match_id: int, book: str, market: str, outcomes,
+                      known: Dict[tuple, float]) -> List[tuple]:
+    """Rows worth inserting: those whose price differs from the stored one.
+
+    Updates `known` as it goes, so two bookmakers quoting the same line in one
+    payload cannot both be written as changes.
+    """
+    out = []
     for o in outcomes:
         # h2h has no point/line; totals markets do. Skipping null points here
         # silently discarded every 1X2 price.
         point = o.get("point")
         line = float(point) if point is not None else None
         side, price = o["name"], float(o["price"])
-        last = conn.execute(
-            """select price from odds_snapshots
-               where match_id=%s and bookmaker=%s and market=%s and side=%s
-                 and line is not distinct from %s
-               order by fetched_at desc limit 1""",
-            (match_id, book, market, side, line),
-        ).fetchone()
-        if last and float(last[0]) == price:
+        key = (book, market, side, line)
+        if known.get(key) == price:
             continue
-        conn.execute(
-            """insert into odds_snapshots (match_id, bookmaker, market, line, side, price)
-               values (%s,%s,%s,%s,%s,%s)""",
-            (match_id, book, market, line, side, price),
-        )
-        written += 1
-    return written
+        known[key] = price
+        out.append((match_id, book, market, line, side, price))
+    return out
 
 
 def fit_and_store(conn, match_id: int, book: str, market: str, outcomes) -> bool:
@@ -125,7 +146,7 @@ def main() -> int:
 
     with job("fetch-prices") as r, connect() as conn:
         conn.autocommit = False
-        fits = 0
+        fits = done = 0
         for match_id, event_id, league, ko, home, away in matches:
             sport = odds_api.sport_key(league)
             try:
@@ -133,15 +154,30 @@ def main() -> int:
             except Exception as exc:
                 print(f"    !! {home} v {away}: {exc}")
                 continue
+            known = latest_prices(conn, match_id)
+            pending: List[tuple] = []
             for bk in data.get("bookmakers", []):
                 for m in bk.get("markets", []):
                     market = odds_api.canonical_market(m["key"])
                     if market is None:
                         continue
-                    r.add(store_snapshots(conn, match_id, bk["key"], market, m["outcomes"]))
+                    pending += changed_snapshots(
+                        match_id, bk["key"], market, m["outcomes"], known)
                     if bk["key"] in SHARP_BOOKS:
                         fits += fit_and_store(conn, match_id, bk["key"], market, m["outcomes"])
+            if pending:
+                # executemany is pipelined in psycopg3, so this is a handful of
+                # round trips rather than one per row.
+                with conn.cursor() as cur:
+                    cur.executemany(
+                        """insert into odds_snapshots
+                               (match_id, bookmaker, market, line, side, price)
+                           values (%s,%s,%s,%s,%s,%s)""", pending)
+                r.add(len(pending))
             conn.commit()
+            done += 1
+            print(f"    [{done}/{len(matches)}] {home[:20]:20s} v {away[:20]:20s} "
+                  f"{len(pending):4d} new prices", flush=True)
         r.meta["credits_used"] = odds_api.USAGE.total_cost
         r.meta["credits_remaining"] = odds_api.USAGE.remaining
         r.meta["fits"] = fits
