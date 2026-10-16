@@ -117,7 +117,10 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--days", type=int, default=8)
     args = ap.parse_args()
-    with job("ingest-fixtures") as r:
+    # Not expect_rows: an empty fixture list is real during a break. What
+    # would be a bug is SofaScore returning events and none of them landing,
+    # which is checked where the rows are written.
+    with job("ingest-fixtures", expect_rows=False) as r:
         fixtures = collect(args.days)
         r.add(store(fixtures))
         r.meta["days"] = args.days

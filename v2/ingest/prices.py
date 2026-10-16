@@ -144,7 +144,9 @@ def main() -> int:
         print("  dry run, nothing fetched")
         return 0
 
-    with job("fetch-prices") as r, connect() as conn:
+    # Not expect_rows: snapshots are change-only, so a run where no quote has
+    # moved since the last one legitimately writes nothing.
+    with job("fetch-prices", expect_rows=False) as r, connect() as conn:
         conn.autocommit = False
         fits = done = 0
         for match_id, event_id, league, ko, home, away in matches:

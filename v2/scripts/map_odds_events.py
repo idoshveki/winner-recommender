@@ -26,7 +26,9 @@ def manual_aliases(league: str) -> dict:
 
 
 def main() -> int:
-    with job("map-odds-events") as r, connect() as conn:
+    # Not expect_rows: with no unlinked fixtures there is nothing to link, and
+    # that is the steady state rather than a failure.
+    with job("map-odds-events", expect_rows=False) as r, connect() as conn:
         conn.autocommit = False
         unresolved = []
         linked = 0

@@ -86,7 +86,13 @@ def main() -> int:
                   draw_match, draw_odds
            from weekly_picks where week >= ? order by week""", (LIVE_FROM,)).fetchall()
 
-    with job("track-v1-picks") as jr, connect() as conn:
+    # Not expect_rows. Re-reading v1's SQLite is an idempotent sync: once a
+    # week's legs are recorded and nothing new has a result, writing nothing is
+    # the correct outcome. Asserting on row count failed the run on a job that
+    # had done its work - the third time that same mistake has broken this
+    # pipeline, after ingest-results and sync-v1-history. The invariant worth
+    # checking is below: no v1 pick may be missing from the record.
+    with job("track-v1-picks", expect_rows=False) as jr, connect() as conn:
         conn.autocommit = False
         inserted = settled = 0
         for r in rows:
@@ -140,6 +146,20 @@ def main() -> int:
         print(f"  {total} legs tracked, {pending} still awaiting a result")
         jr.add(inserted + settled)
         jr.meta.update(inserted=inserted, settled=settled, pending=pending)
+
+        # The real guarantee: every leg v1 actually issued is in the record.
+        # Silence is fine; a missing pick is not, because the record is the
+        # only honest account of what v1 recommended.
+        expected = sum(1 for r in rows for text in
+                       (r[3], r[7], r[11], r[14]) if text)
+        tracked = conn.execute(
+            "select count(*) from v1_live_record where system='v1'").fetchone()[0]
+        if tracked < expected:
+            raise RuntimeError(
+                f"v1 issued {expected} legs since {LIVE_FROM} but only {tracked} "
+                f"are tracked - {expected - tracked} pick(s) are missing from the "
+                f"record. Do not let v1's history go unrecorded.")
+        print(f"  all {expected} v1 legs since {LIVE_FROM} are tracked")
     return 0
 
 
