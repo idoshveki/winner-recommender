@@ -179,6 +179,11 @@ def market_of(row: dict) -> str:
     m = (row.get("market") or "").strip()
     if row["leg"] == "draw":
         return "Draw singles"
+    if "CARD" in m.upper() and "YC" not in m.upper():
+        # v2's market: Pinnacle cards, where a red counts as two. Kept apart
+        # from v1's yellows-only market because they are different quantities
+        # and pooling their results would compare unlike bets.
+        return "Cards"
     if "YC" in m.upper():
         # A family, not a line. Over 3.5, Over 4.5 and Under 3.5 all belong in
         # one row of the summary, and naming that row after a single line
@@ -709,7 +714,8 @@ def tip(key, shown=None):
 
 MARKET_LABEL = {
     "H/A": "Match result",
-    "Yellow cards": "Yellow cards",
+    "Yellow cards": "Yellow cards (v1 — 1win counts yellows only)",
+    "Cards": "Cards (v2 — a red counts as two)",
     "Draw singles": "Draw singles",
     "O2.5+BTTS": "Over 2.5 goals + both score",
 }
@@ -727,8 +733,11 @@ def pick_label(market, pick):
         return "Away win"
     if pk in ("D", "Draw"):
         return "Draw"
-    if "YC" in m or "CARD" in m:
+    if "YC" in m:
         return f"{pk} yellow cards"
+    if "CARD" in m:
+        # Not "yellow cards": this market counts a red as two.
+        return f"{pk} cards (a red counts as two)"
     if "BTTS" in m:
         return "Over 2.5 goals and both teams to score"
     if "CORNER" in m:

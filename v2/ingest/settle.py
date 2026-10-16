@@ -24,16 +24,25 @@ def grade(market: str, pick: str, hg: int, ag: int,
     m = (market or "").upper()
     pk = (pick or "").strip()
 
+    # Two different quantities wear the word "cards" here, and settling one
+    # with the other is a silent, expensive error.
+    #
+    #   "YC ..."    - v1's market. 1win prices YELLOW cards and carries reds
+    #                 separately, so this settles on yellows alone.
+    #   "Cards ..." - v2's market. It prices Pinnacle's alternate_totals_cards
+    #                 and models target_cards_book, where a red counts as TWO.
+    #
+    # Grading v2's Over 4.5 on Freiburg v Schalke by yellows (4) would have
+    # recorded a loss on a bet its own market won (6 cards).
     if "YC" in m or "CARD" in m:
-        # 1win's market is YELLOW cards only - it carries a separate red-card
-        # market - so these settle on yellows, not yellows + 2x reds.
-        if yellows is None:
+        total = yellows if "YC" in m else cards_book
+        if total is None:
             return None
         parts = pk.split()
         if len(parts) < 2:
             return None
         side, line = parts[0].lower(), float(parts[1])
-        res = settle_total(yellows, line, side)
+        res = settle_total(total, line, side)
         return None if res is None else res == 1.0
 
     if "BTTS" in m:
@@ -50,7 +59,11 @@ def main() -> int:
             select lr.id, lr.system, lr.week, lr.leg, lr.market, lr.pick,
                    lr.match_text, s.home_goals, s.away_goals,
                    s.home_yellow + s.away_yellow,
-                   s.home_yellow + s.away_yellow + 2*(s.home_red + s.away_red)
+                   -- coalesce: reds come back NULL when the feed omits them,
+                   -- and 2*NULL made the entire cards total NULL, which reads
+                   -- as "not gradeable yet" and would park the pick forever.
+                   s.home_yellow + s.away_yellow
+                     + 2*(coalesce(s.home_red,0) + coalesce(s.away_red,0))
             from v1_live_record lr
             join matches m on m.id = lr.match_id
             join match_stats s on s.match_id = m.id
@@ -69,8 +82,11 @@ def main() -> int:
                 "update v1_live_record set hit=%s, settled_at=now() where id=%s",
                 (hit, rid))
             settled += 1
+            basis = (f"{yellows} yellows" if "YC" in (market or "").upper()
+                     else f"{cards_book} cards" if "CARD" in (market or "").upper()
+                     else f"{hg}-{ag}")
             print(f"  {system} {week} {leg}: {text[:34]:34s} {pick:10s} "
-                  f"{hg}-{ag}, {yellows} yellows -> {'HIT' if hit else 'miss'}")
+                  f"{basis} -> {'HIT' if hit else 'miss'}")
         conn.commit()
 
         still = conn.execute(
