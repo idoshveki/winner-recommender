@@ -17,8 +17,13 @@ on:
 jobs:
   send:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
     permissions:
       contents: write
+      pages: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
 
@@ -27,7 +32,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install -q pandas requests python-dotenv resend 'psycopg[binary]'
+        run: pip install -q -r v2/requirements.txt pandas resend
 
       # v1's own results feeder has written nothing since 2026-03-09, so every
       # history-derived feature was seven months stale - and the yellow-card
@@ -50,6 +55,35 @@ jobs:
           SOFASCORE_API_KEY: ${{ secrets.SOFASCORE_API_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         run: python src/recommend/send_weekly.py
+
+      # v1 writes its picks to its own SQLite, and the dashboard reads Postgres.
+      # Until now only v2-daily bridged the two, and it runs at 21:00 while this
+      # job lands in the morning - so a Friday slip sat invisible for about
+      # twenty hours, which is most of the window in which the bets are still
+      # placeable. The job that creates the picks now publishes them.
+      - name: Track this week's picks into the record
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -o pipefail
+          PYTHONPATH=. python -m v2.ingest.v1_picks
+
+      - name: Rebuild and publish the dashboard
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -o pipefail
+          PYTHONPATH=. python -m v2.scripts.build_dashboard
+          mkdir -p _site
+          cp v2/web/dashboard.html _site/index.html
+          test -s _site/index.html || { echo "::error::dashboard is empty"; exit 1; }
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
 
       - name: Commit updated DB (picks saved)
         run: |
