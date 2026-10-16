@@ -1,6 +1,24 @@
 """Two different quantities wear the word "cards", and settling one with the
 other is a silent, expensive error.
 
+1win sells both markets and settles them by different rules. Quoted from its
+own terms (confirmed 2026-10-16, superseding the screenshot-based note of
+2026-08-29 which recorded only that the yellows market existed):
+
+  Yellow Card Bets
+    "A second yellow card counts as one red card."
+    "When calculating the number of yellow cards, a second caution resulting
+     in automatic dismissal is not counted."
+
+  Card Bets
+    "1 point = yellow card; 2 points = red card; a second yellow card counts
+     as a red card, not separately. The maximum number of cards per player is
+     three (yellow + second yellow = red)."
+
+Both subtract the second caution. They differ only in whether the dismissal it
+caused is then worth two points - which is a loss in one market and a win in
+the other on the very same match.
+
   "YC ..."    v1's market. 1win prices YELLOW cards and carries red cards as a
               separate market, so these settle on yellows alone.
   "Cards ..." v2's market. It prices Pinnacle's alternate_totals_cards and its
@@ -69,3 +87,25 @@ def test_a_cards_market_never_silently_uses_yellows():
 
 def test_malformed_pick_does_not_settle():
     assert grade("Cards Over", "Over", 1, 0, 4, 6) is None
+
+
+# ---------------------------------------------------------------- 1win rules
+
+def test_freiburg_is_a_loss_in_the_yellows_market_and_a_win_in_cards():
+    """SC Freiburg v FC Schalke: Suzuki booked 49', booked again 64' and sent
+    off; Ginter 57'; Hwang 87'.
+
+    Yellow Card Bets: the second caution is not counted -> 3 yellows.
+    Card Bets: Suzuki 1 + 2 = 3, plus 1 and 1 -> 5 points.
+
+    The same Over 4.5 therefore loses in one market and wins in the other, and
+    v2 prices the cards market.
+    """
+    assert grade("YC Over 4.5", "Over 4.5", 2, 1, 3, 5) is False
+    assert grade("Cards Over 4.5", "Over 4.5", 2, 1, 3, 5) is True
+
+
+def test_a_straight_red_leaves_the_yellow_count_alone():
+    """Elche v Getafe, 2026-05-17: Djene sent off on a straight red at 39'.
+    Nothing is deducted, so the four yellows stand and Over 3.5 wins."""
+    assert grade("YC Over 3.5", "Over 3.5", 1, 0, 4, 6) is True
