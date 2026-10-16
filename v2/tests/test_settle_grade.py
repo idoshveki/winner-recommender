@@ -19,14 +19,8 @@ Both subtract the second caution. They differ only in whether the dismissal it
 caused is then worth two points - which is a loss in one market and a win in
 the other on the very same match.
 
-  "YC ..."    v1's market. 1win prices YELLOW cards and carries red cards as a
-              separate market, so these settle on yellows alone.
-  "Cards ..." v2's market. It prices Pinnacle's alternate_totals_cards and its
-              model target is target_cards_book = yellows + 2*reds, so a red
-              counts as TWO.
-
 The case that forced this apart: v2 took Over 4.5 on SC Freiburg v FC Schalke
-at 3.00. The match finished with 4 yellows and 1 red - 4 by the yellows rule
+at 3.00. The match finished with 4 yellows and 1 red - 3 by the yellows rule
 (a loss), 6 by the cards rule (a win). The settler graded every card leg on
 yellows, so it would have recorded a loss on a bet its own market won, and the
 two earlier v2 picks only agreed because neither match had a red card.
