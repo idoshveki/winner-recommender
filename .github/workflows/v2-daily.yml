@@ -181,22 +181,24 @@ jobs:
       - name: Fail the run if any step failed
         if: always()
         run: |
-          declare -A OUTCOME=(
-            [ingest-results]="${{ steps.ingest.outcome }}"
-            [ingest-fixtures]="${{ steps.fixtures.outcome }}"
-            [map-odds-events]="${{ steps.mapodds.outcome }}"
-            [fetch-prices]="${{ steps.prices.outcome }}"
-            [track-v1-picks]="${{ steps.picks.outcome }}"
-            [v2-picks]="${{ steps.v2picks.outcome }}"
-            [settle-picks]="${{ steps.settle.outcome }}"
-            [assert-results]="${{ steps.assert.outcome }}"
-          )
+          # One space-separated token per step, in pipeline order. Not a bash
+          # associative array - those iterate in hash order, and this log is
+          # read by a person trying to see where the pipeline broke.
           BAD=0
-          for step in "${!OUTCOME[@]}"; do
-            printf '  %-18s %s\n' "$step" "${OUTCOME[$step]}"
-            case "${OUTCOME[$step]}" in
-              failure) BAD=1 ;;
-            esac
+          for pair in \
+            "ingest-results:${{ steps.ingest.outcome }}" \
+            "ingest-fixtures:${{ steps.fixtures.outcome }}" \
+            "map-odds-events:${{ steps.mapodds.outcome }}" \
+            "fetch-prices:${{ steps.prices.outcome }}" \
+            "track-v1-picks:${{ steps.picks.outcome }}" \
+            "v2-picks:${{ steps.v2picks.outcome }}" \
+            "settle-picks:${{ steps.settle.outcome }}" \
+            "assert-results:${{ steps.assert.outcome }}"
+          do
+            step="${pair%%:*}"
+            outcome="${pair#*:}"
+            printf '  %-18s %s\n' "$step" "${outcome:-did-not-run}"
+            if [ "$outcome" = "failure" ]; then BAD=1; fi
           done
           if [ "$BAD" = 1 ]; then
             echo "::error::one or more pipeline steps failed - see the outcomes above"
