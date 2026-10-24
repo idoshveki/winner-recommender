@@ -224,25 +224,45 @@ def analyse(rows: list[dict], weeks_view: dict = None) -> dict:
         r["graded"] = r["hit"] is not None
         r["scored"] = r["graded"] and r["odds"] is not None
 
+    # v1 issues ONE slip a week whose legs stand or fall together, so its rows
+    # belong in a single card keyed by week. v2 issues independent picks per
+    # fixture, on whatever day it finds them, so grouping those by week put
+    # Saturday's picks under Tuesday's date - the card read 2026-10-21 while
+    # holding two bets that kicked off on the 24th, which made live picks look
+    # long dead. v2 is therefore keyed by the date it actually plays.
     weeks: dict = {}
     for r in rows:
-        key = (r["system"], r["week"])
+        singles = r["system"] == "v2"
+        key = ((r["system"], r["week"], r["date"]) if singles
+               else (r["system"], r["week"]))
         wk = weeks.setdefault(key, {"system": r["system"], "week": r["week"],
-                                    "date": r["date"], "acc": [], "draw": None})
+                                    "date": r["date"], "acc": [], "draw": None,
+                                    "singles": singles})
         if r["leg"] == "draw":
             wk["draw"] = r
         else:
             wk["acc"].append(r)
-        wk["date"] = min(wk["date"], r["date"]) if wk["date"] else r["date"]
+        if not singles:
+            wk["date"] = min(wk["date"], r["date"]) if wk["date"] else r["date"]
 
     ordered = sorted(weeks.values(), key=lambda w: (w["date"], w["week"], w["system"]),
                      reverse=True)   # newest at the top: the recent run is what matters
 
-    slips, draws = [], []
+    slips, draws, singles_rows = [], [], []
     for wk in ordered:
         acc = wk["acc"]
         view = weeks_view.get((wk["system"], wk["week"]))
-        if acc:
+        if acc and wk["singles"]:
+            # Each v2 pick is its own bet. Multiplying them would invent an
+            # accumulator nobody placed - and this project already measured
+            # that bundling the same picks turns +88% into -5%.
+            wk["slip"] = None
+            for leg in acc:
+                if leg["scored"]:
+                    singles_rows.append(leg)
+            wk["singles_pnl"] = sum(single_pnl(l["odds"], l["hit"])
+                                    for l in acc if l["scored"]) or None
+        elif acc:
             # 0011's view is the authority on whether a slip counts; without it
             # we apply the same rule to the legs directly.
             row_pending = sum(1 for l in acc if not l["graded"])
@@ -280,7 +300,8 @@ def analyse(rows: list[dict], weeks_view: dict = None) -> dict:
         else:
             wk["draw_pnl"] = None
 
-        parts = [p for p in ((wk["slip"] or {}).get("pnl"), wk["draw_pnl"])
+        parts = [p for p in ((wk["slip"] or {}).get("pnl"), wk["draw_pnl"],
+                             wk.get("singles_pnl"))
                  if p is not None]
         wk["pnl"] = sum(parts) if parts else None
         wk["pending_legs"] = sum(1 for l in acc if not l["graded"]) + \
@@ -292,6 +313,7 @@ def analyse(rows: list[dict], weeks_view: dict = None) -> dict:
 
     slips_pnl = sum(s["pnl"] for s in slips)
     draws_pnl = sum(single_pnl(d["odds"], d["hit"]) for d in draws)
+    singles_pnl = sum(single_pnl(r["odds"], r["hit"]) for r in singles_rows)
 
     markets: dict = {}
     for r in rows:
@@ -338,7 +360,7 @@ def analyse(rows: list[dict], weeks_view: dict = None) -> dict:
         "n_scored_acc": len(scored_acc),
         "n_real_priced": sum(1 for r in rows if r["is_real"]),
         "n_unpriced": sum(1 for r in rows if r["odds"] is None),
-        "bets": len(slips) + len(draws),
+        "bets": len(slips) + len(draws) + len(singles_rows),
         "slips": book(slips_pnl, len(slips)),
         "slips_won": sum(1 for s in slips if s["won"]),
         "slips_lost": sum(1 for s in slips if not s["won"]),
@@ -355,7 +377,12 @@ def analyse(rows: list[dict], weeks_view: dict = None) -> dict:
             sum(single_pnl(r["odds"], r["hit"]) for r in scored_acc), len(scored_acc)),
         "all_as_singles": book(
             sum(single_pnl(r["odds"], r["hit"]) for r in scored_rows), len(scored_rows)),
-        "overall": book(slips_pnl + draws_pnl, len(slips) + len(draws)),
+        # v2's picks are singles, so they are counted alongside v1's slips and
+        # draw singles rather than being multiplied into an accumulator.
+        "singles": book(singles_pnl, len(singles_rows)),
+        "singles_won": sum(1 for r in singles_rows if r["hit"]),
+        "overall": book(slips_pnl + draws_pnl + singles_pnl,
+                        len(slips) + len(draws) + len(singles_rows)),
         "markets": market_rows,
         "systems": systems,
         "by_system": by_system,
@@ -685,7 +712,20 @@ def leg_html(r: dict, *, show_market: bool = True) -> str:
         bits.append(e(r["pick"]))
     bits.append(oddstr)
     meta = " &middot; ".join(bits) + score
-    return (f'<div class="leg"><span class="leg-match">{e(r["match_text"])}</span>'
+    # The date goes on every game, not only the card heading. v2 records picks
+    # per fixture across a week, so one heading cannot speak for them all - a
+    # card headed 2026-10-21 was carrying two bets that kicked off on the 24th,
+    # and they read as long dead.
+    when = ""
+    if r.get("kickoff_utc"):
+        ko = r["kickoff_utc"]
+        try:
+            when = (f'<span class="leg-when">'
+                    f'{ko.strftime("%a %d %b, %H:%M")}</span>')
+        except AttributeError:
+            when = f'<span class="leg-when">{str(ko)[:16]}</span>'
+    return (f'<div class="leg"><span class="leg-match">{e(r["match_text"])}'
+            f'{when}</span>'
             f'<span class="leg-line"><span class="leg-meta">{meta}</span>{chip}</span></div>')
 
 
@@ -758,12 +798,28 @@ def render(a, meta, *, sample=False):
         legs = []
         for l in w["acc"] + ([w["draw"]] if w["draw"] else []):
             st = "pending" if l["hit"] is None else ("hit" if l["hit"] else "miss")
+            # Date on every game, not just the card heading. v2 records picks
+            # per fixture across a week, so one heading cannot speak for them
+            # all - a card headed 2026-10-21 held two bets kicking off on the
+            # 24th, and they read as already gone.
+            ko = l.get("kickoff_utc")
+            when = ""
+            if ko is not None:
+                try:
+                    when = f'<span class="d">{ko.strftime("%a %d %b, %H:%M")}</span>'
+                except AttributeError:
+                    when = f'<span class="d">{e(str(ko)[:16])}</span>'
             legs.append(
-                f'<div class="lg {st}"><span class="m">{e(l["match_text"])}</span>'
+                f'<div class="lg {st}">'
+                f'<span class="m">{e(l["match_text"])}{when}</span>'
                 f'<span class="p">{e(pick_label(l["market"], l["pick"]))} @ {l["odds"]:.2f}</span></div>')
+        # w["pnl"] already sums slip, draw and singles for this card. Adding
+        # the draw again here showed it twice: 2026-09-11 read +5.60u against
+        # a true +2.30u, and every one of the eight weeks carrying a draw was
+        # overstated. The headline totals were computed from separate lists and
+        # were never wrong, which is exactly why this survived - the top of the
+        # page and the week badges disagreed and only the badges were read.
         pnl = w["pnl"]
-        if w["draw_pnl"] is not None:
-            pnl = (pnl or 0) + w["draw_pnl"]
         badge = ("" if pnl is None
                  else f'<span class="amt {cls(pnl)}">{pnl:+.2f}u</span>')
         rows_html.append(
@@ -829,6 +885,8 @@ margin-top:.25rem;border:1px solid transparent}}
 .lg.hit{{background:var(--hit);border-color:var(--hitl)}}
 .lg.miss{{background:var(--miss);border-color:var(--missl)}}
 .lg.pending{{background:transparent;border-style:dashed;border-color:var(--line)}}
+.lg .d{{display:block;font-size:11px;color:var(--muted);
+  margin-top:2px;font-variant-numeric:tabular-nums}}
 .lg .m{{font-size:.87rem}}
 .lg .p{{margin-left:auto;font-size:.8rem;color:var(--dim);
 font-variant-numeric:tabular-nums;white-space:nowrap}}
