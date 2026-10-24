@@ -40,6 +40,10 @@ def spell(market: str, pick: str) -> str:
     m = (market or "").upper()
     if "YC" in m:
         return f"{pick} yellow cards"
+    if "CARD" in m:
+        # Not "yellow cards": this market counts a red as two, which is a
+        # different quantity and settles differently.
+        return f"{pick} cards (a red counts as two)"
     return {"H": "Home win", "A": "Away win", "D": "Draw"}.get(pick, pick)
 
 
@@ -65,9 +69,28 @@ def fetch(conn, week: str) -> tuple[list[dict], dict]:
     return picks, record
 
 
+def split_by_kickoff(picks: list[dict]) -> tuple[list[dict], list[dict]]:
+    """(still placeable, already kicked off).
+
+    v2 records picks as it finds them, any day of the week, but this email
+    goes out on Friday. On 2026-10-23 it led with Levante UD v Athletic Club -
+    a match played on the Tuesday. A recommendation for a bet that can no
+    longer be placed is worse than no recommendation: it costs the reader time
+    and makes them doubt the rest of the email.
+    """
+    now = datetime.now(timezone.utc)
+    live, done = [], []
+    for p in picks:
+        ko = p.get("kickoff")
+        (done if (ko and ko <= now) else live).append(p)
+    return live, done
+
+
 def render(week: str, picks: list[dict], record: dict) -> str:
-    def row(p: dict) -> str:
+    def row(p: dict, played: bool = False) -> str:
         ko = p["kickoff"].strftime("%a %d %b, %H:%M") if p["kickoff"] else ""
+        if played:
+            ko += " — already played"
         edge = f'{p["edge"] * 100:+.1f}%' if p["edge"] is not None else "—"
         gate = ("" if p["qualifies"] else
                 f'<div style="color:{MUTED};font-size:12px;margin-top:6px">'
@@ -80,7 +103,7 @@ def render(week: str, picks: list[dict], record: dict) -> str:
                      f'{float(p["book"]) * 100:.1f}%</div>')
         return (
             f'<div style="padding:16px;border:1px solid {LINE};border-radius:8px;'
-            f'margin-bottom:12px">'
+            f'margin-bottom:12px;{"opacity:.55" if played else ""}">'
             f'<div style="color:{MUTED};font-size:12px;text-transform:uppercase;'
             f'letter-spacing:.04em">{ko}</div>'
             f'<div style="font-size:17px;font-weight:600;color:{INK};'
@@ -90,13 +113,21 @@ def render(week: str, picks: list[dict], record: dict) -> str:
             f'@ {p["odds"]:.2f} <span style="color:{MUTED}">· edge {edge}</span>'
             f'</div>{probs}{gate}</div>')
 
-    if picks:
-        body = "".join(row(p) for p in picks)
+    live, done = split_by_kickoff(picks)
+    if live:
+        body = "".join(row(p) for p in live)
     else:
         body = (f'<div style="padding:16px;border:1px dashed {LINE};'
-                f'border-radius:8px;color:{MUTED}">No pick cleared the gate this '
-                f'week. Most weeks nothing will — that is the finding, not a '
-                f'failure.</div>')
+                f'border-radius:8px;color:{MUTED}">Nothing still to play this '
+                f'week. Most weeks little or nothing clears the gate — that is '
+                f'the finding, not a failure.</div>')
+    if done:
+        # Shown, but plainly separated and after the placeable ones, so a
+        # match that has already been played can never read as a tip.
+        body += (f'<div style="margin-top:18px;color:{MUTED};font-size:12px;'
+                 f'text-transform:uppercase;letter-spacing:.04em">'
+                 f'Already played this week — for the record, not to bet</div>'
+                 + "".join(row(p, played=True) for p in done))
 
     if record["n"]:
         rec = (f'{record["won"]} of {record["n"]} settled, '
@@ -141,9 +172,12 @@ def main() -> int:
         picks, record = fetch(conn, week)
     print(f"  week {week}: {len(picks)} recorded pick(s), "
           f"record {record['won']}/{record['n']} ({record['pnl']:+.2f}u)")
-    for p in picks:
-        print(f"    {p['match']}: {spell(p['market'], p['pick'])} @ {p['odds']:.2f}"
-              f"{'' if p['qualifies'] else '  (below gate)'}")
+    live, done = split_by_kickoff(picks)
+    for label, group in (("to play", live), ("already played", done)):
+        for p in group:
+            print(f"    [{label}] {p['match']}: "
+                  f"{spell(p['market'], p['pick'])} @ {p['odds']:.2f}"
+                  f"{'' if p['qualifies'] else '  (below gate)'}")
 
     html = render(week, picks, record)
     if args.dry_run:

@@ -113,6 +113,8 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--days", type=int, default=8)
     ap.add_argument("--min-edge", type=float, default=MIN_EDGE)
+    ap.add_argument("--max-per-week", type=int, default=3,
+                    help="most picks to record per week, highest edge first")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
@@ -234,55 +236,91 @@ def main() -> int:
         print("\n  dry run — nothing written")
         return 0
 
-    # record the single best candidate per market, flagged for whether it qualifies
+    # Record the week's highest-edge picks, one row per fixture.
+    #
+    # This used to take only `best` per market and key it as (system, week,
+    # leg) with leg='leg2' for every cards pick - so the first pick of the week
+    # filled the slot and the rest were discarded by ON CONFLICT. On
+    # 2026-10-23 that threw away 13 picks which had cleared the edge gate, for
+    # fixtures playing that weekend, while reporting "recorded 0 ... nothing to
+    # add" and exiting green.
+    #
+    # The cap is a betting decision, not a schema one: v2 typically finds
+    # 10-15 qualifying picks a week and we deliberately take the top few by
+    # edge rather than all of them. Picks already recorded this week count
+    # toward it, so a daily run tops up the remaining slots instead of
+    # starting over.
     week = week_label(datetime.now(timezone.utc))
     with job("v2-picks", expect_rows=False) as jr, connect() as conn:
         conn.autocommit = False
         already = conn.execute(
             "select count(*) from v1_live_record where system='v2' and week=%s",
             (week,)).fetchone()[0]
-        n = 0
-        for market in ("cards", "draw"):
-            best = next((c for c in candidates if c["market"] == market), None)
-            if not best:
+        seen = {r[0] for r in conn.execute(
+            "select match_id from v1_live_record where system='v2'").fetchall()}
+
+        # Best pick per fixture, highest edge first. One per fixture, so we
+        # never record Over and Under on the same match.
+        by_match = {}
+        for c in candidates:
+            if c["edge"] < args.min_edge:
                 continue
-            leg = "leg2" if market == "cards" else "draw"
+            cur_best = by_match.get(c["match_id"])
+            if cur_best is None or c["edge"] > cur_best["edge"]:
+                by_match[c["match_id"]] = c
+        ranked = sorted(by_match.values(), key=lambda c: -c["edge"])
+
+        room = max(0, args.max_per_week - already)
+        chosen = [c for c in ranked if c["match_id"] not in seen][:room]
+        print(f"\n  {len(ranked)} qualifying fixture(s); {already} already "
+              f"recorded this week, cap {args.max_per_week} -> taking {len(chosen)}")
+        if len(ranked) > len(chosen) + already:
+            for c in ranked[len(chosen):][:5]:
+                if c["match_id"] in seen:
+                    continue
+                print(f"      not taken (cap): {c['match'][:36]:36s} "
+                      f"{c['pick']:10s} @{c['price']:.2f} edge {c['edge']*100:+.1f}%")
+
+        n = 0
+        for c in chosen:
+            leg = "leg2" if c["market"] == "cards" else "draw"
             cur = conn.execute("""
                 insert into v1_live_record
                   (system, week, leg, market, match_text, pick, odds_quoted,
                    hit, match_id, kickoff_utc, issued_at, edge, qualifies,
                    model_prob, book_prob, note)
-                values ('v2',%s,%s,%s,%s,%s,%s,null,%s,%s,now(),%s,%s,%s,%s,%s)
-                on conflict (system, week, leg) do nothing""",
-                # "Cards", not "YC". This picker prices Pinnacle's
-                # alternate_totals_cards and its model target is
-                # target_cards_book = yellows + 2*reds, so the bet is on CARDS.
-                # Labelling it YC made the settler grade it on yellows alone,
-                # which would have scored Freiburg v Schalke (4 yellows, 1 red
-                # = 6 cards) as a loss on an Over 4.5 that its own market won.
-                # The line taken is included because this once read a constant.
-                (week, leg, f"Cards {best['pick']}" if market == "cards" else "H/A",
-                 best["match"], best["pick"], best["price"], best["match_id"],
-                 best["kickoff"], best["edge"], best["edge"] >= args.min_edge,
-                 best["model_prob"], best["book_prob"],
-                 "v2 pick" + ("" if best["edge"] >= args.min_edge
-                              else " — below edge gate, recorded for comparison only")))
+                values ('v2',%s,%s,%s,%s,%s,%s,null,%s,%s,now(),%s,true,%s,%s,%s)
+                on conflict (system, match_id) where system = 'v2' do nothing""",
+                # "Cards", not "YC": this prices Pinnacle's
+                # alternate_totals_cards and its model target counts a red as
+                # two, so settling it on yellows would misgrade it.
+                (week, leg, f"Cards {c['pick']}" if c["market"] == "cards" else "H/A",
+                 c["match"], c["pick"], c["price"], c["match_id"],
+                 c["kickoff"], c["edge"], c["model_prob"], c["book_prob"],
+                 "v2 pick"))
             # count rows that actually landed, not attempts: an ON CONFLICT that
             # discards everything must not be able to report success
             n += cur.rowcount
+            if cur.rowcount:
+                print(f"      recorded {c['match'][:36]:36s} {c['pick']:10s} "
+                      f"@{c['price']:.2f} edge {c['edge']*100:+.1f}%")
         conn.commit()
         jr.add(n)
         print(f"\n  recorded {n} v2 picks for week {week}")
         # "already recorded for this week" and "silently discarded" look
         # identical from a rowcount of zero, and only the second is a bug.
         # Re-running mid-week is normal and must be a clean no-op.
-        if n == 0 and already:
-            print(f"  (week {week} already has {already} v2 pick(s) — nothing to add)")
+        if n == 0 and not ranked:
+            print("  (nothing cleared the edge gate — a quiet week, not a fault)")
+        elif n == 0 and already >= args.max_per_week:
+            print(f"  (week {week} is at its cap of {args.max_per_week}; "
+                  f"{len(ranked)} qualifying fixture(s) were left on the table)")
+        elif n == 0 and not chosen:
+            print("  (every qualifying fixture is already recorded)")
         elif n == 0:
             raise RuntimeError(
-                "v2 produced candidates but wrote no rows, and none were already "
-                "recorded for this week — every insert was discarded by ON "
-                "CONFLICT. Do not treat this as a quiet week.")
+                f"v2 chose {len(chosen)} pick(s) but wrote no rows — every insert "
+                "was discarded by ON CONFLICT. Do not treat this as a quiet week.")
     return 0
 
 
