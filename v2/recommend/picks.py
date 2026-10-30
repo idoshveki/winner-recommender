@@ -113,8 +113,10 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--days", type=int, default=8)
     ap.add_argument("--min-edge", type=float, default=MIN_EDGE)
-    ap.add_argument("--max-per-week", type=int, default=3,
-                    help="most picks to record per week, highest edge first")
+    ap.add_argument("--max-open", "--max-per-week", type=int, default=3,
+                    dest="max_open",
+                    help="most UNSETTLED picks to carry at once, highest edge "
+                         "first; a graded pick frees its slot")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
@@ -253,9 +255,20 @@ def main() -> int:
     week = week_label(datetime.now(timezone.utc))
     with job("v2-picks", expect_rows=False) as jr, connect() as conn:
         conn.autocommit = False
+        # Open positions, not picks this week. A weekly cap sounded like "the
+        # week's best three" but, with the picker running daily and no sight of
+        # Friday's fixtures on Tuesday, it actually meant "the first three".
+        # In the week of 2026-10-26 three midweek Serie A picks filled it by
+        # Wednesday - all three lost - and the weekend was turned away,
+        # including Liverpool v Arsenal at +14.1%, the best edge of the week.
+        #
+        # Capping unsettled picks instead bounds what is actually at risk: at
+        # most max_open bets live at once. A pick that has been graded frees
+        # its slot, so a busy week can carry more than three in total without
+        # ever exposing more than three at a time.
         already = conn.execute(
-            "select count(*) from v1_live_record where system='v2' and week=%s",
-            (week,)).fetchone()[0]
+            "select count(*) from v1_live_record "
+            "where system='v2' and hit is null").fetchone()[0]
         seen = {r[0] for r in conn.execute(
             "select match_id from v1_live_record where system='v2'").fetchall()}
 
@@ -270,10 +283,10 @@ def main() -> int:
                 by_match[c["match_id"]] = c
         ranked = sorted(by_match.values(), key=lambda c: -c["edge"])
 
-        room = max(0, args.max_per_week - already)
+        room = max(0, args.max_open - already)
         chosen = [c for c in ranked if c["match_id"] not in seen][:room]
-        print(f"\n  {len(ranked)} qualifying fixture(s); {already} already "
-              f"recorded this week, cap {args.max_per_week} -> taking {len(chosen)}")
+        print(f"\n  {len(ranked)} qualifying fixture(s); {already} bet(s) "
+              f"still open, cap {args.max_open} -> taking {len(chosen)}")
         if len(ranked) > len(chosen) + already:
             for c in ranked[len(chosen):][:5]:
                 if c["match_id"] in seen:
@@ -312,9 +325,10 @@ def main() -> int:
         # Re-running mid-week is normal and must be a clean no-op.
         if n == 0 and not ranked:
             print("  (nothing cleared the edge gate — a quiet week, not a fault)")
-        elif n == 0 and already >= args.max_per_week:
-            print(f"  (week {week} is at its cap of {args.max_per_week}; "
-                  f"{len(ranked)} qualifying fixture(s) were left on the table)")
+        elif n == 0 and already >= args.max_open:
+            print(f"  ({already} bet(s) already open, at the cap of "
+                  f"{args.max_open}; {len(ranked)} qualifying fixture(s) were "
+                  f"left on the table until one settles)")
         elif n == 0 and not chosen:
             print("  (every qualifying fixture is already recorded)")
         elif n == 0:

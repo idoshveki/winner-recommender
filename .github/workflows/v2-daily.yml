@@ -136,6 +136,22 @@ jobs:
           set -o pipefail
           python -m v2.ingest.v1_picks 2>&1 | tee /tmp/picks.log
 
+      # Settle BEFORE picking. The cap counts unsettled picks, so a bet
+      # graded by this morning's results must free its slot in the same run -
+      # otherwise yesterday's finished matches would still be blocking today's
+      # picks and the cap would drift upward in effect.
+      # Settles pending picks from EITHER system by match_id. v1's picks were
+      # settled as a side effect of re-reading v1's SQLite; v2's had no settler
+      # at all, so two sat pending with results already in the database.
+      - name: Settle any pending picks
+        id: settle
+        continue-on-error: true
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -o pipefail
+          PYTHONPATH=. python -m v2.ingest.settle 2>&1 | tee /tmp/settle.log
+
       # v2's own picks: recorded, never emailed. Most weeks nothing clears the
       # edge gate, which is the finding rather than a failure - and recording
       # the top-ranked pick anyway makes v1 and v2 comparable over a season.
@@ -149,18 +165,6 @@ jobs:
         run: |
           set -o pipefail
           PYTHONPATH=. python -m v2.recommend.picks --days 8 2>&1 | tee /tmp/v2picks.log
-
-      # Settles pending picks from EITHER system by match_id. v1's picks were
-      # settled as a side effect of re-reading v1's SQLite; v2's had no settler
-      # at all, so two sat pending with results already in the database.
-      - name: Settle any pending picks
-        id: settle
-        continue-on-error: true
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: |
-          set -o pipefail
-          PYTHONPATH=. python -m v2.ingest.settle 2>&1 | tee /tmp/settle.log
 
       # Not "is the newest result recent" - that cannot tell a broken ingest
       # from an international break, and an 18-day gap in fixtures produced 11
